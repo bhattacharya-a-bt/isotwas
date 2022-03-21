@@ -52,7 +52,7 @@ compute_mrce = function(X,
             X.test = X.test[,www]
             mod = compute_fixed(X = X.tr,
                                 Y = Y.tr,
-                                l = lambda[c],
+                                lam2 = lambda[c],
                                 Omega = Omega,
                                 tol.in = tol.in,
                                 maxit.in = maxit.in,

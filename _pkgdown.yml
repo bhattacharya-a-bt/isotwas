@@ -1,4 +1,10 @@
 url: https://bhattacharya-a-bt.github.io/isotwas/
 template:
   bootstrap: 5
-  bootswatch: materia
+  bootswatch: simplex
+  bslib:
+    pkgdown-nav-height: 100px
+  navbar:
+    structure:
+      left:  [intro, reference, articles, news]
+      right: [search, github]
