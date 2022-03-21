@@ -6,8 +6,8 @@ function(s, m, om, nlam, n, B0=NULL, soft=NULL, objective=0, tol=1e-5, maxit=500
   if(is.null(B0))
     B0=as.double(rep(0, p*q))
   if(is.null(soft))
-   soft=as.double(m)  
- 
+   soft=as.double(m)
+
   objective=as.double(objective)
   soft=as.double(soft)
   s = as.double(s)
@@ -22,10 +22,12 @@ function(s, m, om, nlam, n, B0=NULL, soft=NULL, objective=0, tol=1e-5, maxit=500
   mode(maxit) = "integer"
   mode(totalit)="integer"
   dotCoutput=.C("blasso", B=B0, S=s, M=m, Om=om, soft=soft, pin=p,
-            qin=q, nin=n, lam=nlam, tol=tol, maxit=maxit, totalit=totalit, objective=objective)
-	
+            qin=q, nin=n, lam=nlam, tol=tol, maxit=maxit, totalit=totalit,
+            objective=objective,
+            PACKAGE = 'isotwas')
+
   if(!quiet)
-  {  
+  {
     cat("Total iterations for solving for B was", dotCoutput$totalit, "\n")
   }
   B = matrix(dotCoutput$B, nrow=p, ncol=q)
