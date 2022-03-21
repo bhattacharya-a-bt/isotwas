@@ -26,7 +26,8 @@
 
 
     get_best <- function(list_mods,G=G){
-        r2 = as.matrix(unlist(sapply(list_mods, function(y) sapply(y,function(x) x$R2))))
+        r2 = matrix(unlist(sapply(list_mods, function(y) sapply(y,function(x) x$R2))),
+                    nrow = G)
         l_nrows = sapply(list_mods, function(y) sapply(y,function(x) nrow(x$Model)))
         r2[l_nrows == 0] = 0
         r2[is.na(r2)] = 0

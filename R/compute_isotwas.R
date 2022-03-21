@@ -173,32 +173,6 @@ compute_isotwas <- function(X,
         all_models = rlist::list.append(all_models,mmbr_mod)
     }
 
-    ## ELASTIC NET COVARIANCE ESTIMATION - ALSO BUGGY
-    # if ('mrce_enet' %in% method){
-    #     if (verbose){print('Running mrce_enet')}
-    #     if (!verbose){
-    #         sink(tempfile())
-    #     }
-    #
-    #     best_mrce_enet = compute_spring(X = X,
-    #                                     Y = Y,
-    #                                     Omega =
-    #                             omega_list$icov[[length(omega_list$icov)]],
-    #                                     nfolds = nfolds,
-    #                                     tol.in = tol.in,
-    #                                     maxit.in = maxit.in/10,
-    #                                     verbose = verbose,
-    #                                     seed = seed,
-    #                                     par = par,
-    #                                     n.cores = n.cores)
-    #
-    #     if (!verbose){
-    #         sink()
-    #     }
-    #
-    #     all_models = rlist::list.append(all_models,best_mrce_enet)
-    # }
-
     if ('finemap' %in% method){
         if (verbose){print('Running finemap')}
         best_finemap = compute_finemap_regress(X = X,
