@@ -4,7 +4,3 @@ template:
   bootswatch: simplex
   bslib:
     pkgdown-nav-height: 100px
-  navbar:
-    structure:
-      left:  [intro, reference, articles, news]
-      right: [search, github]
