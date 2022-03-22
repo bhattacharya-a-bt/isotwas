@@ -76,7 +76,7 @@ colnames(isoform_mat_rep) = paste0('Isoform',1:p)
 dim(isoform_mat_rep)
 ```
 
-Now, we can train the model using the compute_isotwas() function:
+Now, we can train the model using the `compute_isotwas()` function:
 
 ```{r train, message = F, warning=FALSE, eval=F}
 isotwas_model = isotwas::compute_isotwas(X = gen_mat, 
@@ -119,4 +119,3 @@ A few notes on the options in the function:
 -   If `return_all = TRUE`, then predicted values for each isoform and predictive performance for all methods and all isoforms will be outputted.
 
 We can convert the model from a list (the output from `compute_isotwas()`) to a tibble or data.frame using `convert_model(isotwas_model)`.
-

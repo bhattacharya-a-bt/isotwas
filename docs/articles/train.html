@@ -115,7 +115,7 @@
 <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">isoform_mat_rep</span><span class="op">)</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">'Isoform'</span>,<span class="fl">1</span><span class="op">:</span><span class="va">p</span><span class="op">)</span> 
 <span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">isoform_mat_rep</span><span class="op">)</span>
 <span class="co">#&gt; [1] 2000    3</span></code></pre></div>
-<p>Now, we can train the model using the compute_isotwas() function:</p>
+<p>Now, we can train the model using the <code><a href="../reference/compute_isotwas.html">compute_isotwas()</a></code> function:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">isotwas_model</span> <span class="op">=</span> <span class="fu">isotwas</span><span class="fu">::</span><span class="fu"><a href="../reference/compute_isotwas.html">compute_isotwas</a></span><span class="op">(</span>X <span class="op">=</span> <span class="va">gen_mat</span>, 
                                          Y <span class="op">=</span> <span class="va">isoform_mat</span>, 
