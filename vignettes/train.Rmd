@@ -2,7 +2,7 @@
 title: "Train an isotwas model"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{train}
+  %\VignetteIndexEntry{Train an isotwas model}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -86,7 +86,7 @@ dim(isoform_mat_rep)
 
 Now, we can train the model using the `compute_isotwas()` function:
 
-```{r, train, message = F, warning=FALSE}
+```{r, train, message = F, warning=FALSE, eval=F}
 isotwas_model = isotwas::compute_isotwas(X = gen_mat,
                                 Y = isoform_mat,
                                 Y.rep = isoform_mat_rep,

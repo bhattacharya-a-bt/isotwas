@@ -5,7 +5,6 @@ Version: 0.1.0
 Authors@R:
     person(given = "Arjun",
            family = "Bhattacharya",
-           email = "bhattacharya.a.bt@gmail.com"
            role = c("aut", "cre"),
            email = "bhattacharya.a.bt@gmail.com")
 Description: Trains predictive multivariate models for isoform expression
