@@ -1,6 +1,5 @@
 url: https://bhattacharya-a-bt.github.io/isotwas/
 template:
   bootstrap: 5
-  bootswatch: simplex
   bslib:
     pkgdown-nav-height: 100px
