@@ -1,6 +1,6 @@
 #' Convert isotwas model list to tibble
 #'
-#' The function converts an isotwas model from compute_isotwas() and returns a tibble
+#' The function converts an isotwas model and returns a tibble
 #'
 #' @param model
 #'
