@@ -17,7 +17,8 @@ twas_finemap <- function(res.df,
                          Omega,
                          V,
                          max_enum = 3,
-                         cutoff = .9){
+                         cutoff = .9,
+                         verbose = F){
 
   colnames(res.df)[colnames(res.df) == z] = 'Z'
   zscores = res.df$Z
@@ -54,8 +55,9 @@ twas_finemap <- function(res.df,
         pips[idx] = log(exp(pips[idx]) + exp(local))
       }
     }
+    if (verbose){
     print(pips)
-    print(marginal)
+    print(marginal)}
   }
 
   pips = exp(pips - marginal)
