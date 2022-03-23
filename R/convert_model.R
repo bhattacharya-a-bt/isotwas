@@ -13,7 +13,7 @@ convert_model = function(model){
                              ncol = 5))
   colnames(mod) = c('SNP','Weight','Transcript','R2','P')
 
-  for (i in 1:length(model)){
+  for (i in 1:length(model$Model)){
 
     this.model = as.data.frame(model$Model[[i]]$Model)
     this.model$Transcript = model$Model[[i]]$Transcript

@@ -14,11 +14,15 @@ knitr::opts_chunk$set(
 )
 ```
 
+## Introduction
+
 This module will cover how to use functions from `isotwas` to train an multivariate `isotwas` model for isoform-level expression. Then, we will run summary statistics-based disease mapping using the stage-wise hypothesis testing procedure. Lastly, we will run probabilistic fine-mapping. Along the way, we'll be covering some practical considerations for computation and feature selection.
 
 ```{r setup, echo=F, message=F}
 library(isotwas)
 ```
+
+## Train predictive model
 
 To train a multivariate model, we need:
 
@@ -33,26 +37,16 @@ Isoform expression estimated from pseudo-alignment methods like [`salmon`](https
 For this vignette, we'll use some toy genetic and transcriptomic data provided.
 
 ```{r generate_genetic_data}
-snps = bigsnpr::snp_attach(bigsnpr::snp_readBed2('extdata/train.bed',
+train_bed = system.file("extdata", "train.bed", package = "isotwas")
+snps = bigsnpr::snp_attach(bigsnpr::snp_readBed2(train_bed,
                                                  backingfile = tempfile()))
-```
+dim(snps$genotypes[])
 
-This generates a $200 \times 500$ SNP matrix saved to gen_mat. These SNPs are coded as 0, 1, and 2, where the $ij$-th element of gen_mat represents the number of alternative alleles at SNP $j$ for sample $i$.
-
-Now, let's make our matrix of isoform expression (call it `isoform_mat`) that is the product of the SNP matrix gen_mat and a sparse isoform effect matrix (`b_isoqtl`).
-
-```{r generate_exp_data}
-set.seed(1789) 
-isoform_mat = matrix(nrow = n, ncol = k) 
-effects = rnorm(k*p, mean = 0, sd = 0.05) 
-effects[rbinom(k*p,1,0.01) != 1] = 0 
-b_isoqtl = matrix(effects, nrow = k)
-
-isoform_mat = gen_mat %*% b_isoqtl 
-rownames(isoform_mat) = paste0('Sample',1:n) 
-colnames(isoform_mat) = paste0('Isoform',1:p) 
+isoform_mat = readRDS(system.file("extdata", "isoform_exp.RDS", package = "isotwas"))
 dim(isoform_mat)
 ```
+
+This reads in a SNP matrix with dimensions $300 \times 4542$, with samples along the rows and SNPs along the columns and a isoform-level expression matrix of dimension $300 \times 3$, with isoforms along the columns.
 
 [**Practical consideration**]{.ul}: Though this is not a requirement for the isotwas pipeline, we recommend a feature selection step based on cis-heritability of isoform-level expression. Prior of model training for isoforms of a given gene, we recommend that users compute the heritability of all expressed isoforms of a gene using [`GCTA`](https://yanglab.westlake.edu.cn/software/gcta/#Overview) (ideally the [`gcta-nr-robust` executable in `FUSION`](http://gusevlab.org/projects/fusion/)). We recommend users only train models for isoforms that have positive heritability at nominal $P < 0.05$ or $0.01$.
 
@@ -63,35 +57,35 @@ Let's jitter our expression matrix a little to generate 10 bootstrapped estimate
 ```{r bootstrap}
 boot_list = lapply(1:10,function(i){jitter(isoform_mat)}) 
 isoform_mat_rep = rlist::list.rbind(boot_list) 
-rownames(isoform_mat_rep) = rep(paste0('Sample',1:n),10) 
-colnames(isoform_mat_rep) = paste0('Isoform',1:p) 
+rownames(isoform_mat_rep) = rep(paste0('Sample',1:nrow(snps$fam)),10) 
+colnames(isoform_mat_rep) = paste0('Isoform',1:ncol(isoform_mat_rep)) 
 dim(isoform_mat_rep)
 ```
 
 Now, we can train the model using the `compute_isotwas()` function:
 
 ```{r train, message = F, warning=FALSE, eval=F}
-isotwas_model = isotwas::compute_isotwas(X = gen_mat, 
-                                         Y = isoform_mat, 
-                                         Y.rep = isoform_mat_rep,
-                                         R = 10, 
-                                         id = rownames(isoform_mat_rep), 
-                                         omega_est = 'replicates', 
-                                         omega_nlambda = 5, 
-                                         method = c('mrce_lasso', 
-                                                    'multi_enet', 
-                                                    'univariate',
-                                                    'mvsusie'),
-                                         predict_nlambda = 10, 
-                                         family = 'gaussian', 
-                                         scale = FALSE, 
-                                         alpha = 0.5, 
-                                         nfolds = 5, 
-                                         verbose = FALSE, 
-                                         tx_names = paste0('Isoform',1:3), 
-                                         seed = 1789, 
-                                         run_all = FALSE, 
-                                         return_all = TRUE)
+isotwas_model = compute_isotwas(X = snps$genotypes[], 
+                                Y = isoform_mat, 
+                                Y.rep = isoform_mat_rep,
+                                R = 10, 
+                                id = rownames(isoform_mat_rep), 
+                                omega_est = 'replicates', 
+                                omega_nlambda = 5, 
+                                method = c('mrce_lasso', 
+                                           'multi_enet', 
+                                           'univariate',
+                                           'mvsusie'),
+                                predict_nlambda = 10, 
+                                family = 'gaussian', 
+                                scale = FALSE, 
+                                alpha = 0.5, 
+                                nfolds = 5, 
+                                verbose = FALSE, 
+                                tx_names = paste0('Isoform',1:3), 
+                                seed = 1789, 
+                                run_all = FALSE, 
+                                return_all = TRUE)
 ```
 
 A few notes on the options in the function:
@@ -111,3 +105,7 @@ A few notes on the options in the function:
 -   If `return_all = TRUE`, then predicted values for each isoform and predictive performance for all methods and all isoforms will be outputted.
 
 We can convert the model from a list (the output from `compute_isotwas()`) to a tibble or data.frame using `convert_model(isotwas_model)`.
+
+## Run stage-wise trait mapping
+
+Let's load up the model and the sample GWAS data that's provided.
