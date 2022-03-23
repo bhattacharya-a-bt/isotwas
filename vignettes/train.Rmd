@@ -1,8 +1,8 @@
 ---
-title: "Train an isotwas model"
+title: "Run the isotwas pipeline"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Train an isotwas model}
+  %\VignetteIndexEntry{Run the isotwas pipeline}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -14,7 +14,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-This module will cover how to use functions from `isotwas` to train an multivariate isotwas model for isoform-level expression. Along the way, we'll be covering some practical considerations for computation and feature selection.
+This module will cover how to use functions from `isotwas` to train an multivariate `isotwas` model for isoform-level expression. Then, we will run summary statistics-based disease mapping using the stage-wise hypothesis testing procedure. Lastly, we will run probabilistic fine-mapping. Along the way, we'll be covering some practical considerations for computation and feature selection.
 
 ```{r setup, echo=F, message=F}
 library(isotwas)
@@ -30,19 +30,11 @@ Isoform expression estimated from pseudo-alignment methods like [`salmon`](https
 
 [**Practical consideration**]{.ul}: Ideally, to reduce your memory usage, we recommend storing your genetic data as `PLINK` format data (ideally as `.bed`/`bim`/`fam` or `.pgen`/`.pvar`/`.psam`). For a given gene, use `PLINK` to [select only SNPs](https://www.cog-genomics.org/plink/2.0/filter) on the same chromosome and within 1 Megabase of the gene body. Then, you can use the [`bigsnpr` package](https://privefl.github.io/bigsnpr/) read in this "condensed" file set.
 
-For this vignette, we'll generate some toy genetic and transcriptomic data with $p = 3$ isoforms for a gene and $k = 500$ SNPs within 1 Megabase of the gene across $n = 200$ samples.
+For this vignette, we'll use some toy genetic and transcriptomic data provided.
 
 ```{r generate_genetic_data}
-p = 3; k = 500; n = 200
-
-set.seed(1789) 
-maf = runif(k,0.05,0.5) 
-gen_mat = sapply(maf,function(freq){
-  return(rbinom(n,2,freq))
-}) 
-rownames(gen_mat) = paste0('Sample',1:n) 
-colnames(gen_mat) = paste0('SNP',1:k) 
-dim(gen_mat)
+snps = bigsnpr::snp_attach(bigsnpr::snp_readBed2('extdata/train.bed',
+                                                 backingfile = tempfile()))
 ```
 
 This generates a $200 \times 500$ SNP matrix saved to gen_mat. These SNPs are coded as 0, 1, and 2, where the $ij$-th element of gen_mat represents the number of alternative alleles at SNP $j$ for sample $i$.
