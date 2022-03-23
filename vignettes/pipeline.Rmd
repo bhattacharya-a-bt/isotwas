@@ -62,10 +62,13 @@ colnames(isoform_mat_rep) = paste0('Isoform',1:ncol(isoform_mat_rep))
 dim(isoform_mat_rep)
 ```
 
-Now, we can train the model using the `compute_isotwas()` function:
+Now, we can train the model using the `compute_isotwas()` function. Make sure the SNP matrix has clear labels for the SNP identifiers that are relevant to your study. This is a large SNP matrix which will take a few minutes to run on your local machine.
 
 ```{r train, message = F, warning=FALSE, eval=F}
-isotwas_model = compute_isotwas(X = snps$genotypes[], 
+snp_mat = as.matrix(snps$genotypes[])
+colnames(snp_mat) = snps$map$marker.ID
+rownames(snp_mat) = snps$fam$sample.ID
+isotwas_model = compute_isotwas(X = snp_mat, 
                                 Y = isoform_mat, 
                                 Y.rep = isoform_mat_rep,
                                 R = 10, 
@@ -105,6 +108,18 @@ A few notes on the options in the function:
 -   If `return_all = TRUE`, then predicted values for each isoform and predictive performance for all methods and all isoforms will be outputted.
 
 We can convert the model from a list (the output from `compute_isotwas()`) to a tibble or data.frame using `convert_model(isotwas_model)`.
+
+Let's take a look at what a sample model looks like:
+
+```{r sample}
+model_isotwas = readRDS(system.file("extdata", "model_example.RDS", package = "isotwas"))
+class(model_isotwas)
+length(model_isotwas)
+names(model_isotwas)
+model_isotwas$Model[[1]]
+
+model_tib = read.table(system.file("extdata", "model_example.tsv", package = "isotwas"))
+```
 
 ## Run stage-wise trait mapping
 

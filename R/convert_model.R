@@ -2,12 +2,16 @@
 #'
 #' The function converts an isotwas model and returns a tibble
 #'
-#' @param model
+#' @param model, isotwas model
+#' @param snp_annot, annotations for SNPs, typically map obj from bigsnpr
+#' @param snp_var, column name of SNP marker id
 #'
 #' @return tibble of the model
 #'
 #' @export
-convert_model = function(model){
+convert_model = function(model,
+                         snp_annot = NULL,
+                         snp_var = NULL){
 
   mod = as.data.frame(matrix(nrow = 0,
                              ncol = 5))
@@ -21,6 +25,14 @@ convert_model = function(model){
     this.model$R2.P = model$Model[[i]]$P
     mod = rbind(mod,
                 this.model)
+
+  }
+
+  if (!is.null(snp_annot)){
+    if (!'SNP' %in% colnames(snp_annot)){
+      colnames(snp_annot)[which(colnames(snp_annot) == snp_var)] = 'SNP'
+    }
+    mod = merge(mod,snp_annot,by='SNP')
 
   }
 
