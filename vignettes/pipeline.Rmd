@@ -117,10 +117,76 @@ class(model_isotwas)
 length(model_isotwas)
 names(model_isotwas)
 model_isotwas$Model[[1]]
+```
 
-model_tib = read.table(system.file("extdata", "model_example.tsv", package = "isotwas"))
+This model object is a list with a `Model` and a `R2` slot. The `Model` slot stores a list of models for each isoform.
+
+We can convert this model from a list to a `tibble` using the `convert_model()` function. Make sure you have an annotation object to have position and REF/ALT allele information.
+
+```{r convert}
+model_tsv = convert_model(model_isotwas,
+                          snp_annot = snps$map,
+                          snp_var = 'marker.ID')
+model_tsv
 ```
 
 ## Run stage-wise trait mapping
 
-Let's load up the model and the sample GWAS data that's provided.
+Let's load up the sample GWAS data that's provided and read in the reference linkage disequilibrium data. Again, these GWAS summary statistic files and LD reference files are large and unwieldy. Try to use bash or `PLINK` commands to cut down the file to the variants you need. You need to have standardized effect sizes for the GWAS (i.e. `beta`/`SE`). You only need to provide a numeric matrix for the LD reference in the burden test function. Here, we use `bigsnpr` to calculate the reference LD.
+
+```{r gwas}
+gwas = read.table(system.file("extdata", "gwas.txt", package = "isotwas"),header = T)
+head(gwas)
+
+ld_bed = system.file("extdata", "ld.bed", package = "isotwas")
+ld_ref = bigsnpr::snp_attach(bigsnpr::snp_readBed2(ld_bed,
+                                                   backingfile = tempfile()))
+ld_cor = bigsnpr::snp_cor(ld_ref$genotypes)
+colnames(ld_cor) = rownames(ld_cor) = ld_ref$map$marker.ID
+```
+
+Let's now generate TWAS Z-scores for each isoform using `burdenTest()` modified from the [`MOSTWAS` package](https://github.com/bhattacharya-a-bt/MOSTWAS). Ensure that you have a column named `Chromosome`, `Position`, `A1` (alternative allele) and `A2` (reference allele) in your model tibble.
+
+```{r runZ}
+model_tsv$Chromosome = model_tsv$chromosome
+model_tsv$Position = model_tsv$physical.pos
+model_tsv$A1 = model_tsv$allele1
+model_tsv$A2 = model_tsv$allele2
+res.df = data.frame(Gene = c(),
+                    Transcript = c(),
+                    Z = c(),
+                    P = c(),
+                    permute.P = c(),
+                    topSNP = c(),
+                    topSNP.P = c())
+for (isoform in unique(model_tsv$Transcript)){
+  
+  model_this = subset(model_tsv,
+                      Transcript == isoform)
+  gwas_cur = subset(gwas,SNP %in% model_this$SNP)
+  gwas_cur = gwas_cur[match(model_this$SNP,
+                            gwas_cur$SNP),]
+  res.df = rbind(res.df,
+                 burdenTest(mod = model_this,
+                            ld = ld_cor,
+                            gene = 'GeneExample',
+                            sumStats = gwas_cur,
+                            chr = 'Chromosome',
+                            pos = 'Position',
+                            a1 = 'A1',
+                            a2 = 'A2',
+                            Z = 'Z',
+                            beta = 'Beta',
+                            se = 'SE',
+                            R2cutoff = 0.01,
+                            alpha = 0.25,
+                            nperms = 1e2,
+                            usePos = F))
+  
+}
+res.df
+```
+
+Now, we have individual isoform-level associations for all isoforms of our example gene. We can run a screening-level test to test whether at least one of the isoforms of the gene is significantly associated with the trait using `p_screen(res.df$P,mode = 'P')`. For a panel of genes, we run false discovery control on these screening P-values. If a gene has a small enough P-value on the screening level, we run `p_confirm(res.df$P)` to control the family-wise error rate within each gene family. This will provide a set of isoforms that pass stage-wise hypothesis testing.
+
+We recommend permutation testing on the isoform-level to make sure you aren't proritizing an isoform-trait association only because of strong GWAS or strong QTL effects; read [Gusev et al 2016](https://www.nature.com/articles/ng.3506) for more information. `burdenTest()` will automatically run permutations if the nominal TWAS P-value for an isoform is under the specified `alpha`.
