@@ -22,6 +22,8 @@
 #'
 #' @return list of results for burden and permutation tests
 #'
+#' @importFrom boot boot
+#'
 #' @export
 burdenTest <- function(mod,
                        ld,

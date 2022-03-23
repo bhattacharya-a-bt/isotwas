@@ -10,6 +10,9 @@
     <loc>https://bhattacharya-a-bt.github.io/isotwas/articles/motivation.html</loc>
   </url>
   <url>
+    <loc>https://bhattacharya-a-bt.github.io/isotwas/articles/pipeline.html</loc>
+  </url>
+  <url>
     <loc>https://bhattacharya-a-bt.github.io/isotwas/articles/train.html</loc>
   </url>
   <url>
@@ -20,6 +23,9 @@
   </url>
   <url>
     <loc>https://bhattacharya-a-bt.github.io/isotwas/reference/bayes_factor.html</loc>
+  </url>
+  <url>
+    <loc>https://bhattacharya-a-bt.github.io/isotwas/reference/burdenTest.html</loc>
   </url>
   <url>
     <loc>https://bhattacharya-a-bt.github.io/isotwas/reference/compute_curds_whey.html</loc>
@@ -47,6 +53,9 @@
   </url>
   <url>
     <loc>https://bhattacharya-a-bt.github.io/isotwas/reference/conditional_test_focus.html</loc>
+  </url>
+  <url>
+    <loc>https://bhattacharya-a-bt.github.io/isotwas/reference/convert_model.html</loc>
   </url>
   <url>
     <loc>https://bhattacharya-a-bt.github.io/isotwas/reference/curds_whey.html</loc>

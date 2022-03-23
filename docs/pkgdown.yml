@@ -3,8 +3,8 @@ pkgdown: 2.0.2
 pkgdown_sha: ~
 articles:
   motivation: motivation.html
-  train: train.html
-last_built: 2022-03-22T17:12Z
+  pipeline: pipeline.html
+last_built: 2022-03-23T21:11Z
 urls:
   reference: https://bhattacharya-a-bt.github.io/isotwas/reference
   article: https://bhattacharya-a-bt.github.io/isotwas/articles
