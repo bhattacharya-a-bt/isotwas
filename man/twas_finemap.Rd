@@ -4,7 +4,15 @@
 \alias{twas_finemap}
 \title{FOCUS-like gene-level finemapping}
 \usage{
-twas_finemap(res.df, z = "Z", Omega, V, max_enum = 3, cutoff = 0.9)
+twas_finemap(
+  res.df,
+  z = "Z",
+  Omega,
+  V,
+  max_enum = 3,
+  cutoff = 0.9,
+  verbose = F
+)
 }
 \arguments{
 \item{res.df}{data.frame, TWAS results that at least has Z scores and transcript names}

@@ -29,7 +29,7 @@ reference:
     desc: >
       Functions for FOCUS-like probabilistic fine-mapping
     contents:
-      - twas_finemapping
+      - twas_finemap
       - estimate_cor
       - get_resid
       - bayes_factor
