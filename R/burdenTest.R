@@ -67,8 +67,7 @@ burdenTest <- function(mod,
   }
 
   if (mod$R2[1] <= R2cutoff){
-    return(paste0(geneInt,
-                  ' is not predicted at R2 > ',
+    return(paste0('The isoform is not predicted at R2 > ',
                   R2cutoff))
   }
 
