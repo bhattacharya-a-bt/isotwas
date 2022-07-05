@@ -4,7 +4,7 @@ Welcome to `isotwas`, a package that facilitates isoform-level transcriptome wid
 
 To install: `devtools::install_github("bhattacharya-a-bt/isoTWAS")`
 
-Pre-computing isoTWAS models for 48 GTEx tissues and adult and fetal
+Pre-computed isoTWAS models for 48 GTEx tissues and adult and fetal
 frontal cortext (PsychENCODE; Gandal et al 2018, Science and
 Walker et al 2019, Cell) are provided at https://zenodo.org/record/6795947. 
 Please cite the manuscript
