@@ -32,6 +32,7 @@ Imports:
     pbapply,
     Rcpp,
     rlist,
+    rmeta,
     rrBLUP,
     susieR,
     tibble
