@@ -43,93 +43,90 @@ burdenTest <- function(mod,
 
 
    if (all(is.null(c(Z,beta,se)))){
-     stop('Please provide a column name for the Z-score or beta and SE.')
-   }
-  
-   if (is.null(Z) | any(is.null(c(beta,se)))){
-     stop('Please provide a column name for the Z-score or beta and SE.')
-   }
-
-  colnames(sumStats)[which(colnames(sumStats) == chr)] = 'Chromsome'
-  colnames(sumStats)[which(colnames(sumStats) == pos)] = 'Position'
-  colnames(sumStats)[which(colnames(sumStats) == a1)] = 'A1'
-  colnames(sumStats)[which(colnames(sumStats) == a2)] = 'A2'
-
-  if (!is.null(Z)){
-    colnames(sumStats)[which(colnames(sumStats) == Z)] = 'Z'
-  }
-
-  if (!all(is.null(c(beta,se)))){
-    colnames(sumStats)[which(colnames(sumStats) == beta)] = 'Beta'
-    colnames(sumStats)[which(colnames(sumStats) == se)] = 'SE'
-  }
-
-  if (!'Z' %in% colnames(sumStats)){
-    sumStats$Z = sumStats$Beta/sumStats$SE
-  }
-
-  if (mod$R2[1] <= R2cutoff){
-    return(paste0('The isoform is not predicted at R2 > ',
-                  R2cutoff))
-  }
-
-  if (usePos){
-
-    sumStats$SNP = paste(sumStats$Chromsome,sumStats$Position,sep=':')
-    mod$SNP = paste(mod$Chromosome,mod$Position,sep=':')
-
-  }
-
-
-  sumStats = subset(sumStats,SNP %in% mod$SNP)
-  sumStats = sumStats[match(mod$SNP,
-                            sumStats$SNP),]
-
-  if (nrow(sumStats) == 0){
-    return('SNPs not found.')
-  }
-
-  sumStats$Z = ifelse(sumStats$A1 == mod$A1,
-                      sumStats$Z,
-                      -1 * sumStats$Z)
-
-  calculateTWAS <- function(effects,
-                            Z,
-                            LD,
-                            indices){
-    effects = effects[indices]
-    twasZ = as.numeric(effects %*% Z)
-    twasr2pred = as.numeric(effects %*% LD %*% effects)
-    if (twasr2pred > 0){
-      twas = as.numeric(twasZ/sqrt(twasr2pred))
-    } else {
-      twas = 0
+      stop('Please provide a column name for the Z-score or beta and SE.')
     }
-    return(twas)
-  }
-
-  twasLD = as.numeric(mod$Weight %*% sumStats$Z) /
-    sqrt(as.numeric(mod$Weight) %*% ld[mod$SNP,mod$SNP] %*% as.numeric(mod$Weight))
-  twasLD = as.numeric(twasLD)
-  P = 2*pnorm(-abs(twasLD))
-
-  if (P <= alpha){
-    permutationLD = boot::boot(data = mod$Weight,
-                               statistic = calculateTWAS,
-                               R = nperms,
-                               sim = 'permutation',
-                               Z = sumStats$Z,
-                               LD = ld[mod$SNP,mod$SNP])
-    permute.p = (nperms * mean(abs(permutationLD$t) >
-                                 abs(permutationLD$t0)) + 1)/(nperms+1)
-  } else {
-    permute.p = 1}
+    
+    if (is.null(Z) | any(is.null(c(beta,se)))){
+      stop('Please provide a column name for the Z-score or beta and SE.')
+    }
+    
+    colnames(sumStats)[which(colnames(sumStats) == chr)] = 'Chromsome'
+    colnames(sumStats)[which(colnames(sumStats) == pos)] = 'Position'
+    colnames(sumStats)[which(colnames(sumStats) == a1)] = 'A1'
+    colnames(sumStats)[which(colnames(sumStats) == a2)] = 'A2'
+    
+    if (!is.null(Z)){
+      colnames(sumStats)[which(colnames(sumStats) == Z)] = 'Z'
+    }
+    
+    if (!all(is.null(c(beta,se)))){
+      colnames(sumStats)[which(colnames(sumStats) == beta)] = 'Beta'
+      colnames(sumStats)[which(colnames(sumStats) == se)] = 'SE'
+    }
+    
+    if (!'Z' %in% colnames(sumStats)){
+      sumStats$Z = sumStats$Beta/sumStats$SE
+    }
+    
+    if (mod$R2[1] <= R2cutoff){
+      return(paste0('The isoform is not predicted at R2 > ',
+                    R2cutoff))
+    }
+    
+    if (usePos){
+      
+      sumStats$SNP = paste(sumStats$Chromsome,sumStats$Position,sep=':')
+      mod$SNP = paste(mod$Chromosome,mod$Position,sep=':')
+      
+    }
+    
+    tot = merge(mod,sumStats,by = 'SNP')
+    
+    if (nrow(tot) == 0){
+      return('SNPs not found.')
+    }
+    
+    tot$Z = ifelse(tot$A1.x == tot$A1.y,
+                   tot$Z,
+                   -1 * tot$Z)
+    
+    calculateTWAS <- function(effects,
+                              Z,
+                              LD,
+                              indices){
+      effects = effects[indices]
+      twasZ = as.numeric(effects %*% Z)
+      twasr2pred = as.numeric(effects %*% LD %*% effects)
+      if (twasr2pred > 0){
+        twas = as.numeric(twasZ/sqrt(twasr2pred))
+      } else {
+        twas = 0
+      }
+      return(twas)
+    }
+    
+    twasLD = as.numeric(tot$Weight %*% tot$Z) /
+      sqrt(as.numeric(tot$Weight) %*% ld[tot$SNP,tot$SNP] %*% as.numeric(tot$Weight))
+    twasLD = as.numeric(twasLD)
+    P = 2*pnorm(-abs(twasLD))
+    
+    if (P <= alpha){
+      permutationLD = boot::boot(data = tot$Weight,
+                                 statistic = calculateTWAS,
+                                 R = nperms,
+                                 sim = 'permutation',
+                                 Z = tot$Z,
+                                 LD = ld[tot$SNP,tot$SNP])
+      permute.p = (nperms * mean(abs(permutationLD$t) >
+                                   abs(permutationLD$t0)) + 1)/(nperms+1)
+    } else {
+      permute.p = 1}
 
   return(data.frame(Gene = gene,
-                    Transcript = mod$Transcript[1],
+                    Transcript = tot$Transcript[1],
                     Z = twasLD,
                     P = 2*pnorm(-abs(twasLD)),
                     permute.P = permute.p,
-                    topSNP = sumStats$SNP[which.max(abs(sumStats$Z))],
-                    topSNP.P = 2*pnorm(-abs(max(abs(sumStats$Z))))))
+                    topSNP = tot$SNP[which.max(abs(tot$Z))],
+                    topSNP.P = 2*pnorm(-abs(max(abs(tot$Z))))))
 }
