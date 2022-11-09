@@ -25,6 +25,7 @@ Imports:
     glmnet,
     huge,
     MASS,
+    MRCE,
     mvsusieR (>= 0.0.3.518),
     mvtnorm,
     parallel,

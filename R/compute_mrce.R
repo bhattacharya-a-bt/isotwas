@@ -12,13 +12,18 @@
 #' @param verbose logical
 #' @param seed int, random seed
 #'
+#' @importFrom MRCE mrce
+#' @importFrom caret createFolds
+#' @importFrom tibble tibble
+#' @importFrom rlist list.append
+#'
 #' @return CV MRCE fit
 #'
 #' @export
 compute_mrce = function(X,
                         Y,
                         lambda = NULL,
-                        nlambda = 50,
+                        nlambda = 20,
                         Omega,
                         nfolds = 5,
                         tol.in,
@@ -50,13 +55,16 @@ compute_mrce = function(X,
                             apply(X.test,2,sd) != 0)
             X.tr = X.tr[,www]
             X.test = X.test[,www]
-            mod = compute_fixed(X = X.tr,
-                                Y = Y.tr,
-                                lam2 = lambda[c],
-                                Omega = Omega,
-                                tol.in = tol.in,
-                                maxit.in = maxit.in,
-                                silent = verbose)
+
+            mod = MRCE::mrce(Y = Y.tr,
+                             X = X.tr,
+                             lam1.vec = lambda,
+                             lam2.vec = lambda,
+                             method = 'cv',
+                             tol.in = tol.in,
+                             maxit.in = maxit.in,
+                             )
+
             Bhat = mod$Bhat
             pred[-train.folds[[tr]],] = X.test %*% Bhat
         }
@@ -73,13 +81,11 @@ compute_mrce = function(X,
 
     }
 
-    final.model = compute_fixed(X = X,
-                                Y = Y,
-                                l = lambda[which.max(colMeans(r2Mat))],
-                                Omega = Omega,
-                                tol.in = tol.in,
-                                maxit.in = maxit.in,
-                                silent = verbose)
+    final.model = MRCE::mrce(X = X,
+                             Y = Y,
+                             lam1 = lambda[which.max(colMeans(r2Mat))],
+                             lam2 = lambda[which.max(colMeans(r2Mat))],
+                             method = 'single')
 
 
     modelList = list()

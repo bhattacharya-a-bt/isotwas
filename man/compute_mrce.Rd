@@ -8,7 +8,7 @@ compute_mrce(
   X,
   Y,
   lambda = NULL,
-  nlambda = 50,
+  nlambda = 20,
   Omega,
   nfolds = 5,
   tol.in,
