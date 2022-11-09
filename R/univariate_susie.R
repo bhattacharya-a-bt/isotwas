@@ -23,6 +23,7 @@
 #' @importFrom pbapply pbapply
 #' @importFrom tibble tibble
 #' @importFrom rlist list.append
+#' @importFrom Matrix Matrix
 #'
 #' @export
 univariate_susie <- function(X,

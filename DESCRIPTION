@@ -26,6 +26,7 @@ Imports:
     glmnet,
     huge,
     MASS,
+    Matrix,
     MRCE,
     mvsusieR (>= 0.0.3.518),
     mvtnorm,
@@ -36,6 +37,6 @@ Imports:
     rrBLUP,
     susieR,
     tibble
-Remotes:  
+Remotes: 
     github::stephenslab/mvsusieR@bb9084d,
     yaowuliu/ACAT
