@@ -46,7 +46,7 @@ curds_whey <- function(X,
     cancor.cor <- cancor.all$cor
     cancor.y <- cancor.all$ycoef
     yPrime <- as.matrix(Y) %*% cancor.y
-    yPrime.mod = apply(Y,
+    yPrime.mod = apply(yPrime,
                        FUN = glmnet::cv.glmnet,
                        2,
                        x = X,
