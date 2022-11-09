@@ -10,6 +10,7 @@
 #'
 #'
 #' @importFrom mvtnorm pmvnorm
+#' @importFrom ACAT ACAT
 #'
 #'
 #' @export

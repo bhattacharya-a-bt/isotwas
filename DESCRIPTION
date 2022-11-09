@@ -18,6 +18,7 @@ Suggests:
     rmarkdown
 VignetteBuilder: knitr
 Imports: 
+    ACAT (>= 0.91),
     boot,
     caret,
     doParallel,
@@ -35,5 +36,6 @@ Imports:
     rrBLUP,
     susieR,
     tibble
-Remotes: 
-    github::stephenslab/mvsusieR@bb9084d
+Remotes:  
+    github::stephenslab/mvsusieR@bb9084d,
+    yaowuliu/ACAT
