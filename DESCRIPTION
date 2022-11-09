@@ -17,7 +17,7 @@ Suggests:
     knitr,
     rmarkdown
 VignetteBuilder: knitr
-Remotes: git::https://github.com/stephenslab/mvsusieR@bb9084d
+Remotes: git::https://github.com/stephenslab/mvsusieR.git@bb9084d
 Imports: 
     boot,
     caret,
