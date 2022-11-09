@@ -13,6 +13,7 @@
 #' @return data frame of conditional Z-scores for all combinations of tx
 #'
 #' @importFrom MASS ginv
+#' @importFrom condMVNorm condMVN
 #'
 #' @export
 conditional_test_focus <- function(w_gene,
