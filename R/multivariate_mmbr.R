@@ -17,6 +17,7 @@
 #' @importFrom pbapply pbapply
 #' @importFrom tibble tibble
 #' @importFrom rlist list.append
+#' @importFrom mvsusieR create_mash_prior
 #'
 #' @export
 multivariate_mmbr <- function(X,
