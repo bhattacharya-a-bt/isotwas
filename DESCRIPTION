@@ -17,3 +17,22 @@ Suggests:
     knitr,
     rmarkdown
 VignetteBuilder: knitr
+Imports: 
+    boot,
+    caret,
+    doParallel,
+    estimatr,
+    glmnet,
+    huge,
+    MASS,
+    mvsusieR (>= 0.0.3.518),
+    mvtnorm,
+    parallel,
+    pbapply,
+    Rcpp,
+    rlist,
+    rrBLUP,
+    susieR,
+    tibble
+Remotes: 
+    github::stephenslab/mvsusieR@bb9084d
