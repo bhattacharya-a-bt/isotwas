@@ -201,8 +201,8 @@ compute_isotwas <- function(X,
                                          alpha = alpha,
                                          nfolds = nfolds,
                                          verbose = verbose,
-                                         par = par,
-                                         n.cores = n.cores,
+                                         par = F,
+                                         n.cores = 1,
                                          tx_names = tx_names,
                                          seed = seed)
 
@@ -213,8 +213,8 @@ compute_isotwas <- function(X,
                                    alpha = alpha,
                                    nfolds = nfolds,
                                    verbose = verbose,
-                                   par = par,
-                                   n.cores = n.cores,
+                                   par = F,
+                                   n.cores = 1,
                                    tx_names = tx_names,
                                    seed = seed)
 
@@ -225,8 +225,8 @@ compute_isotwas <- function(X,
                                      alpha = alpha,
                                      nfolds = nfolds,
                                      verbose = verbose,
-                                     par = par,
-                                     n.cores = n.cores,
+                                     par = F,
+                                     n.cores = 1,
                                      tx_names = tx_names,
                                      seed = seed)
 
