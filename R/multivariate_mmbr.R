@@ -86,7 +86,8 @@ multivariate_mmbr <- function(X,
                            precompute_covariances = T,
                            L = L,
                            intercept = T,
-                           standardize = T)
+                           standardize = T,
+                           n_thread = ifelse(par,n.cores,1))
 
     modelList = list()
     for (i in 1:ncol(Y)){
