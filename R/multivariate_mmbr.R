@@ -26,6 +26,8 @@ multivariate_mmbr <- function(X,
                               verbose = T,
                               tx_names = NULL,
                               L = 10,
+                              par,
+                              n.cores,
                               seed){
 
     if (!is.null(colnames(Y))){
@@ -66,7 +68,8 @@ multivariate_mmbr <- function(X,
                                precompute_covariances = T,
                                L = L,
                                intercept = F,
-                               standardize = T)
+                               standardize = T,
+                               n_thread = ifelse(par,n.cores,1))
 
         pred[-train.folds[[tr]],] <- X.test %*% m$coef[-1,]
     }

@@ -169,7 +169,9 @@ compute_isotwas <- function(X,
                                      nfolds = nfolds,
                                      verbose = verbose,
                                      tx_names = tx_names,
-                                     seed = seed)
+                                     seed = seed,
+                                     par = par,
+                                     n.cores = n.cores)
         all_models = rlist::list.append(all_models,mmbr_mod)
     }
 
