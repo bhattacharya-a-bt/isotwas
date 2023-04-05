@@ -31,6 +31,7 @@
 #' @export
 compute_isotwas <- function(X,
                             Y,
+                            gene_exp = NULL,
                             Y.rep,
                             R,
                             id,
@@ -66,6 +67,8 @@ compute_isotwas <- function(X,
     N = nrow(Y)
     P = ncol(X)
     G = ncol(Y)
+    pred_mat = matrix(nrow = N,
+                      ncol = G)
 
     if (is.null(R)){
         R = nrow(Y.rep)/nrow(Y)
@@ -88,6 +91,7 @@ compute_isotwas <- function(X,
     if (ncol(Y) == 1){
 
         method = c('univariate')
+        Y = as.matrix
 
     }
 
@@ -242,6 +246,43 @@ compute_isotwas <- function(X,
                            G = G)
     colnames(Y) = tx_names
 
+
+
+    if (!is.null(gene_exp)){
+
+      for (i in 1:length(isotwas_mod)){
+        pred_mat[,i] = isotwas_mod[[i]]$Pred
+      }
+
+      set.seed(seed)
+      test.folds = caret::createFolds(1:nrow(Y),
+                                      k = nfolds,
+                                      returnTrain = F,
+                                      list = F)
+      tx2gene = glmnet::cv.glmnet(x = pred_mat,
+                                  y = gene_exp,
+                                  foldid = test.folds,
+                                  keep = T,
+                                  intercept = T,
+                                  alpha = .5)
+      best_pred = tx2gene$fit.preval[,which.min(tx2gene$cvm)]
+      r2_gene = summary(lm(gene_exp ~ best_pred))$adj.r.sq
+      tx2gene_coef = data.frame(Feature = tx_names,
+                                Weight_tx2gene =
+                                  as.numeric(coef(tx2gene,
+                                       s = 'lambda.min'))[-1],
+                                R2 = r2_gene)
+      if (all(tx2gene_coef$Weight_tx2gene == 0)){
+
+        tx2gene_coef$Weight_tx2gene =
+          coef(lm(gene_exp ~ pred_mat))[-1]
+
+      }
+
+    } else {
+      tx2gene_coef = 'Gene expression vector not supplied'
+    }
+
     if (return_all){
         r2 = sapply(all_models, function(y) sapply(y,function(x) x$R2))
         r2.df = as.data.frame(cbind(colnames(Y),r2))
@@ -249,9 +290,10 @@ compute_isotwas <- function(X,
         isotwas_mod = list(Model = get_best(all_models,
                                             G = G),
                            R2 = r2.df)
-        }
+    }
 
-    return(isotwas_mod)
+    return(list(isotwas_mod = isotwas_mod,
+                tx2gene_coef = tx2gene_coef))
 
 
 }
