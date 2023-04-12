@@ -49,6 +49,7 @@ multivariate_mmbr <- function(X,
     pred = matrix(ncol = ncol(Y),
                   nrow = nrow(Y))
     for (tr in 1:nfolds){
+      print(tr)
         Y.tr = Y[train.folds[[tr]],]
         X.tr = X[train.folds[[tr]],]
         X.test = X[-train.folds[[tr]],]
@@ -73,7 +74,9 @@ multivariate_mmbr <- function(X,
 
         pred[-train.folds[[tr]],] <- X.test %*% m$coef[-1,]
     }
-        r2.vec = sapply(1:ncol(Y),calc.r2,Y,pred)
+        r2.vec = sapply(1:ncol(Y),function(x){
+          pred_r_squared(lm(Y[,x] ~ pred[,x]))
+        })
         prior_covar = mvsusieR::create_mash_prior(sample_data =
                                                   list(X=X,
                                                        Y=Y,

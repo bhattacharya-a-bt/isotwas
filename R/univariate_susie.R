@@ -82,7 +82,10 @@ univariate_susie <- function(X,
 
     }
 
-    r2.vec = sapply(1:ncol(Y),calc.r2,Y,pred)
+    #r2.vec = sapply(1:ncol(Y),calc.r2,Y,pred)
+    r2.vec = sapply(1:ncol(Y),function(x){
+      pred_r_squared(lm(Y[,x] ~ pred[,x]))
+    })
 
     susie.fit = list()
     for (i in 1:ncol(Y.tr)){

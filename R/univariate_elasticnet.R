@@ -95,7 +95,7 @@ univariate_elasticnet <- function(X,
                                            s = 'lambda.min')[-1])
         mod = subset(mod,Weight != 0)
         best.pred = models[[i]]$fit.preval[,which.min(models[[i]]$cvm)]
-        reg = summary(lm(Y[,i]~best.pred))
+        reg = pred_r_squared(lm(Y[,i]~best.pred))
         modelList = rlist::list.append(modelList,
                                        list(Transcript = colnames(Y)[i],
                                             Model = mod,
