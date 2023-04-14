@@ -100,9 +100,8 @@ univariate_elasticnet <- function(X,
                                        list(Transcript = colnames(Y)[i],
                                             Model = mod,
                                             R2 = pred_r_squared(reg),
-                                            P = 1-pf(reg$fstatistic[1],
-                                                     reg$fstatistic[2],
-                                                     reg$fstatistic[3]),
+                                            P = cor.test(as.numeric(Y[,i]) ~
+                                                           best.pred)$p.value,
                                             Pred = best.pred))
 
     }
