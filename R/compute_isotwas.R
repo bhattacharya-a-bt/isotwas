@@ -110,22 +110,22 @@ compute_isotwas <- function(X,
 
   if ('mrce_lasso' %in% method){
     if (verbose){print('Running mrce_lasso')}
-    mrce_lasso = list()
-    for (i in 1:omega_nlambda){
-      mrce_lasso = rlist::list.append(mrce_lasso,
-                                      compute_mrce(X = X,
-                                                   Y = Y,
-                                                   lambda = NULL,
-                                                   nlambda =
-                                                     predict_nlambda,
-                                                   Omega =
-                                                     omega_list$icov[[i]],
-                                                   nfolds = nfolds,
-                                                   tol.in = tol.in,
-                                                   maxit.in = maxit.in,
-                                                   verbose = verbose,
-                                                   seed = seed))
-    }
+      mrce_lasso = list()
+      for (i in 1:omega_nlambda){
+        mrce_lasso = rlist::list.append(mrce_lasso,
+                                        compute_mrce(X = X,
+                                                     Y = Y,
+                                                     lambda = NULL,
+                                                     nlambda =
+                                                       predict_nlambda,
+                                                     Omega =
+                                                       omega_list$icov[[i]],
+                                                     nfolds = nfolds,
+                                                     tol.in = tol.in,
+                                                     maxit.in = maxit.in,
+                                                     verbose = verbose,
+                                                     seed = seed))
+      }
     all_models = rlist::list.append(all_models,get_best(mrce_lasso,
                                                         G = G))
   }

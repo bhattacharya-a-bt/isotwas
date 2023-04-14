@@ -77,6 +77,9 @@ multivariate_elasticnet <- function(X,
     r2.vec = sapply(1:ncol(Y),function(x){
       pred_r_squared(lm(Y[,x] ~ pred[,x]))
     })
+    P = sapply(1:ncol(Y),function(x){
+      cor.test(Y[,x], pred[,x])$p.value
+    })
 
     modelList = list()
     for (i in 1:ncol(Y)){
@@ -90,8 +93,8 @@ multivariate_elasticnet <- function(X,
         modelList = rlist::list.append(modelList,
                                        list(Transcript = colnames(Y)[i],
                                             Model = mod,
-                                            R2 = r2.vec[1,i],
-                                            P = r2.vec[2,i],
+                                            R2 = r2.vec[i],
+                                            P = P[i],
                                             Pred = pred[,i]))
 
     }

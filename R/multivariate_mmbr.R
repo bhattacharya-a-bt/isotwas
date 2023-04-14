@@ -77,6 +77,9 @@ multivariate_mmbr <- function(X,
         r2.vec = sapply(1:ncol(Y),function(x){
           pred_r_squared(lm(Y[,x] ~ pred[,x]))
         })
+        P = sapply(1:ncol(Y),function(x){
+          cor.test(Y[,x], pred[,x])$p.value
+        })
         prior_covar = mvsusieR::create_mash_prior(sample_data =
                                                   list(X=X,
                                                        Y=Y,
@@ -101,8 +104,8 @@ multivariate_mmbr <- function(X,
         modelList = rlist::list.append(modelList,
                                        list(Transcript = colnames(Y)[i],
                                             Model = mod,
-                                            R2 = r2.vec[1,i],
-                                            P = r2.vec[2,i],
+                                            R2 = r2.vec[i],
+                                            P = P[i],
                                             Pred = pred[,i]))
 
     }
