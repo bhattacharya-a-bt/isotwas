@@ -265,7 +265,7 @@ compute_isotwas <- function(X,
                                     keep = T,
                                     relax = T,
                                     gamma = c(0,.25,.5,.75,1),
-                                    trace.it = T)
+                                    trace.it = F)
 
     gamma_which = which.max(sapply(lapply(glmnet_pred$fit.preval,
            function(y){
