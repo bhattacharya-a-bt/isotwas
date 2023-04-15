@@ -254,11 +254,52 @@ compute_isotwas <- function(X,
       pred_mat[,i] = isotwas_mod[[i]]$Pred
     }
 
-    tx2gene = lm(gene_exp ~ pred_mat)
+    set.seed(seed)
+    test.folds = caret::createFolds(1:nrow(Y),
+                                     k = nfolds,
+                                     returnTrain = F,
+                                     list = F)
+    glmnet_pred = glmnet::cv.glmnet(x = pred_mat,
+                                    y = gene_exp,
+                                    foldid = test.folds,
+                                    keep = T,
+                                    relax = T,
+                                    gamma = c(0,.25,.5,.75,1),
+                                    trace.it = T)
+
+    gamma_which = which.max(sapply(lapply(glmnet_pred$fit.preval,
+           function(y){
+             apply(y,2,function(x){
+               summary(lm(gene_exp ~ x))$adj.r.sq
+             })
+           }),max))
+
+    which_r2 = which.max(apply(glmnet_pred$fit.preval[[gamma_which]],
+                    2,
+                    function(x){summary(lm(gene_exp ~ x))$adj.r.sq}
+                    ))
+
+    tot_mod = glmnet(x = pred_mat,
+                     y = gene_exp,
+                     alpha = c(0,.25,.5,.75,1)[gamma_which],
+                     lambda = glmnet_pred$lambda[which_r2])
+    glmnet_r2 = max(sapply(lapply(glmnet_pred$fit.preval,
+                                  function(y){
+                                    apply(y,2,
+                                          function(x){
+                                            summary(lm(gene_exp ~ x))$adj.r.sq
+                                          })
+                                  }),max))
+
+    if (all(as.numeric(coef(tot_mod))[-1] == 0)){
+      ccc = coef(lm(gene_exp ~ pred_mat))[-1]
+    } else {
+      ccc = as.numeric(coef(tot_mod))[-1]
+    }
     tx2gene_coef = data.frame(Feature = tx_names,
                               Weight_tx2gene =
-                                as.numeric(coef(tx2gene))[-1],
-                              R2 = pred_r_squared(tx2gene))
+                                ccc,
+                              R2 = glmnet_r2)
 
 
   } else {
