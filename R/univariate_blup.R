@@ -71,7 +71,7 @@ univariate_blup <- function(X,
     }
 
     r2.vec = sapply(1:ncol(Y),function(x){
-      pred_r_squared(lm(Y[,x] ~ pred[,x]))
+      summary((lm(Y[,x] ~ pred[,x])))$adj.r.sq
     })
 
 

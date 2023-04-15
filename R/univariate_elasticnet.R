@@ -99,7 +99,7 @@ univariate_elasticnet <- function(X,
         modelList = rlist::list.append(modelList,
                                        list(Transcript = colnames(Y)[i],
                                             Model = mod,
-                                            R2 = pred_r_squared(reg),
+                                            R2 = summary(reg)$adj.r.sq,
                                             P = cor.test(as.numeric(Y[,i]),
                                                            best.pred)$p.value,
                                             Pred = best.pred))
