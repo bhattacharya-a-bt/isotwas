@@ -64,9 +64,10 @@ compute_mrce = function(X,
 
     r2 = sapply(1:ncol(Y),function(x){
       summary(lm(Y[,x] ~ pred[,x]))$adj.r.sq
-    })[(1:(2*ncol(Y)))%%2 == 1]
-    p = as.numeric(as.matrix(sapply(1:ncol(pred),
-                                    calc.r2,Y,pred)))[(1:(2*ncol(Y)))%%2 == 0]
+    })
+    p = sapply(1:ncol(Y),function(x){
+      cor.test(lm(Y[,x],pred[,x]))$p.value
+    })
     r2[is.na(r2)] = 0
     p[is.na(p)] = 0
     r2Mat[,c] = r2
