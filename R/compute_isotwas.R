@@ -314,7 +314,6 @@ compute_isotwas <- function(X,
     for (i in 1:ncol(r2_mat)){
       this_model = all_models[[i]]
       for (j in 1:nrow(r2_mat)){
-        print(j)
         r2_mat[j,i] = unlist(this_model[[j]]$R2)
 
       }
