@@ -315,14 +315,26 @@ compute_isotwas <- function(X,
       this_model = all_models[[i]]
       for (j in 1:nrow(r2_mat)){
         print(j)
-        r2_mat[j,i] = unlist(this_model[[j]]$Pred)
+        r2_mat[j,i] = unlist(this_model[[j]]$R2)
 
       }
     }
+    all_methods = c('mrce_lasso',
+                    'curds_whey',
+                    'multi_enet',
+                    'mvsusie',
+                    'finemap',
+                    'univariate')
+    r2.df = as.data.frame(cbind(colnames(Y),r2_mat))
+    colnames(r2.df) = c('Transcript',
+                        all_methods[all_methods %in%
+                                      method])
+    for (i in 2:ncol(r2.df)){
 
-    r2 = sapply(all_models, function(y) sapply(y,function(x) x$R2))
-    r2.df = as.data.frame(cbind(colnames(Y),r2))
-    colnames(r2.df) = c('Transcript',method)
+      r2.df[,i] = as.numeric(r2.df[,i])
+
+    }
+
     isotwas_mod = list(Model = get_best(all_models,
                                         G = G),
                        R2 = r2.df)
