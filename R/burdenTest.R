@@ -45,51 +45,51 @@ burdenTest <- function(mod,
    if (all(is.null(c(Z,beta,se)))){
       stop('Please provide a column name for the Z-score or beta and SE.')
     }
-    
+
     if (is.null(Z) | any(is.null(c(beta,se)))){
       stop('Please provide a column name for the Z-score or beta and SE.')
     }
-    
-    colnames(sumStats)[which(colnames(sumStats) == chr)] = 'Chromsome'
+
+    colnames(sumStats)[which(colnames(sumStats) == chr)] = 'Chromosome'
     colnames(sumStats)[which(colnames(sumStats) == pos)] = 'Position'
     colnames(sumStats)[which(colnames(sumStats) == a1)] = 'A1'
     colnames(sumStats)[which(colnames(sumStats) == a2)] = 'A2'
-    
+
     if (!is.null(Z)){
       colnames(sumStats)[which(colnames(sumStats) == Z)] = 'Z'
     }
-    
+
     if (!all(is.null(c(beta,se)))){
       colnames(sumStats)[which(colnames(sumStats) == beta)] = 'Beta'
       colnames(sumStats)[which(colnames(sumStats) == se)] = 'SE'
     }
-    
+
     if (!'Z' %in% colnames(sumStats)){
       sumStats$Z = sumStats$Beta/sumStats$SE
     }
-    
+
     if (mod$R2[1] <= R2cutoff){
       return(paste0('The isoform is not predicted at R2 > ',
                     R2cutoff))
     }
-    
+
     if (usePos){
-      
-      sumStats$SNP = paste(sumStats$Chromsome,sumStats$Position,sep=':')
+
+      sumStats$SNP = paste(sumStats$Chromosome,sumStats$Position,sep=':')
       mod$SNP = paste(mod$Chromosome,mod$Position,sep=':')
-      
+
     }
-    
+
     tot = merge(mod,sumStats,by = 'SNP')
-    
+
     if (nrow(tot) == 0){
       return('SNPs not found.')
     }
-    
+
     tot$Z = ifelse(tot$A1.x == tot$A1.y,
                    tot$Z,
                    -1 * tot$Z)
-    
+
     calculateTWAS <- function(effects,
                               Z,
                               LD,
@@ -104,12 +104,12 @@ burdenTest <- function(mod,
       }
       return(twas)
     }
-    
+
     twasLD = as.numeric(tot$Weight %*% tot$Z) /
       sqrt(as.numeric(tot$Weight) %*% ld[tot$SNP,tot$SNP] %*% as.numeric(tot$Weight))
     twasLD = as.numeric(twasLD)
     P = 2*pnorm(-abs(twasLD))
-    
+
     if (P <= alpha){
       permutationLD = boot::boot(data = tot$Weight,
                                  statistic = calculateTWAS,
