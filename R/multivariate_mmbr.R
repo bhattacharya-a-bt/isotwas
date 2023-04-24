@@ -102,7 +102,7 @@ multivariate_mmbr <- function(X,
         modelList = rlist::list.append(modelList,
                                        list(Transcript = colnames(Y)[i],
                                             Model = mod,
-                                            R2 = r2.vec,
+                                            R2 = r2.vec[i],
                                             P = P[i],
                                             Pred = pred[,i]))
 
