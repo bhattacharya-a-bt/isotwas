@@ -73,7 +73,7 @@ multivariate_elasticnet <- function(X,
     }
 
     pred = models$fit.preval[,,which.min(models$cvm)]
-    r2.vec = sapply(1:ncol(Y),calc.r2,Y,pred)
+    r2.vec = unlist(sapply(1:ncol(Y),calc.r2,Y,pred)[1,])
     P = sapply(1:ncol(Y),function(x){
       cor.test(Y[,x], pred[,x])$p.value
     })

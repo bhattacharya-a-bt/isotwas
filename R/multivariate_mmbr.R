@@ -74,7 +74,7 @@ multivariate_mmbr <- function(X,
 
         pred[-train.folds[[tr]],] <- X.test %*% m$coef[-1,]
     }
-    r2.vec = sapply(1:ncol(Y),calc.r2,Y,pred)
+    r2.vec = unlist(sapply(1:ncol(Y),calc.r2,Y,pred)[1,])
         P = sapply(1:ncol(Y),function(x){
           cor.test(Y[,x], pred[,x])$p.value
         })
@@ -102,7 +102,7 @@ multivariate_mmbr <- function(X,
         modelList = rlist::list.append(modelList,
                                        list(Transcript = colnames(Y)[i],
                                             Model = mod,
-                                            R2 = r2.vec[i],
+                                            R2 = r2.vec,
                                             P = P[i],
                                             Pred = pred[,i]))
 

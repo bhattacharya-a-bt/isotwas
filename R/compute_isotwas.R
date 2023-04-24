@@ -307,6 +307,19 @@ compute_isotwas <- function(X,
   }
 
   if (return_all){
+
+    r2_mat = matrix(nrow = ncol(Y),
+                    ncol = length(all_models))
+
+    for (i in 1:ncol(r2_mat)){
+      this_model = all_models[[i]]
+      for (j in 1:nrow(r2_mat)){
+        print(j)
+        r2_mat[j,i] = unlist(this_model[[j]]$Pred)
+
+      }
+    }
+
     r2 = sapply(all_models, function(y) sapply(y,function(x) x$R2))
     r2.df = as.data.frame(cbind(colnames(Y),r2))
     colnames(r2.df) = c('Transcript',method)
