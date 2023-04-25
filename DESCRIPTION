@@ -12,7 +12,7 @@ Description: Trains predictive multivariate models for isoform expression
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.2.1
+RoxygenNote: 7.2.3
 Suggests: 
     knitr,
     rmarkdown
@@ -38,4 +38,4 @@ Imports:
     tibble
 Remotes: 
     github::stephenslab/mvsusieR@bb9084d,
-    yaowuliu/ACAT
+    yaowuliu/ACAT,stephenslab/mr.mash.alpha

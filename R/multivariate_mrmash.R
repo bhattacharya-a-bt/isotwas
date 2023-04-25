@@ -11,13 +11,17 @@
 #' @param n.cores int, number of parallel cores
 #' @param tx_name vector, character vector of tx names in order of columns of Y
 #'
-#' @return data frame of mvSuSiE weights
+#' @return mrmash models
 #'
-#' @importFrom mvsusieR mvsusie
+#' @importFrom mr.mash.alpha compute_univariate_sumstats
+#' @importFrom mr.mash.alpha autoselect.mixsd
+#' @importFrom mr.mash.alpha compute_canonical_covs
+#' @importFrom mr.mash.alpha expand_covs
+#' @importFrom mr.mash.alpha mr.mash
 #' @importFrom pbapply pbapply
 #' @importFrom tibble tibble
 #' @importFrom rlist list.append
-#' @importFrom mvsusieR create_mash_prior
+#' @importFrom caret createFolds
 #'
 #' @export
 multivariate_mrmash <- function(X,
