@@ -1,7 +1,7 @@
 Package: isotwas
 Type: Package
 Title: Isoform-level transcriptome-wide association studies
-Version: 0.1.0
+Version: 0.2.0
 Authors@R:
     person(given = "Arjun",
            family = "Bhattacharya",
@@ -26,6 +26,7 @@ Imports:
     estimatr,
     glmnet,
     huge,
+    joinet,
     MASS,
     Matrix,
     mvsusieR (>= 0.0.3.518),
