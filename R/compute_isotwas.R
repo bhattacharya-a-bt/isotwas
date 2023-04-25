@@ -40,9 +40,11 @@ compute_isotwas <- function(X,
                             method = c('mrce_lasso',
                                        'curds_whey',
                                        'multi_enet',
+                                       'joinet',
+                                       'mvsusie',
+                                       'mrmash',
                                        'finemap',
-                                       'univariate',
-                                       'mvsusie'),
+                                       'univariate'),
                             predict_nlambda = 50,
                             family = 'gaussian',
                             scale = F,
@@ -97,10 +99,32 @@ compute_isotwas <- function(X,
 
   if (run_all){
     print('run_all is set to T and all methods will be run.')
-    method = c('mrce_lasso','curds_whey',
+    method = c('mrce_lasso',
+               'curds_whey',
                'multi_enet',
-               'finemap','univariate')
+               'joinet',
+               'mvsusie',
+               'mrmash',
+               'finemap',
+               'univariate')
   }
+
+  if (is.null(tx_names)){
+    tx_names = colnames(Y)
+  }
+
+  r2_mat = data.frame(Transcript = tx_names)
+  r2_mat = cbind(r2_mat,
+                 matrix(nrow = nrow(r2_mat),
+                        ncol = 8))
+  colnames(r2_mat)[-1] =  c('mrce_lasso',
+                            'curds_whey',
+                            'multi_enet',
+                            'joinet',
+                            'mvsusie',
+                            'mrmash',
+                            'finemap',
+                            'univariate')
 
   if (is.null(seed)){
     seed = sample(1:100000,1)
@@ -128,6 +152,7 @@ compute_isotwas <- function(X,
       }
     all_models = rlist::list.append(all_models,get_best(mrce_lasso,
                                                         G = G))
+    r2_mat[,'mrce_lasso'] = sapply(mrce_lasso[[1]],function(x) x$R2)
   }
 
   ## CURDS AND WHEY
@@ -141,9 +166,11 @@ compute_isotwas <- function(X,
                                          verbose = verbose,
                                          par = F,
                                          n.cores = NULL,
-                                         tx_names = NULL,
+                                         tx_names = tx_names,
                                          seed)
     all_models = rlist::list.append(all_models,best_curds_whey)
+    r2_mat[,'curds_whey'] = sapply(best_curds_whey[[1]],
+                                   function(x) x$R2)
   }
 
   ## MULTIVARATE ELASTIC NET
@@ -163,6 +190,29 @@ compute_isotwas <- function(X,
                               tx_names = tx_names,
                               seed = seed)
     all_models = rlist::list.append(all_models,best_multi_enet)
+    r2_mat[,'multi_enet'] = sapply(best_multi_enet,
+                                   function(x) x$R2)
+  }
+
+  ## JOINET
+  if ('joinet' %in% method){
+    if (verbose){print('Running joinet')}
+    best_joinet =
+      multivariate_joinet(X = X,
+                          Y = Y,
+                          Omega =
+                            omega_list$icov[[omega_nlambda]],
+                          scale = scale,
+                          alpha = alpha,
+                          nfolds = nfolds,
+                          verbose = verbose,
+                          par = par,
+                          n.cores = n.cores,
+                          tx_names = tx_names,
+                          seed = seed)
+    all_models = rlist::list.append(all_models,best_joinet)
+    r2_mat[,'joinet'] = sapply(best_joinet,
+                                   function(x) x$R2)
   }
 
   # MVSUSIE
@@ -177,6 +227,24 @@ compute_isotwas <- function(X,
                                  par = par,
                                  n.cores = n.cores)
     all_models = rlist::list.append(all_models,mmbr_mod)
+    r2_mat[,'mvsusie'] = sapply(mmbr_mod,
+                               function(x) x$R2)
+  }
+
+  # MR MASH
+  if ('mrmash' %in% method){
+    if (verbose){print('Running mrmash')}
+    mrmash_mod = multivariate_mrmash(X = X,
+                        Y = Y,
+                        nfolds = nfolds,
+                        verbose = verbose,
+                        tx_names = tx_names,
+                        par = par,
+                        n.cores = n.cores,
+                        seed = seed)
+    all_models = rlist::list.append(all_models,mrmash_mod)
+    r2_mat[,'mrmash'] = sapply(mrmash_mod,
+                               function(x) x$R2)
   }
 
   if ('finemap' %in% method){
@@ -192,6 +260,8 @@ compute_isotwas <- function(X,
                                            coverage = coverage,
                                            seed = seed)
     all_models = rlist::list.append(all_models,best_finemap)
+    r2_mat[,'finemap'] = sapply(best_finemap,
+                               function(x) x$R2)
   }
 
   ### UNIVARIATE FUSION
@@ -237,10 +307,14 @@ compute_isotwas <- function(X,
     univariate = list(uni_enet,
                       uni_blup,
                       uni_susie)
-    all_models = rlist::list.append(all_models,get_best(univariate,
-                                                        G = G))
+    best_uni = get_best(univariate,
+                        G = G)
+    all_models = rlist::list.append(all_models,best_uni)
+    r2_mat[,'univariate'] = sapply(best_uni,
+                                function(x) x$R2)
 
   }
+  r2_mat = r2_mat[, apply(r2_mat,2,function(x) !all(is.na(x)))]
 
   isotwas_mod = get_best(all_models,
                          G = G)
@@ -308,32 +382,7 @@ compute_isotwas <- function(X,
 
   if (return_all){
 
-    r2_mat = matrix(nrow = ncol(Y),
-                    ncol = length(all_models))
-
-    for (i in 1:ncol(r2_mat)){
-      this_model = all_models[[i]]
-      for (j in 1:nrow(r2_mat)){
-        r2_mat[j,i] = unlist(this_model[[j]]$R2)
-
-      }
-    }
-    all_methods = c('mrce_lasso',
-                    'curds_whey',
-                    'multi_enet',
-                    'mvsusie',
-                    'finemap',
-                    'univariate')
-    r2.df = as.data.frame(cbind(colnames(Y),r2_mat))
-    colnames(r2.df) = c('Transcript',
-                        all_methods[all_methods %in%
-                                      method])
-    for (i in 2:ncol(r2.df)){
-
-      r2.df[,i] = as.numeric(r2.df[,i])
-
-    }
-
+    r2.df = r2_mat
     isotwas_mod = list(Model = get_best(all_models,
                                         G = G),
                        R2 = r2.df)
