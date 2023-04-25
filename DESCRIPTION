@@ -39,4 +39,5 @@ Imports:
     tibble
 Remotes: 
     github::stephenslab/mvsusieR@bb9084d,
-    yaowuliu/ACAT,stephenslab/mr.mash.alpha
+    yaowuliu/ACAT,
+    stephenslab/mr.mash.alpha
