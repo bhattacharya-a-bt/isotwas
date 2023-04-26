@@ -64,7 +64,9 @@ multivariate_mrmash <- function(X,
 
     univ_sumstats <- mr.mash.alpha::compute_univariate_sumstats(X.tr, Y.tr,
                                                  standardize=TRUE,
-                                                 standardize.response=FALSE)
+                                                 standardize.response=FALSE,
+                                                 mc.cores =
+                                                   ifelse(par,n.cores,1))
     grid <- mr.mash.alpha::autoselect.mixsd(univ_sumstats,
                                             mult=sqrt(2))^2
     S0 <- mr.mash.alpha::compute_canonical_covs(ncol(Y.tr),
