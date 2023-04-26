@@ -49,15 +49,36 @@ multivariate_joinet <- function(X,
     colnames(Y) = tx_names
   }
 
-  models = joinet::cv.joinet(Y = Y,
-                             X = X,
-                             family="gaussian",
-                             nfolds.ext=nfolds,
-                             nfolds.int=10,
-                             alpha.base=alpha,
-                             alpha.meta=alpha,
-                             cvpred=T,
-                             times=F)
+  if (par){
+    doParallel::registerDoParallel(n.cores)
+    set.seed(seed)
+    models = joinet::cv.joinet(Y = Y,
+                               X = X,
+                               family="gaussian",
+                               nfolds.ext=nfolds,
+                               nfolds.int=10,
+                               alpha.base=alpha,
+                               alpha.meta=alpha,
+                               parallel = T,
+                               cvpred=T,
+                               times=F,
+                               trace.it = ifelse(verbose,1,0))
+  } else  {
+    set.seed(seed)
+    models = joinet::cv.joinet(Y = Y,
+                               X = X,
+                               family="gaussian",
+                               nfolds.ext=nfolds,
+                               nfolds.int=10,
+                               alpha.base=alpha,
+                               alpha.meta=alpha,
+                               parallel = F,
+                               cvpred=T,
+                               times=F,
+                               trace.it = ifelse(verbose,1,0))
+  }
+
+
 
   pred = models$cvpred
   r2.vec = unlist(sapply(1:ncol(Y),calc.r2,Y,pred)[1,])
