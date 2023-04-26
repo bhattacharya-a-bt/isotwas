@@ -79,7 +79,8 @@ multivariate_mrmash <- function(X,
                                   S0,
                                   update_V=TRUE,
                                   verbose = verbose,
-                                  nthreads = ifelse(par,n.cores,1))
+                                  nthreads = ifelse(par,n.cores,1),
+                                  version = 'Rcpp')
 
     pred[-train.folds[[tr]],] <- predict(fit,X.test)
   }
@@ -108,7 +109,8 @@ multivariate_mrmash <- function(X,
                                 S0,
                                 update_V=TRUE,
                                 verbose = verbose,
-                                nthreads = ifelse(par,n.cores,1))
+                                nthreads = ifelse(par,n.cores,1),
+                                version = 'Rcpp')
 
   modelList = list()
   for (i in 1:ncol(Y)){
