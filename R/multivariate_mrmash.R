@@ -1,6 +1,6 @@
 #' Multivariate MrMash model
 #'
-#' The function trains multivariate SuSiE for all
+#' The function trains multivariate mr mash for all
 #' isoform transcripts jointly
 #'
 #' @param X matrix, design matrix of SNP dosages
