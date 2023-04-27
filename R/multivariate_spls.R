@@ -50,10 +50,11 @@ multivariate_spls <- function(X,
                 nrow = nrow(Y))
 
   set.seed(seed)
+  max_K = min(ncol(Y),3)
   opt_model = spls::cv.spls(x = X,
                             y = Y,
                             fold = nfolds,
-                            K = c(1:floor(ncol(Y)/2)),
+                            K = c(1:max_K),
                             eta = seq(.1,.9,.1),
                             scale.x=F,
                             scale.y=F)
