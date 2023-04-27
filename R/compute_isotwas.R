@@ -132,6 +132,24 @@ compute_isotwas <- function(X,
 
   all_models = list()
 
+
+  # MR MASH
+  if ('mrmash' %in% method){
+    if (verbose){print('Running mrmash')}
+    mrmash_mod = multivariate_mrmash(X = X,
+                                     Y = Y,
+                                     nfolds = nfolds,
+                                     verbose = verbose,
+                                     tx_names = tx_names,
+                                     par = par,
+                                     n.cores = n.cores,
+                                     seed = seed)
+    all_models = rlist::list.append(all_models,mrmash_mod)
+    r2_mat[,'mrmash'] = sapply(mrmash_mod,
+                               function(x) x$R2)
+  }
+
+
   if ('mrce_lasso' %in% method){
     if (verbose){print('Running mrce_lasso')}
       mrce_lasso = list()
@@ -231,21 +249,6 @@ compute_isotwas <- function(X,
                                function(x) x$R2)
   }
 
-  # MR MASH
-  if ('mrmash' %in% method){
-    if (verbose){print('Running mrmash')}
-    mrmash_mod = multivariate_mrmash(X = X,
-                        Y = Y,
-                        nfolds = nfolds,
-                        verbose = verbose,
-                        tx_names = tx_names,
-                        par = par,
-                        n.cores = n.cores,
-                        seed = seed)
-    all_models = rlist::list.append(all_models,mrmash_mod)
-    r2_mat[,'mrmash'] = sapply(mrmash_mod,
-                               function(x) x$R2)
-  }
 
   if ('finemap' %in% method){
     if (verbose){print('Running finemap')}
