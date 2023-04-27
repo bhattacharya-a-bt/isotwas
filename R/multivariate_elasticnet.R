@@ -158,7 +158,7 @@ multivariate_elasticnet <- function(X,
                                Weight = coef(models_0,
                                              s = 'lambda.min')[[i]][-1])
           mod = subset(mod,Weight != 0)
-          best.pred = models_0$fit.preval[,i,which.min(models$cvm)]
+          best.pred = models_0$fit.preval[,i,which.min(models_0$cvm)]
           modelList = rlist::list.append(modelList,
                                          list(Transcript = colnames(Y)[i],
                                               Model = mod,
