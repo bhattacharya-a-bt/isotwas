@@ -53,13 +53,17 @@ multivariate_spls <- function(X,
   opt_model = spls::cv.spls(x = X,
                             y = Y,
                             fold = nfolds,
-                            K = c(1:ncol(Y)),
-                            eta = seq(.1,.9,.1))
+                            K = c(1:floor(ncol(Y)/2)),
+                            eta = seq(.1,.9,.1),
+                            scale.x=F,
+                            scale.y=F)
 
   model_out = spls::spls(x = X,
                          y = Y,
                          K = opt_model$K.opt,
-                         eta = opt_model$eta.opt)
+                         eta = opt_model$eta.opt,
+                         scale.x=F,
+                         scale.y=F)
   coef_mat = coef(model_out)
 
   for (tr in 1:nfolds){
@@ -74,7 +78,9 @@ multivariate_spls <- function(X,
     fit <- spls::spls(x = X.tr,
                       y = Y.tr,
                       K = opt_model$K.opt,
-                      eta = opt_model$eta.opt)
+                      eta = opt_model$eta.opt,
+                      scale.x=F,
+                      scale.y=F)
 
     pred[-train.folds[[tr]],] <- predict(fit,X.test)
   }
