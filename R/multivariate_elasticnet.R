@@ -176,7 +176,7 @@ multivariate_elasticnet <- function(X,
                                Weight = ccc)
           mod = mod[cluster_weight(mod$Weight)$index,]
           mod = subset(mod,Weight != 0)
-          best.pred = models_5$fit.preval[,i,which.min(models$cvm)]
+          best.pred = models_5$fit.preval[,i,which.min(models_5$cvm)]
           modelList = rlist::list.append(modelList,
                                          list(Transcript = colnames(Y)[i],
                                               Model = mod,
@@ -194,7 +194,7 @@ multivariate_elasticnet <- function(X,
                                Weight = ccc)
           mod = mod[cluster_weight(mod$Weight)$index,]
           mod = subset(mod,Weight != 0)
-          best.pred = models_1$fit.preval[,i,which.min(models$cvm)]
+          best.pred = models_1$fit.preval[,i,which.min(models_1$cvm)]
           modelList = rlist::list.append(modelList,
                                          list(Transcript = colnames(Y)[i],
                                               Model = mod,
