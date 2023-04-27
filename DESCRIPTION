@@ -36,6 +36,7 @@ Imports:
     pbapply,
     rlist,
     rrBLUP,
+    spls,
     susieR,
     tibble
 Remotes: 

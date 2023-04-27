@@ -42,6 +42,7 @@ compute_isotwas <- function(X,
                                        'multi_enet',
                                        'joinet',
                                        'mvsusie',
+                                       'spls',
                                        'mrmash',
                                        'finemap',
                                        'univariate'),
@@ -116,13 +117,14 @@ compute_isotwas <- function(X,
   r2_mat = data.frame(Transcript = tx_names)
   r2_mat = cbind(r2_mat,
                  matrix(nrow = nrow(r2_mat),
-                        ncol = 8))
+                        ncol = 9))
   colnames(r2_mat)[-1] =  c('mrce_lasso',
                             'curds_whey',
                             'multi_enet',
                             'joinet',
                             'mvsusie',
                             'mrmash',
+                            'spls',
                             'finemap',
                             'univariate')
 
@@ -148,6 +150,23 @@ compute_isotwas <- function(X,
     r2_mat[,'mrmash'] = sapply(mrmash_mod,
                                function(x) x$R2)
   }
+
+  # SPLS
+  if ('spls' %in% method){
+    if (verbose){print('Running spls')}
+    spls_mod = multivariate_spls(X = X,
+                                   Y = Y,
+                                   nfolds = nfolds,
+                                   verbose = verbose,
+                                   tx_names = tx_names,
+                                   par = par,
+                                   n.cores = n.cores,
+                                   seed = seed)
+    all_models = rlist::list.append(all_models,spls_mod)
+    r2_mat[,'spls'] = sapply(spls_mod,
+                               function(x) x$R2)
+  }
+
 
 
   if ('mrce_lasso' %in% method){
