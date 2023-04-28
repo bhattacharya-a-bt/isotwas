@@ -57,7 +57,8 @@ multivariate_spls <- function(X,
                             K = c(1:max_K),
                             eta = seq(.1,.9,.1),
                             scale.x=F,
-                            scale.y=F)
+                            scale.y=F,
+                            plot.it = F)
 
   model_out = spls::spls(x = X,
                          y = Y,
