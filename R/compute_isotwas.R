@@ -25,6 +25,11 @@
 #' @param tol.in numeric, tolerance for objective difference
 #' @param maxit.in int, maximum number of iteractions
 #'
+#' @importFrom glmnet glmnet
+#' @importFrom glmnet cv.glmnet
+#' @importFrom rlist list.append
+#' @importFrom caret createFolds
+#'
 #' @return optimal isoTWAS model
 #'
 #'
@@ -375,7 +380,7 @@ compute_isotwas <- function(X,
                     function(x){summary(lm(gene_exp ~ x))$adj.r.sq}
                     ))
 
-    tot_mod = glmnet(x = pred_mat,
+    tot_mod = glmnet::glmnet(x = pred_mat,
                      y = gene_exp,
                      alpha = c(0,.25,.5,.75,1)[gamma_which],
                      lambda = glmnet_pred$lambda[which_r2])
