@@ -26,7 +26,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">isotwas</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -443,7 +443,7 @@ model tibble.</p>
 <span><span class="co">#&gt;          Gene Transcript            Z         P permute.P  topSNP     topSNP.P</span></span>
 <span><span class="co">#&gt; 1 GeneExample   Isoform1 -0.885378410 0.3759526 1.0000000 SNP4334 3.700510e-08</span></span>
 <span><span class="co">#&gt; 2 GeneExample   Isoform3  0.003277902 0.9973846 1.0000000  SNP585 9.759435e-15</span></span>
-<span><span class="co">#&gt; 3 GeneExample   Isoform2 -1.380675303 0.1673788 0.4059406 SNP1751 7.638442e-09</span></span></code></pre></div>
+<span><span class="co">#&gt; 3 GeneExample   Isoform2 -1.380675303 0.1673788 0.4554455 SNP1751 7.638442e-09</span></span></code></pre></div>
 <p>Now, we have individual isoform-level associations for all isoforms
 of our example gene. We can run a screening-level test to test whether
 at least one of the isoforms of the gene is significantly associated
@@ -496,7 +496,7 @@ matrix aligns with the SNPs in <code>Omega</code>.</p>
 <span>                      cutoff <span class="op">=</span> <span class="fl">.9</span><span class="op">)</span></span>
 <span><span class="va">res.df</span></span>
 <span><span class="co">#&gt;          Gene Transcript            Z         P permute.P  topSNP     topSNP.P</span></span>
-<span><span class="co">#&gt; 3 GeneExample   Isoform2 -1.380675303 0.1673788 0.4059406 SNP1751 7.638442e-09</span></span>
+<span><span class="co">#&gt; 3 GeneExample   Isoform2 -1.380675303 0.1673788 0.4554455 SNP1751 7.638442e-09</span></span>
 <span><span class="co">#&gt; 1 GeneExample   Isoform1 -0.885378410 0.3759526 1.0000000 SNP4334 3.700510e-08</span></span>
 <span><span class="co">#&gt; 2 GeneExample   Isoform3  0.003277902 0.9973846 1.0000000  SNP585 9.759435e-15</span></span>
 <span><span class="co">#&gt;            pip in_cred_set</span></span>
