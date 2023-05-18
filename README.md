@@ -1,3 +1,7 @@
+<!-- badges: start -->
+[![R-CMD-check](https://github.com/bhattacharya-a-bt/isotwas/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/bhattacharya-a-bt/isotwas/actions/workflows/R-CMD-check.yaml)
+<!-- badges: end -->
+
 # isotwas
 
 Welcome to `isotwas`, a package that facilitates isoform-level transcriptome wide associations studies. This package contains models to train multivariate predictive models of isoform-level expression and run isoform-level trait mapping to identify genetic associations with complex traits.
