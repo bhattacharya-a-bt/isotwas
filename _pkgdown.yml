@@ -1,35 +1,4 @@
-url: https://bhattacharya-a-bt.github.io/isotwas/
+url: ~
 template:
   bootstrap: 5
-  bslib:
-    pkgdown-nav-height: 100px
-reference:
-  - title: "Training models"
-    desc: >
-      Functions for training multivariate predictive models
-    contents:
-      - compute_isotwas
-      - compute_curds_whey
-      - compute_finemap_regress
-      - compute_fixed
-      - compute_mrce
-      - compute_omega
-      - multivariate_elasticnet
-      - multivariate_mmbr
-      - univariate_blup
-      - univariate_elasticnet
-      - univariate_susie
-  - title: "Trait mapping"
-    desc: >
-      Stage-wise trait mapping
-    contents:
-      - p_screen
-      - p_confirm
-  - title: "Probabilistic fine-mapping"
-    desc: >
-      Functions for FOCUS-like probabilistic fine-mapping
-    contents:
-      - twas_finemap
-      - estimate_cor
-      - get_resid
-      - bayes_factor
+

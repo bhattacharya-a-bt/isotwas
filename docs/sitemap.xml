@@ -1,99 +1,108 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://bhattacharya-a-bt.github.io/isotwas/404.html</loc>
+    <loc>/404.html</loc>
   </url>
   <url>
-    <loc>https://bhattacharya-a-bt.github.io/isotwas/articles/index.html</loc>
+    <loc>/articles/index.html</loc>
   </url>
   <url>
-    <loc>https://bhattacharya-a-bt.github.io/isotwas/articles/motivation.html</loc>
+    <loc>/articles/motivation.html</loc>
   </url>
   <url>
-    <loc>https://bhattacharya-a-bt.github.io/isotwas/articles/pipeline.html</loc>
+    <loc>/articles/pipeline.html</loc>
   </url>
   <url>
-    <loc>https://bhattacharya-a-bt.github.io/isotwas/articles/train.html</loc>
+    <loc>/articles/train.html</loc>
   </url>
   <url>
-    <loc>https://bhattacharya-a-bt.github.io/isotwas/authors.html</loc>
+    <loc>/authors.html</loc>
   </url>
   <url>
-    <loc>https://bhattacharya-a-bt.github.io/isotwas/index.html</loc>
+    <loc>/index.html</loc>
   </url>
   <url>
-    <loc>https://bhattacharya-a-bt.github.io/isotwas/reference/bayes_factor.html</loc>
+    <loc>/reference/bayes_factor.html</loc>
   </url>
   <url>
-    <loc>https://bhattacharya-a-bt.github.io/isotwas/reference/burdenTest.html</loc>
+    <loc>/reference/burdenTest.html</loc>
   </url>
   <url>
-    <loc>https://bhattacharya-a-bt.github.io/isotwas/reference/compute_curds_whey.html</loc>
+    <loc>/reference/compute_curds_whey.html</loc>
   </url>
   <url>
-    <loc>https://bhattacharya-a-bt.github.io/isotwas/reference/compute_finemap_regress.html</loc>
+    <loc>/reference/compute_finemap_regress.html</loc>
   </url>
   <url>
-    <loc>https://bhattacharya-a-bt.github.io/isotwas/reference/compute_fixed.html</loc>
+    <loc>/reference/compute_fixed.html</loc>
   </url>
   <url>
-    <loc>https://bhattacharya-a-bt.github.io/isotwas/reference/compute_isotwas.html</loc>
+    <loc>/reference/compute_isotwas.html</loc>
   </url>
   <url>
-    <loc>https://bhattacharya-a-bt.github.io/isotwas/reference/compute_mrce.html</loc>
+    <loc>/reference/compute_mrce.html</loc>
   </url>
   <url>
-    <loc>https://bhattacharya-a-bt.github.io/isotwas/reference/compute_omega.html</loc>
+    <loc>/reference/compute_omega.html</loc>
   </url>
   <url>
-    <loc>https://bhattacharya-a-bt.github.io/isotwas/reference/compute_spring.html</loc>
+    <loc>/reference/compute_spring.html</loc>
   </url>
   <url>
-    <loc>https://bhattacharya-a-bt.github.io/isotwas/reference/conditional_test.html</loc>
+    <loc>/reference/conditional_test.html</loc>
   </url>
   <url>
-    <loc>https://bhattacharya-a-bt.github.io/isotwas/reference/conditional_test_focus.html</loc>
+    <loc>/reference/conditional_test_focus.html</loc>
   </url>
   <url>
-    <loc>https://bhattacharya-a-bt.github.io/isotwas/reference/convert_model.html</loc>
+    <loc>/reference/convert_model.html</loc>
   </url>
   <url>
-    <loc>https://bhattacharya-a-bt.github.io/isotwas/reference/curds_whey.html</loc>
+    <loc>/reference/curds_whey.html</loc>
   </url>
   <url>
-    <loc>https://bhattacharya-a-bt.github.io/isotwas/reference/estimate_cor.html</loc>
+    <loc>/reference/estimate_cor.html</loc>
   </url>
   <url>
-    <loc>https://bhattacharya-a-bt.github.io/isotwas/reference/finemap_regress.html</loc>
+    <loc>/reference/finemap_regress.html</loc>
   </url>
   <url>
-    <loc>https://bhattacharya-a-bt.github.io/isotwas/reference/get_resid.html</loc>
+    <loc>/reference/get_resid.html</loc>
   </url>
   <url>
-    <loc>https://bhattacharya-a-bt.github.io/isotwas/reference/index.html</loc>
+    <loc>/reference/index.html</loc>
   </url>
   <url>
-    <loc>https://bhattacharya-a-bt.github.io/isotwas/reference/multivariate_elasticnet.html</loc>
+    <loc>/reference/multivariate_elasticnet.html</loc>
   </url>
   <url>
-    <loc>https://bhattacharya-a-bt.github.io/isotwas/reference/multivariate_mmbr.html</loc>
+    <loc>/reference/multivariate_joinet.html</loc>
   </url>
   <url>
-    <loc>https://bhattacharya-a-bt.github.io/isotwas/reference/p_confirm.html</loc>
+    <loc>/reference/multivariate_mmbr.html</loc>
   </url>
   <url>
-    <loc>https://bhattacharya-a-bt.github.io/isotwas/reference/p_screen.html</loc>
+    <loc>/reference/multivariate_mrmash.html</loc>
   </url>
   <url>
-    <loc>https://bhattacharya-a-bt.github.io/isotwas/reference/twas_finemap.html</loc>
+    <loc>/reference/multivariate_spls.html</loc>
   </url>
   <url>
-    <loc>https://bhattacharya-a-bt.github.io/isotwas/reference/univariate_blup.html</loc>
+    <loc>/reference/p_confirm.html</loc>
   </url>
   <url>
-    <loc>https://bhattacharya-a-bt.github.io/isotwas/reference/univariate_elasticnet.html</loc>
+    <loc>/reference/p_screen.html</loc>
   </url>
   <url>
-    <loc>https://bhattacharya-a-bt.github.io/isotwas/reference/univariate_susie.html</loc>
+    <loc>/reference/twas_finemap.html</loc>
+  </url>
+  <url>
+    <loc>/reference/univariate_blup.html</loc>
+  </url>
+  <url>
+    <loc>/reference/univariate_elasticnet.html</loc>
+  </url>
+  <url>
+    <loc>/reference/univariate_susie.html</loc>
   </url>
 </urlset>
