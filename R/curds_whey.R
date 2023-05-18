@@ -19,6 +19,8 @@
 #' @importFrom pbapply pbapply
 #' @importFrom tibble tibble
 #' @importFrom rlist list.append
+#' @importFrom stats cancor
+#' @importFrom stats runif
 #'
 #' @export
 curds_whey <- function(X,
@@ -42,7 +44,7 @@ curds_whey <- function(X,
 
     Y = as.matrix(scale(Y))
     #X = as.matrix(scale(X))
-    cancor.all <- cancor(X, Y)
+    cancor.all <- stats::cancor(X, Y)
     cancor.cor <- cancor.all$cor
     cancor.y <- cancor.all$ycoef
     yPrime <- as.matrix(Y) %*% cancor.y
@@ -67,7 +69,7 @@ curds_whey <- function(X,
     yhatstar <- yhat.Prime %*% D
     yFinal <- yhatstar %*% solve(cancor.y)
     www = which(apply(yFinal,2,sd) == 0)
-    yFinal[,www] = runif(length(www)*nrow(yFinal),
+    yFinal[,www] = stats::runif(length(www)*nrow(yFinal),
                          -0.1,.1)
 
     models = apply(yFinal,

@@ -24,6 +24,8 @@ compute_mrce(
 
 \item{lambda}{vector, lambda penalty vector for LASSO to tune on}
 
+\item{nlambda}{int, number of lambda value for parameter selection}
+
 \item{Omega}{matrix, precision matrix of Y}
 
 \item{nfolds}{int, number of CV folds}

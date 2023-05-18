@@ -9,7 +9,8 @@
 #' @param verbose logical
 #' @param par logical, uses mclapply to parallelize model fit
 #' @param n.cores int, number of parallel cores
-#' @param tx_name vector, character vector of tx names in order of columns of Y
+#' @param tx_names vector, character vector of tx names in order of columns of Y
+#' @param seed int, random seed
 #'
 #' @return spls models
 #'
@@ -18,6 +19,7 @@
 #' @importFrom tibble tibble
 #' @importFrom rlist list.append
 #' @importFrom caret createFolds
+#' @importFrom stats sd
 #'
 #' @export
 multivariate_spls <- function(X,
@@ -40,7 +42,7 @@ multivariate_spls <- function(X,
     colnames(Y) = tx_names
   }
 
-  X = X[,apply(X,2,sd) != 0]
+  X = X[,apply(X,2,stats::sd) != 0]
 
   set.seed(seed)
   train.folds = caret::createFolds(1:nrow(Y),

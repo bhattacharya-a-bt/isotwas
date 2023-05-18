@@ -12,7 +12,7 @@
 #' @param verbose logical
 #' @param par logical, uses mclapply to parallelize model fit
 #' @param n.cores int, number of parallel cores
-#' @param tx_name vector, character vector of tx names in order of columns of Y
+#' @param tx_names vector, character vector of tx names in order of columns of Y
 #' @param seed int, random seed
 #'
 #' @return data frame of elastic net, lasso, and LMM based predictions
@@ -22,6 +22,7 @@
 #' @importFrom pbapply pbapply
 #' @importFrom tibble tibble
 #' @importFrom rlist list.append
+#' @importFrom stats cor.test
 #'
 #' @export
 multivariate_joinet <- function(X,
@@ -83,7 +84,7 @@ multivariate_joinet <- function(X,
   pred = models$cvpred
   r2.vec = unlist(sapply(1:ncol(Y),calc.r2,Y,pred)[1,])
   P = sapply(1:ncol(Y),function(x){
-    cor.test(Y[,x], pred[,x])$p.value
+    stats::cor.test(Y[,x], pred[,x])$p.value
   })
 
   models = joinet::joinet(Y = Y,

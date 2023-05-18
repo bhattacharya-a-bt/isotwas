@@ -6,7 +6,6 @@
 #' @param X matrix, design matrix of SNP dosages
 #' @param Y matrix, matrix of G isoform expression across columns
 #' @param family character, glmnet glm family
-#' @param scale logical, T/F to scale Y by Omega
 #' @param alpha numeric, elastic net mixing parameter
 #' @param nfolds int, number of CV folds
 #' @param verbose logical

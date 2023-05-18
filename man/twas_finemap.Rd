@@ -26,6 +26,8 @@ twas_finemap(
 \item{max_enum}{numeric, max number of causals in the credible set}
 
 \item{cutoff}{numeric, proportion of posterior explained by credible set}
+
+\item{verbose}{logical, verbose}
 }
 \value{
 data frame of res.df with pips and whether isoform is in credible set

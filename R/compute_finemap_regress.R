@@ -11,6 +11,8 @@
 #' @param verbose logical
 #' @param tx_names vector, character vector of tx names - order of columns of Y
 #' @param seed int, random seed
+#' @param nfolds int, number of folds
+#' @param coverage numeric, covarage of credible sets
 #'
 #' @return isoTWAS model list
 #'

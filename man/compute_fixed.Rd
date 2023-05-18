@@ -20,8 +20,6 @@ compute_fixed(X, Y, lam2, Omega, tol.in, maxit.in, silent)
 \item{maxit.in}{int, maximum number of iteractions}
 
 \item{silent}{logical}
-
-\item{weights}{matrix, weights for each predictor in X}
 }
 \value{
 list of MRCE estimates

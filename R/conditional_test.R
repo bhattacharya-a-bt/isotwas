@@ -82,12 +82,13 @@ conditional_test <- function(w_gene,
                 MASS::ginv(ld_gene_iso[ppp[,c],ppp[,c]]) %*% ld_gene_iso[ppp[,c],1]
             cond_z_score_top = (z_twas_gene - cond_z_mean)
             cond_z_score_se = sqrt(cond_z_var)
-            z = (z_twas_gene_effect - cond_z_score_top)/sqrt(z_twas_gene_se^2 + cond_z_var)
+            z = (z_twas_gene_effect - cond_z_score_top)/sqrt(z_twas_gene_se^2 +
+                                                               cond_z_var)
             df.piece = data.frame(Test = paste0(gene_name,', conditional on ',
                                                 paste(tx_name[ppp[,c]-1],
                                                       collapse=', ')),
                                   Z = cond_z_score,
-                                  P = 2*pnorm(-abs(cond_z_score)))
+                                  P = 2*pnorm(-abs(z)))
             df = rbind(df,df.piece)
 
 

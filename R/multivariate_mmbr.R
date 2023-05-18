@@ -9,7 +9,9 @@
 #' @param verbose logical
 #' @param par logical, uses mclapply to parallelize model fit
 #' @param n.cores int, number of parallel cores
-#' @param tx_name vector, character vector of tx names in order of columns of Y
+#' @param tx_names vector, character vector of tx names in order of columns of Y
+#' @param L int, number of single effects
+#' @param seed int, random seed
 #'
 #' @return data frame of mvSuSiE weights
 #'
@@ -18,6 +20,7 @@
 #' @importFrom tibble tibble
 #' @importFrom rlist list.append
 #' @importFrom mvsusieR create_mash_prior
+#' @importFrom stats cov
 #'
 #' @export
 multivariate_mmbr <- function(X,
@@ -61,7 +64,7 @@ multivariate_mmbr <- function(X,
                                                   list(X=X.tr,
                                                        Y=Y.tr,
                                                        residual_variance =
-                                                           cov(Y.tr)),
+                                                           stats::cov(Y.tr)),
                                               max_mixture_len=-1)
         m <- mvsusieR::mvsusie(X = X.tr,
                                Y = as.matrix(Y.tr),
@@ -82,7 +85,7 @@ multivariate_mmbr <- function(X,
                                                   list(X=X,
                                                        Y=Y,
                                                        residual_variance =
-                                                           cov(Y)),
+                                                           stats::cov(Y)),
                                               max_mixture_len=-1)
     m <- mvsusieR::mvsusie(X = X,
                            Y = as.matrix(Y),

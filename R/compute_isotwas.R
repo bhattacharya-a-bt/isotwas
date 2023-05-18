@@ -23,12 +23,17 @@
 #' @param seed int, random seed
 #' @param return_all logical, return R2 for all models?
 #' @param tol.in numeric, tolerance for objective difference
-#' @param maxit.in int, maximum number of iteractions
+#' @param maxit.in int, maximum number of interactions
+#' @param gene_exp vector, vector of total gene expression
+#' @param run_all logical, run all methods
+#' @param coverage numeric, coverage of cred set for finemap and regress
 #'
 #' @importFrom glmnet glmnet
 #' @importFrom glmnet cv.glmnet
 #' @importFrom rlist list.append
 #' @importFrom caret createFolds
+#' @importFrom stats lm
+#' @importFrom stats coef
 #'
 #' @return optimal isoTWAS model
 #'
@@ -371,13 +376,13 @@ compute_isotwas <- function(X,
     gamma_which = which.max(sapply(lapply(glmnet_pred$fit.preval,
            function(y){
              apply(y,2,function(x){
-               summary(lm(gene_exp ~ x))$adj.r.sq
+               summary(stats::lm(gene_exp ~ x))$adj.r.sq
              })
            }),max))
 
     which_r2 = which.max(apply(glmnet_pred$fit.preval[[gamma_which]],
                     2,
-                    function(x){summary(lm(gene_exp ~ x))$adj.r.sq}
+                    function(x){summary(stats::lm(gene_exp ~ x))$adj.r.sq}
                     ))
 
     tot_mod = glmnet::glmnet(x = pred_mat,
@@ -388,14 +393,14 @@ compute_isotwas <- function(X,
                                   function(y){
                                     apply(y,2,
                                           function(x){
-                                            summary(lm(gene_exp ~ x))$adj.r.sq
+                                            summary(stats::lm(gene_exp ~ x))$adj.r.sq
                                           })
                                   }),max))
 
     if (all(as.numeric(coef(tot_mod))[-1] == 0)){
-      ccc = coef(lm(gene_exp ~ pred_mat))[-1]
+      ccc = stats::coef(stats::lm(gene_exp ~ pred_mat))[-1]
     } else {
-      ccc = as.numeric(coef(tot_mod))[-1]
+      ccc = as.numeric(stats::coef(tot_mod))[-1]
     }
     tx2gene_coef = data.frame(Feature = tx_names,
                               Weight_tx2gene =

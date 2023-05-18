@@ -10,6 +10,7 @@
 #' @param id vector, vector of sample ids showing rep to id
 #' @param verbose logical
 #' @param tx_names vector, character vector of tx names in order of columns of Y
+#' @param coverage numeric, coverage of credible set
 #'
 #' @return data frame of elastic net, lasso, and LMM based predictions
 #'

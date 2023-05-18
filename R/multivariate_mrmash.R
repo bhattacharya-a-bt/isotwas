@@ -9,7 +9,8 @@
 #' @param verbose logical
 #' @param par logical, uses mclapply to parallelize model fit
 #' @param n.cores int, number of parallel cores
-#' @param tx_name vector, character vector of tx names in order of columns of Y
+#' @param tx_names vector, character vector of tx names in order of columns of Y
+#' @param seed int, random seed
 #'
 #' @return mrmash models
 #'

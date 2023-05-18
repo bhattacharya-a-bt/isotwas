@@ -28,9 +28,13 @@ compute_finemap_regress(
 
 \item{id}{vector, vector of sample ids showing rep to id}
 
+\item{nfolds}{int, number of folds}
+
 \item{verbose}{logical}
 
 \item{tx_names}{vector, character vector of tx names - order of columns of Y}
+
+\item{coverage}{numeric, covarage of credible sets}
 
 \item{seed}{int, random seed}
 }

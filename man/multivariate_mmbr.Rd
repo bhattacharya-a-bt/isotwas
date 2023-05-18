@@ -25,11 +25,15 @@ multivariate_mmbr(
 
 \item{verbose}{logical}
 
+\item{tx_names}{vector, character vector of tx names in order of columns of Y}
+
+\item{L}{int, number of single effects}
+
 \item{par}{logical, uses mclapply to parallelize model fit}
 
 \item{n.cores}{int, number of parallel cores}
 
-\item{tx_name}{vector, character vector of tx names in order of columns of Y}
+\item{seed}{int, random seed}
 }
 \value{
 data frame of mvSuSiE weights

@@ -11,6 +11,7 @@
 #' @param maxit.in int, maximum number of iteractions
 #' @param verbose logical
 #' @param seed int, random seed
+#' @param nlambda int, number of lambda value for parameter selection
 #'
 #' @return CV MRCE fit
 #'
@@ -78,7 +79,7 @@ compute_mrce = function(X,
 
   final.model = compute_fixed(X = X,
                               Y = Y,
-                              l = lambda[which.max(colMeans(r2Mat))],
+                              lam2 = lambda[which.max(colMeans(r2Mat))],
                               Omega = Omega,
                               tol.in = tol.in,
                               maxit.in = maxit.in,

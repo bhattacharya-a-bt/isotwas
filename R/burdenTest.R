@@ -23,6 +23,7 @@
 #' @return list of results for burden and permutation tests
 #'
 #' @importFrom boot boot
+#' @importFrom stats pnorm
 #'
 #' @export
 burdenTest <- function(mod,
@@ -108,7 +109,7 @@ burdenTest <- function(mod,
     twasLD = as.numeric(tot$Weight %*% tot$Z) /
       sqrt(as.numeric(tot$Weight) %*% ld[tot$SNP,tot$SNP] %*% as.numeric(tot$Weight))
     twasLD = as.numeric(twasLD)
-    P = 2*pnorm(-abs(twasLD))
+    P = 2*stats::pnorm(-abs(twasLD))
 
     if (P <= alpha){
       permutationLD = boot::boot(data = tot$Weight,

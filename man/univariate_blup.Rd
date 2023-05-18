@@ -51,6 +51,8 @@ univariate_blup(
 
 \item{n.cores}{int, number of parallel cores}
 
+\item{tx_names}{vector, character vector of tx names in order of columns of Y}
+
 \item{seed}{int, random seed}
 
 \item{family}{character, glmnet glm family}

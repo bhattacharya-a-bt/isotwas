@@ -15,33 +15,13 @@ calc.mse <- function(obs, pred){
 
 calc.r2 <- function(i,obs,pred){
 
-    r2 = summary(lm(obs[,i]~pred[,i]))$adj.r.sq
-    ct = cor.test(obs[,i],pred[,i])
+    r2 = summary(stats::lm(obs[,i]~pred[,i]))$adj.r.sq
+    ct = stats::cor.test(obs[,i],pred[,i])
     if (is.na(r2)){r2 = 0}
     p = ct$p.value
     return(list(R2 = r2,
                 P = p))
 
-}
-
-PRESS <- function(linear.model) {
-  #' calculate the predictive residuals
-  pr <- residuals(linear.model)/(1-lm.influence(linear.model)$hat)
-  #' calculate the PRESS
-  PRESS <- sum(pr^2)
-
-  return(PRESS)
-}
-
-pred_r_squared <- function(linear.model) {
-  #' Use anova() to get the sum of squares for the linear model
-  lm.anova <- anova(linear.model)
-  #' Calculate the total sum of squares
-  tss <- sum(lm.anova$'Sum Sq')
-  # Calculate the predictive R^2
-  pred.r.squared <- 1-PRESS(linear.model)/(tss)
-
-  return(pred.r.squared)
 }
 
 
@@ -61,8 +41,10 @@ cluster_weight = function(x){
                                   index = NA))}
   if (length(x) == 1){return(list(sum = 0,
                                   index = 1))}
-  p = p.adjust(pnorm(as.numeric(scale(x)),
-                     lower.tail=F),'fdr')
+  p = stats::p.adjust(stats::pnorm(
+    as.numeric(scale(x)),
+    lower.tail=F),
+    'fdr')
   if (sum(p < 0.05) > 0){
     return(list(sum = sum(p < 0.05),
                 index = which(p < 0.05)))

@@ -8,6 +8,9 @@
 #' @param V matrix, LD matrix in the same order as Omega
 #' @param max_enum numeric, max number of causals in the credible set
 #' @param cutoff numeric, proportion of posterior explained by credible set
+#' @param verbose logical, verbose
+#'
+#' @importFrom utils combn
 #'
 #' @return data frame of res.df with pips and whether isoform is in credible set
 #'
@@ -36,7 +39,7 @@ twas_finemap <- function(res.df,
   comb_list = list()
   for (n in 1:min(max_enum,length(zscores))){
     comb_list = c(comb_list,
-                  combn(1:length(zscores),n,simplify=F))
+                  utils::combn(1:length(zscores),n,simplify=F))
   }
   pips = rep(0,length(zscores))
   zscores = get_resid(zscores,

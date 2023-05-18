@@ -25,6 +25,8 @@ compute_omega(
 
 \item{method}{character, use Y.rep or Y}
 
+\item{nlambda}{int, number of matrices to produce in terms of sparsity}
+
 \item{verbose}{logical}
 }
 \value{

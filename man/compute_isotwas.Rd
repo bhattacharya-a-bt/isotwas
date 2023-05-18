@@ -37,6 +37,8 @@ compute_isotwas(
 
 \item{Y}{matrix, matrix of G isoform expression across columns}
 
+\item{gene_exp}{vector, vector of total gene expression}
+
 \item{Y.rep}{matrix, matrix of G isoform expression with replicates}
 
 \item{R}{int, number of replicates}
@@ -69,11 +71,15 @@ compute_isotwas(
 
 \item{seed}{int, random seed}
 
+\item{run_all}{logical, run all methods}
+
 \item{return_all}{logical, return R2 for all models?}
 
 \item{tol.in}{numeric, tolerance for objective difference}
 
-\item{maxit.in}{int, maximum number of iteractions}
+\item{maxit.in}{int, maximum number of interactions}
+
+\item{coverage}{numeric, coverage of cred set for finemap and regress}
 }
 \value{
 optimal isoTWAS model

@@ -78,7 +78,8 @@ isotwas_model = compute_isotwas(X = snp_mat,
                                 method = c('mrce_lasso', 
                                            'multi_enet', 
                                            'univariate',
-                                           'mvsusie'),
+                                           'joinet',
+                                           'spls'),
                                 predict_nlambda = 10, 
                                 family = 'gaussian', 
                                 scale = FALSE, 
@@ -97,13 +98,13 @@ A few notes on the options in the function:
 
 -   `omega_nlambda` selects the number of steps between fully dense to fully sparse in the correlation matrix estimation. We recommend 5-10 as the default here.
 
--   There are 6 total methods to predict expression. However, through simulations and real data examples, we recommend the four shown here as the default in the `method` option.
+-   There are multiple methods to predict expression. However, through simulations and real data examples, we recommend the five shown here as the default in the `method` option.
 
 -   `predict_nlambda` is the number of penalty variables that are considered from the `mrce_lasso` method. We recommend 10-20 for this variable.
 
 -   `family` and `alpha` are for `multi_enet` and `univariate` to determine how elastic net regression is run. The default is that the response follows a Normal distribution and the mixing parameter is set to 0.5.
 
--   If `run_all = TRUE`, then all 6 methods will be run.
+-   If `run_all = TRUE`, then all methods will be run.
 
 -   If `return_all = TRUE`, then predicted values for each isoform and predictive performance for all methods and all isoforms will be outputted.
 

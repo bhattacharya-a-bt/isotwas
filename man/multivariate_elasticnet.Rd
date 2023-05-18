@@ -37,9 +37,9 @@ multivariate_elasticnet(
 
 \item{n.cores}{int, number of parallel cores}
 
-\item{seed}{int, random seed}
+\item{tx_names}{vector, character vector of tx names in order of columns of Y}
 
-\item{tx_name}{vector, character vector of tx names in order of columns of Y}
+\item{seed}{int, random seed}
 }
 \value{
 data frame of elastic net, lasso, and LMM based predictions

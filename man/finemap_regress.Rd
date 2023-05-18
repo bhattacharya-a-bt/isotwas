@@ -29,6 +29,8 @@ finemap_regress(
 \item{verbose}{logical}
 
 \item{tx_names}{vector, character vector of tx names in order of columns of Y}
+
+\item{coverage}{numeric, coverage of credible set}
 }
 \value{
 data frame of elastic net, lasso, and LMM based predictions

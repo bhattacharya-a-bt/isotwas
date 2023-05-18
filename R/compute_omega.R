@@ -9,10 +9,12 @@
 #' @param id vector, vector of sample ids showing rep to id
 #' @param method character, use Y.rep or Y
 #' @param verbose logical
+#' @param nlambda int, number of matrices to produce in terms of sparsity
 #'
 #' @return covariance and/or precision matrix list in huge form
 #'
 #' @importFrom huge huge
+#' @importFrom stats model.matrix
 #'
 #' @export
 compute_omega <- function(Y,
@@ -39,7 +41,7 @@ compute_omega <- function(Y,
                                 nlambda = nlambda)
     } else if (method == 'replicates'){
         ### RIGHT NOW THIS IS AN OLS WITH FIXED EFFECTS
-        mm = model.matrix(~id)
+        mm = stats::model.matrix(~id)
         Y.resid = mm %*% solve(t(mm) %*% mm) %*% t(mm) %*% Y.rep
         Omega_list = huge::huge(Y.resid,
                                 method = 'glasso',

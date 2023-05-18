@@ -37,8 +37,6 @@ compute_curds_whey(
 \item{tx_names}{vector, character vector of tx names - order of columns of Y}
 
 \item{seed}{int, random seed}
-
-\item{scale}{logical, T/F to scale Y by Omega}
 }
 \value{
 data frame of elastic net, lasso, and LMM based predictions
