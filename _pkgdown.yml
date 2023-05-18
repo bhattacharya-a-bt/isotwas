@@ -16,6 +16,8 @@ reference:
       - compute_omega
       - multivariate_elasticnet
       - multivariate_mmbr
+      - multivariate_joinet
+      - multivariate_spls
       - univariate_blup
       - univariate_elasticnet
       - univariate_susie
