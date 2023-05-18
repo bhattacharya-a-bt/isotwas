@@ -20,6 +20,7 @@ VignetteBuilder: knitr
 Imports: 
     ACAT (>= 0.91),
     boot,
+    bigsnpr,
     caret,
     condMVNorm,
     doParallel,
