@@ -2,7 +2,7 @@
     with(eigen(x), vectors %*% (values^n * t(vectors)))
     }
 
-.onUnload <- function (libpath) { library.dynam.unload("isoTWAS", libpath)}
+.onUnload <- function (libpath) { library.dynam.unload("isotwas", libpath)}
 
 calc.mse <- function(obs, pred){
     if(is.vector(obs)) obs <- as.matrix(obs)

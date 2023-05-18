@@ -7,7 +7,6 @@
 #' @param Y matrix, matrix of G isoform expression across columns
 #' @param Omega matrix, precision matrix of Y
 #' @param scale logical, T/F to scale Y by Omega
-#' @param alpha numeric, elastic net mixing parameter
 #' @param nfolds int, number of CV folds
 #' @param verbose logical
 #' @param par logical, uses mclapply to parallelize model fit
@@ -26,7 +25,6 @@ univariate_blup <- function(X,
                             Y,
                             Omega,
                             scale = F,
-                            alpha = 0.5,
                             nfolds = 5,
                             verbose,
                             par = F,

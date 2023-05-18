@@ -2,6 +2,7 @@
 
 export(bayes_factor)
 export(burdenTest)
+export(compute_blup)
 export(compute_curds_whey)
 export(compute_finemap_regress)
 export(compute_fixed)
@@ -65,4 +66,4 @@ importFrom(stats,sd)
 importFrom(susieR,susie)
 importFrom(tibble,tibble)
 importFrom(utils,combn)
-useDynLib(isotwas, .registration = TRUE)
+useDynLib(isotwas)
