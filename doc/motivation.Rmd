@@ -1,0 +1,35 @@
+---
+title: "Motivation for isotwas"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Motivation for isotwas}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup, echo=F, message=F}
+library(isotwas)
+```
+
+`isotwas` provides functions to run transcriptome-wide association studies on the isoform-level.
+
+Isoform-level analyses can provide further granularity to a gene-trait association by pinpointing the isoform of a given gene that drives the association. Furthermore, if two isoforms of the same genes have associations with divergent effect sizes, then gene-level trait mapping will likely miss this association but isoform-level trait mapping will not.
+
+![](images/motivation-01.png){width="700"}
+
+`isotwas` contains functions for:
+
+1.  training multivariate predictive models for isoform-level expression from a set of genetic variants,
+
+2.  conducting trait mapping on the isoform-level using stage-wise hypothesis testing, and
+
+3.  probabilistic fine-mapping
+
+![](images/scheme-01.png){width="700"}
