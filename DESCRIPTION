@@ -30,6 +30,7 @@ Imports:
     joinet,
     MASS,
     Matrix,
+    mr.mash.alpha,
     mvsusieR (>= 0.0.3.518),
     mvtnorm,
     parallel,
