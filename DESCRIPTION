@@ -40,3 +40,7 @@ Imports:
     tibble
 Remotes: 
     yaowuliu/ACAT
+Suggests:
+    tidyverse,
+    magrittr,
+    dplyr
