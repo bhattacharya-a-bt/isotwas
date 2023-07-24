@@ -34,9 +34,11 @@ burdenTest <- function(mod,
                        pos,
                        a1,
                        a2,
+                       snpName = 'SNP',
                        Z = NULL,
                        beta = NULL,
                        se = NULL,
+                       featureName = 'Feature',
                        R2cutoff = 0.01,
                        alpha = 2.5e-6,
                        nperms = 1e3,
@@ -46,8 +48,11 @@ burdenTest <- function(mod,
       if (any(is.null(beta,se))){
         stop('Please provide a column name for the Z-score or beta and SE.')
       }
-      }
+    }
 
+   colnames(mod)[which(colnames(mod) == featureName)] = 'Feature'
+
+   colnames(sumStats)[which(colnames(sumStats) == snpName)] = 'SNP'
     colnames(sumStats)[which(colnames(sumStats) == chr)] = 'Chromosome'
     colnames(sumStats)[which(colnames(sumStats) == pos)] = 'Position'
     colnames(sumStats)[which(colnames(sumStats) == a1)] = 'A1'
@@ -121,7 +126,7 @@ burdenTest <- function(mod,
       permute.p = 1}
 
   return(data.frame(Gene = gene,
-                    Transcript = tot$Transcript[1],
+                    Feature = tot$Feature[1],
                     Z = twasLD,
                     P = 2*pnorm(-abs(twasLD)),
                     permute.P = permute.p,
