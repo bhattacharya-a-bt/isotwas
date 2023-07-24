@@ -30,8 +30,6 @@ Imports:
     joinet,
     MASS,
     Matrix,
-    mr.mash.alpha,
-    mvsusieR (>= 0.0.3.518),
     mvtnorm,
     parallel,
     pbapply,
@@ -41,6 +39,4 @@ Imports:
     susieR,
     tibble
 Remotes: 
-    github::stephenslab/mvsusieR@bb9084d,
-    yaowuliu/ACAT,
-    stephenslab/mr.mash.alpha
+    yaowuliu/ACAT

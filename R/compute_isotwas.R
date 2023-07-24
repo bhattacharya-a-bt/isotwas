@@ -51,9 +51,7 @@ compute_isotwas <- function(X,
                                        'curds_whey',
                                        'multi_enet',
                                        'joinet',
-                                       'mvsusie',
                                        'spls',
-                                       'mrmash',
                                        'finemap',
                                        'univariate'),
                             predict_nlambda = 50,
@@ -114,8 +112,6 @@ compute_isotwas <- function(X,
                'curds_whey',
                'multi_enet',
                'joinet',
-               'mvsusie',
-               'mrmash',
                'finemap',
                'univariate')
   }
@@ -132,8 +128,6 @@ compute_isotwas <- function(X,
                             'curds_whey',
                             'multi_enet',
                             'joinet',
-                            'mvsusie',
-                            'mrmash',
                             'spls',
                             'finemap',
                             'univariate')
@@ -145,21 +139,21 @@ compute_isotwas <- function(X,
   all_models = list()
 
 
-  # MR MASH
-  if ('mrmash' %in% method){
-    if (verbose){print('Running mrmash')}
-    mrmash_mod = multivariate_mrmash(X = X,
-                                     Y = Y,
-                                     nfolds = nfolds,
-                                     verbose = verbose,
-                                     tx_names = tx_names,
-                                     par = par,
-                                     n.cores = n.cores,
-                                     seed = seed)
-    all_models = rlist::list.append(all_models,mrmash_mod)
-    r2_mat[,'mrmash'] = sapply(mrmash_mod,
-                               function(x) x$R2)
-  }
+  # # MR MASH
+  # if ('mrmash' %in% method){
+  #   if (verbose){print('Running mrmash')}
+  #   mrmash_mod = multivariate_mrmash(X = X,
+  #                                    Y = Y,
+  #                                    nfolds = nfolds,
+  #                                    verbose = verbose,
+  #                                    tx_names = tx_names,
+  #                                    par = par,
+  #                                    n.cores = n.cores,
+  #                                    seed = seed)
+  #   all_models = rlist::list.append(all_models,mrmash_mod)
+  #   r2_mat[,'mrmash'] = sapply(mrmash_mod,
+  #                              function(x) x$R2)
+  # }
 
   # SPLS
   if ('spls' %in% method){
@@ -262,21 +256,21 @@ compute_isotwas <- function(X,
                                    function(x) x$R2)
   }
 
-  # MVSUSIE
-  if ('mvsusie' %in% method){
-    if (verbose){print('Running mvsusie')}
-    mmbr_mod = multivariate_mmbr(X = X,
-                                 Y = Y,
-                                 nfolds = nfolds,
-                                 verbose = verbose,
-                                 tx_names = tx_names,
-                                 seed = seed,
-                                 par = par,
-                                 n.cores = n.cores)
-    all_models = rlist::list.append(all_models,mmbr_mod)
-    r2_mat[,'mvsusie'] = sapply(mmbr_mod,
-                               function(x) x$R2)
-  }
+  # # MVSUSIE
+  # if ('mvsusie' %in% method){
+  #   if (verbose){print('Running mvsusie')}
+  #   mmbr_mod = multivariate_mmbr(X = X,
+  #                                Y = Y,
+  #                                nfolds = nfolds,
+  #                                verbose = verbose,
+  #                                tx_names = tx_names,
+  #                                seed = seed,
+  #                                par = par,
+  #                                n.cores = n.cores)
+  #   all_models = rlist::list.append(all_models,mmbr_mod)
+  #   r2_mat[,'mvsusie'] = sapply(mmbr_mod,
+  #                              function(x) x$R2)
+  # }
 
 
   if ('finemap' %in% method){
