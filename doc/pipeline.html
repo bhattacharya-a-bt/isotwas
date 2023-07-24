@@ -372,7 +372,11 @@ expression matrix is log-transformed and residualized by covariates that
 are normally used in a QTL analysis (i.e., age, sex, principal
 components of the genotype matrix, <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3398141/">PEER
 factors</a> or <a href="https://pubmed.ncbi.nlm.nih.gov/23874524/">hidden covariates with
-prior</a> for the full expression matrix).</p>
+prior</a> for the full expression matrix). In order to ensure maximal
+overlap between the model and the GWAS we will eventually use for trait
+mapping, we suggest restricting the SNPs in the QTL panel to only those
+present in the LD reference panel or to those annotated by the <a href="https://www.nature.com/articles/nature02168">HapMap3 Project</a>.
+This will ensure proper standard error calculations.</p>
 <p>For this vignette about training an model, we’ll use some toy genetic
 and transcriptomic data provided.</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>train_bed <span class="ot">=</span> <span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;train.bed&quot;</span>, <span class="at">package =</span> <span class="st">&quot;isotwas&quot;</span>)</span>

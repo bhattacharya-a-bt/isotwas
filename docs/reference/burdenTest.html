@@ -65,6 +65,8 @@ carries out the weighted burden Z-test for a trait</p>
 <span>  <span class="va">pos</span>,</span>
 <span>  <span class="va">a1</span>,</span>
 <span>  <span class="va">a2</span>,</span>
+<span>  a1_mod <span class="op">=</span> <span class="st">"ALT"</span>,</span>
+<span>  a2_mod <span class="op">=</span> <span class="st">"REF"</span>,</span>
 <span>  snpName <span class="op">=</span> <span class="st">"SNP"</span>,</span>
 <span>  Z <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  beta <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -109,6 +111,14 @@ carries out the weighted burden Z-test for a trait</p>
 
 <dt>a2</dt>
 <dd><p>character, colnames in sumStats that keeps the REF allele</p></dd>
+
+
+<dt>a1_mod</dt>
+<dd><p>character, colnames in model that keeps the ALT allele</p></dd>
+
+
+<dt>a2_mod</dt>
+<dd><p>character, colnames in model that keeps the REF allele</p></dd>
 
 
 <dt>snpName</dt>

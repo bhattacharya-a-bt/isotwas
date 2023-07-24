@@ -1,0 +1,436 @@
+---
+title: "Run isoTWAS associations"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,warning = FALSE)
+```
+
+This module will cover how to use functions from `isotwas` to map isoform-level trait associations using a two-step testing framework. Then, we will run probabilistic fine-mapping to account of linkage disequilibrium (LD) in a locus with overlapping isoforms that are associated with a trait. Along the way, we'll be covering some practical considerations for computation and feature selection.
+
+For this, you will need:
+
+1.  a set of isoTWAS models,
+
+2.  an appropriate LD reference panel, and
+
+3.  GWAS summary statistics for your trait of interest.
+
+Let's talk a little about each of these three components.
+
+## Pre-computed models and LD matrix
+
+You can always use your own set of models that you have trained on your own isoform expression QTL data (paired genotype and RNA-seq data). For convenience, we have trained and made publicly available isoTWAS models for 48 tissues from the [Genotype-Tissue Expression Project (GTEx)](https://gtexportal.org/home/), adult brain cortex from [PsychENCODE](https://www.nimhgenetics.org/resources/psychencode) and [AMP-AD](https://www.nia.nih.gov/research/amp-ad), and developmental brain cortex from PsychENCODE. There are Zenodo repositories for the [GTEx](https://zenodo.org/record/8047940), [adult cortex](https://zenodo.org/record/8048198), and [developmental cortex](https://zenodo.org/record/8048137) models. Please cite our manuscript and the associated Zenodo DOI if you use these models.
+
+To download an entire Zenodo repository, you may use the Python package `Zenodo_get` (<https://zenodo.org/record/1261813>). To install and use, here are some sample commands to directly download all of the adult cortex repository off Zenodo:
+
+```{bash eval=FALSE}
+pip install zenodo-get
+zenodo_get 8048198
+```
+
+In this tutorial, we are only using isoTWAS models for 3 genes: *CDC42* (*ENSG00000070831*), *WNT4* (*ENSG00000162552*), and *CDC42-IT1* (*ENSG00000230068*). Let's take a look at what the models look like, which are saved as `.RDS` files.
+
+```{r lookmod}
+model_test = readRDS(system.file("extdata",
+                                 "ENSG00000070831_isoTWAS.RDS",
+                                 package = "isotwas"))
+head(model_test)
+```
+
+If you train your own models, ensure that your model files contain columns for the:
+
+1.  isoform name,
+
+2.  SNP name or rsID,
+
+3.  chromosome of the SNP,
+
+4.  position of the SNP,
+
+5.  alternative allele,
+
+6.  reference allele, and
+
+7.  the predictive weight for the isoform.
+
+For reference, our models include the genome build on which the model was trained, so users can align their GWAS to the models based on genome build.
+
+We also include in-sample LD matrices for each isoTWAS model. These are simply `.RDS` files that contain a square matrix with the LD between the SNPs in the correspondin row and column.
+
+```{r lookLD}
+LD_test = readRDS(system.file("extdata",
+                                 "ENSG00000070831_LDMatrix.RDS",
+                                 package = "isotwas"))
+head(as.matrix(LD_test)[,1:10])
+```
+
+Note that the column and row names for the matrix correspond to the rsIDs in the model.
+
+[**Practical consideration**]{.underline}: In many settings, you will not have a corresponding file that contains the LD matrix for the SNPs at the locus. In this case, we suggest either one of two approaches. First, you can generate the LD matrix from the data where the model was trained, if you have access to the individual-level genotypes for this data. Alternatively, you can use an LD reference panel that is well-aligned to the genetic ancestry of the training dataset. This LD reference panel is usually [1000 Genomes](https://www.internationalgenome.org/), since it's publicly available. You can use `bigsnpr::snp_cor` or `bigsnpr::bed_cor` to generate similar-looking LD matrices, given you have the PLINK style files (`.bed`/`.bim`/`.fam`) for the LD reference.
+
+## Preparing the GWAS summary statistics
+
+The last file you will need is the GWAS summary statistics for your trait of interest. In this tutorial, we are using the GWAS summary statistics for schizophrenia, made available by the Psychiatric Genomics Consortium. We are specifically using the GWAS summary statistics from European-ancestry individual. You can find these files here: <https://figshare.com/articles/dataset/scz2022/19426775>.
+
+Since GWAS summary statistics often have varied column names, we use a munging script to clean the data. In addition, we subset the GWAS summary statistics to only SNPs annotated in [HapMap3](https://www.nature.com/articles/nature02168) to ensure that there is maximal overlap. This munging script is available [here](https://github.com/bhattacharya-a-bt/isotwas_manu_scripts/blob/98a76279037003e0e30de964b26fe7d5a49961df/Real%20Data/Association%20Testing/MungeSumStats/Snakefile), courtesy of Michael Margolis.
+
+In this tutorial, we have subsetted only to the SNPs that are within the *SCN2A*/*SCN3A* locus. Let's take a look at this munged file.
+
+```{r lookGWAS}
+gwas = read.table(system.file("extdata",
+                              "tutorial_SCZ_2022.hm3_filter.sumstats.gz",
+                              package = "isotwas"),
+                  header=T)
+head(gwas)
+```
+
+This munged summary statistics table has only 5 columns:
+
+1.  The SNP rsID,
+
+2.  the alternative allele,
+
+3.  the reference allele,
+
+4.  the Z-score (beta value divided by standard error) for the GWAS association, and
+
+5.  the effective sample size.
+
+We advise you use the munging script to format your summary statistics files. At the very least, please ensure that your summary statistics file contains a column for the SNP identifier, the alternative allele, and either the Z-score or the beta value and standard error for each SNP.
+
+## Generating nominal Z-scores
+
+The first step for isoTWAS trait-mapping is to generate the isoform-level Z-scores using the weighted burden test. In general, you'll have a vector of gene names with corresponding isoTWAS model files and/or LD files. The following code snippet loops through this vector of genes, reads in the model file and LD file, and then computes a Z-score for each isoform of the gene that was well-predicted in cross-validation.
+
+```{r burdenTest}
+gene_names = c('ENSG00000070831',
+               'ENSG00000162552',
+               'ENSG00000230068')
+out_df = data.frame(Gene = c(),
+                    Feature = c(),
+                    Z = c(),
+                    P = c(),
+                    permute.P = c(),
+                    topSNP = c(),
+                    topSNP.P = c())
+
+for (gene in gene_names){
+  
+  model = readRDS(system.file("extdata",
+                              paste0(gene,"_isoTWAS.RDS"),
+                              package = "isotwas"))
+  ld = readRDS(system.file("extdata",
+                           paste0(gene,"_LDMatrix.RDS"),
+                           package = "isotwas"))
+  
+  for (tx in unique(model$Feature)){
+    
+    sumstats.cur = subset(gwas,SNP %in% subset(model, Feature == tx)$SNP)
+    tx_df = isotwas::burdenTest(mod = subset(model, Feature == tx),
+                       ld = ld,
+                       gene = gene,
+                       sumStats = sumstats.cur,
+                       chr = 'Chromosome',
+                       pos = 'Position',
+                       a1 = 'A1',
+                       a2 = 'A2',
+                       a1_mod = 'ALT',
+                       a2_mod = 'REF',
+                       snpName = 'SNP',
+                       Z = 'Z',
+                       beta = NULL,
+                       se = NULL,
+                       featureName = 'Feature',
+                       R2cutoff = .01,
+                       alpha = 1e-3,
+                       nperms = 1000,
+                       usePos = F)
+    out_df = rbind(out_df,tx_df)
+    
+  }
+}
+
+head(out_df)
+```
+
+The `out_df` variable contains a data frame with 7 columns:
+
+1.  the gene name,
+
+2.  the isoform name,
+
+3.  the isoform-level Z-score for the trait association,
+
+4.  the P-value corresponding to this Z-score,
+
+5.  the permutation P-value (more on this below),
+
+6.  the top SNP based on GWAS P-value within 1 Mb of the gene locus,
+
+7.  and the P-value corresponding to this GWAS SNP.
+
+The permutation test test assesses how much signal is added by isoform expression, given the GWAS architecture of the locus, and controls for large LD blocks. We shuffle the SNP-to-isoform weights to generate a null distribution and use this null to generate the permutation P-value. We only run this permutation test if the nominal P-value from the isoform-level Z-score is less than `alpha`, as defined in the `burdenTest` function.
+
+## Stage-wise hypothesis test
+
+`isoTWAS` employs a two-step testing framework. First, we control from false discovery rate (FDR) across gene families, using either Benjamini-Hochberg FDR control (recommended) or Bonferroni. Next, for genes that pass FDR control (adjusted P-values for the genes are lower than our defined significance threshold), we drop down to the isoform level and run family-wise error rate (FWER) control using Shaffer's modified sequentially rejective Bonferroni procedure. Here, we are controlling both the FDR (`alpha1`) and FWER (`alpha2`) to 0.05.
+
+Let's run the first stage now: gene-level FDR control.
+
+```{r stage1}
+suppressPackageStartupMessages(require(tidyverse))
+gene = out_df %>%
+  group_by(Gene) %>%
+  summarise(Screen.P = isotwas::p_screen(P))
+gene = as.data.frame(gene)
+head(gene)
+
+alpha1=.05
+G = nrow(gene)
+gene$Screen.P.Adjusted = p.adjust(gene$Screen.P,method = 'fdr')
+R = length(unique(gene$Gene[gene$Screen.P.Adjusted < alpha1]))
+alpha2 = (R*alpha1)/G
+print(gene)
+```
+
+We see that, on the gene-level, all 3 genes pass FDR control. That is, we see that the adjusted screening P-value is less than 0.05 for all 3 genes. Now, we have to drop down to the isoform level for all 3 genes.
+
+Let's run the second stage: isoform-level FWER control for these gene families.
+
+```{r stage2}
+isoform_new = as.data.frame(matrix(nrow = 0,
+                                   ncol = ncol(out_df)+2))
+colnames(isoform_new) = c(colnames(out_df),'Screen.P','Confirmation.P')
+gene = gene[order(gene$Screen.P),]
+ttt = merge(out_df,
+            gene[,c('Gene','Screen.P',
+                    'Screen.P.Adjusted')],
+            by = 'Gene')
+  
+isoform_new = ttt %>%
+  group_by(Gene) %>%
+  summarise(Feature = Feature,
+            Confirmation.P = isotwas::p_confirm(P,alpha = alpha2))
+isoform_new = merge(isoform_new,ttt,by=c('Gene','Feature'))
+isoform_new$Confirmation.P = ifelse(isoform_new$Screen.P.Adjusted < 0.05,
+                                    isoform_new$Confirmation.P,
+                                    1)
+isoform_new = isoform_new[,c('Gene','Feature','Z','P','permute.P',
+                             'topSNP','topSNP.P',
+                             'Screen.P','Screen.P.Adjusted','Confirmation.P')]
+print(isoform_new)
+print(subset(isoform_new,Screen.P.Adjusted < alpha1 &
+               Confirmation.P < alpha2 &
+               permute.P < 0.05))
+```
+
+We have now generated screening gene-level FDR-adjusted P-values and confirmation isoform-level FWER controlled P-values. We see that there are 3 isoforms at this locus that pass all 3 levels of hypothesis testing: screening FDR-adjusted P \< 0.05, confirmation FWER-adjusted P \< 0.05, and nominal permutation P \< 0.05. These isoforms are ENST00000400259 (gene: *ENSG00000070831*), ENST00000290167 (gene: *ENSG00000162552*), and ENST00000431803 (gene: *ENSG00000230068*).
+
+## Fine-mapping overlapping and trait-associated isoforms
+
+Since these two isoforms overlap and likely share LD-linked SNPs that predict each isoform, we can't be sure which of the three isoforms are likely to be carrying the trait association signal. In short, we account of the correlations between the genetically-predicted portions of the expression of these isoforms, enumerate the possible causal configurations, and use a Bayesian approach to generate a posterior inclusion probability (PIP) for each isoform. These PIPs can be used to generate a 90% credible set of isoforms that best explain the trait association at the locus. See [Mancuso et al's manuscript](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6619422/) about gene-level fine-mapping for more of the intuition and mathematical details.
+
+For fine-mapping, you no longer need the GWAS summary statistics. You will need:
+
+1.  TWAS summary statistics (something that looks like `isoform_new`),
+
+2.  the isoTWAS models, and
+
+3.  an LD reference panel.
+
+Here, you need to make sure the LD reference matrix contains **all SNPs that are in all models for all isoforms in the overlapping locus**. If you do not have the in-sample individual-level genotypes, we recommend using 1000 Genomes. For ease in this tutorial, we have compiled the necessary LD matrix.
+
+First, we annotate each isoform with location and select the significantly associated isoforms that are within 1 Mb of one another.
+
+```{r subsetToOverlap}
+suppressPackageStartupMessages(require(biomaRt))
+gene_names = unique(isoform_new$Gene)
+ensembl <- useEnsembl(biomart = "ensembl", 
+                   dataset = "hsapiens_gene_ensembl", 
+                   mirror = "useast")
+bm = getBM(attributes = c('ensembl_gene_id', 
+                          'chromosome_name',
+                          'start_position',
+                          'end_position'),
+      filters = 'ensembl_gene_id',
+      values = gene_names, 
+      mart = ensembl)
+colnames(bm) = c('Gene','Chromosome','Start','End')
+isoform_new = merge(bm,isoform_new,by='Gene')
+
+isoform_new = isoform_new[order(isoform_new$Chromosome,
+                                isoform_new$Start,
+                                decreasing = F),]
+isoform_sig = subset(isoform_new,
+                     Screen.P.Adjusted < alpha1 &
+                       Confirmation.P < alpha2 &
+                       permute.P < 0.05)
+
+keep.isoform = c()
+if (nrow(isoform_sig) > 1){
+      for (i in 1:(nrow(isoform_sig)-1)){
+        if (isoform_sig$End[i] > isoform_sig$Start[i+1] - 1e6){
+          keep.isoform = unique(c(keep.isoform,
+                              c(isoform_sig$Feature[c(i,i+1)])))
+        }
+      }
+  }
+isoform_sig = subset(isoform_sig,Feature %in% keep.isoform)
+```
+
+Significant isoforms that do not overlap within 1 Mb of another significant isoform do not need to be fine-mapped.
+
+Now, we aggregate the models and generate a single table with the SNP-to-isoform weights of all the SNPs that predict these overlapping isoforms.
+
+```{r aggregateModels}
+all.snps = c()
+omega = c()
+pos = c()
+gene = c()
+snp.chr = c()
+
+### COLLECT WEIGHTS FOR SNPS IN THE MODELS
+for (i in 1:nrow(isoform_sig)){
+  gene_in = isoform_sig$Gene[i]
+  model_in = readRDS(system.file("extdata",
+                              paste0(gene_in,"_isoTWAS.RDS"),
+                              package = "isotwas"))
+  model_in = subset(model_in,
+                    Feature == isoform_sig$Feature[i])
+  Model = data.frame(SNP = model_in$SNP,
+                     Chromosome = model_in$Chromosome,
+                     Position = model_in$Position,
+                     Effect = model_in$Weight,
+                     A1 = model_in$ALT,
+                     A2 = model_in$REF)
+  Model = subset(Model,Effect!=0)
+  Model = Model[!duplicated(Model$SNP),]
+  all.snps = c(all.snps,
+               as.character(Model$SNP))
+  omega = c(omega,
+            as.numeric(Model$Effect))
+  gene = c(gene,
+           rep(isoform_sig$Feature[i],nrow(Model)))
+  snp.chr = c(snp.chr,
+              as.numeric(Model$Chromosome))
+  pos = c(pos,as.numeric(Model$Position))
+}
+
+tot.df = data.frame(SNP = all.snps,
+                    Gene = gene,
+                    Effect = omega,
+                    Chromosome = snp.chr)
+
+model.df = as.data.frame(matrix(nrow = length(unique(all.snps)),
+                                ncol = nrow(isoform_sig)+1))
+colnames(model.df) = c('SNP',isoform_sig$Feature)
+model.df$SNP = as.character(unique(all.snps))
+
+for (q in 1:nrow(isoform_sig)){
+  cur.tot.df = subset(tot.df,Gene == isoform_sig$Feature[q])
+  cur.tot.df$SNP = as.character(cur.tot.df$SNP)
+  for (i in 1:nrow(model.df)){
+    w = which(cur.tot.df$SNP == model.df$SNP[i])
+    model.df[i,q+1] = ifelse(length(w) != 0,
+                             cur.tot.df$Effect[w],
+                             0)
+  }
+}
+
+model.df$Chromosome = 2
+for (i in 1:nrow(model.df)){
+  rrr = subset(tot.df,SNP == model.df$SNP[i])
+  model.df$Chromosome[i] = rrr$Chromosome[1]
+}
+
+head(model.df)
+```
+
+This step generates a data frame in `model.df` that includes all SNPs in both isoTWAS models at the locus and their effect (non-zero or otherwise) on each isoforms we are fine-mapping at the locus.
+
+Now, we obtain our LD matrix for the SNPs in `model.df$SNP`
+
+```{r grabLD}
+V = readRDS(system.file("extdata",
+                        "test_LD_finemapping.RDS",
+                        package = "isotwas"))
+```
+
+Now, we run the fine-mapping process in the following steps: (1) compute the correlation between the genetically-predicted expression of the isoforms, (2) enumerate the causal configurations, (3) compute marginal likelihoods and Bayes factors for each isoform, and (4) compute posterior inclusion probabilities and credible sets.
+
+```{r finemapping}
+V = V[model.df$SNP,model.df$SNP]
+Omega = Matrix::Matrix(as.matrix(model.df[,-c(1,ncol(model.df))]))
+zscores = isoform_sig$Z
+m = length(zscores)
+
+### COMPUTE LD BETWEEN TX ON THE GENETIC LEVEL
+wcor = isotwas::estimate_cor(as.matrix(Omega),
+                             as.matrix(V),
+                             intercept=T)[[1]]
+diag(wcor) = 1
+wcor[is.na(wcor)] = 0
+
+### COMPUTE LD INTERCEPT BETWEEN ISOFRM ON THE GENETIC LEVEL
+swld = isotwas::estimate_cor(as.matrix(Omega),
+                             as.matrix(V),
+                             intercept=T)[[2]]
+        
+null_res = m * log(1 - 1e-3)
+marginal = m * log(1 - 1e-3)
+comb_list = list()
+for (n in 1:min(3,length(zscores))){
+  comb_list = c(comb_list,
+                combn(1:length(zscores),n,simplify=F))
+  }
+
+pips = rep(0,length(zscores))
+
+### COMPUTE BAYES FACTORS/LIKELIHOOD AT EACH CAUSAL CONFIG
+for (j in 1:length(comb_list)){
+  subset = comb_list[[j]]
+  local = isotwas::bayes_factor(zscores,
+                                idx_set = subset,
+                                wcor = wcor)
+  
+  marginal = log(exp(local) + exp(marginal))
+  for (idx in subset){
+    if (pips[idx] == 0){
+      pips[idx] = local
+      } else {
+        pips[idx] = log(exp(pips[idx]) + exp(local))
+      }
+  }
+  }
+
+pips = exp(pips - marginal)
+null_res = exp(null_res - marginal)
+isoform_sig$pip = pips
+isoform_sig = isoform_sig[order(isoform_sig$pip,decreasing = T),]
+npost = isoform_sig$pip/sum(isoform_sig$pip)
+csum = cumsum(npost)
+isoform_sig$in_cred_set = F
+
+for (i in 1:nrow(isoform_sig)){
+  isoform_sig$in_cred_set[i] = T
+  if (i > 1){
+    if (csum[i] > .9 & csum[i-1] < .9){
+      isoform_sig$in_cred_set[i] = T
+    }
+    if (csum[i] < .9){
+      isoform_sig$in_cred_set[i] = T
+    }
+    if (csum[i] > .9 & csum[i-1] > .9){
+      isoform_sig$in_cred_set[i] = F
+      }
+  }
+}
+
+print(isoform_sig)
+```
+
+As you can see, ENST00000431803 and ENST00000290167 have `PIP = 1` and are both in the 90% credible set (`in_cred_set` column).
+
+Full scripts for association testing genome-wide are available [here](https://github.com/bhattacharya-a-bt/isotwas_manu_scripts).
