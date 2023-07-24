@@ -71,13 +71,7 @@ for (gene in gene_names){
 head(out_df)
 
 ## ----stage1-------------------------------------------------------------------
-if (!require("tidyverse", quietly = TRUE)){
-    install.packages("tidyverse",
-                     repos = 'https://archive.linux.duke.edu/cran/',
-                     dependencies = T)
-  }
-
-library(tidyverse)
+suppressPackageStartupMessages(library(tidyverse))
 gene = out_df %>%
   group_by(Gene) %>%
   summarise(Screen.P = isotwas::p_screen(P))
@@ -117,20 +111,26 @@ print(subset(isoform_new,Screen.P.Adjusted < alpha1 &
                Confirmation.P < alpha2 &
                permute.P < 0.05))
 
+## ----biomart, eval=F----------------------------------------------------------
+#  suppressPackageStartupMessages(require(biomaRt))
+#  gene_names = unique(isoform_new$Gene)
+#  ensembl <- useEnsembl(biomart = "ensembl",
+#                     dataset = "hsapiens_gene_ensembl",
+#                     mirror = "useast")
+#  bm = getBM(attributes = c('ensembl_gene_id',
+#                            'chromosome_name',
+#                            'start_position',
+#                            'end_position'),
+#        filters = 'ensembl_gene_id',
+#        values = gene_names,
+#        mart = ensembl)
+#  colnames(bm) = c('Gene','Chromosome','Start','End')
+
 ## ----subsetToOverlap----------------------------------------------------------
-suppressPackageStartupMessages(require(biomaRt))
-gene_names = unique(isoform_new$Gene)
-ensembl <- useEnsembl(biomart = "ensembl", 
-                   dataset = "hsapiens_gene_ensembl", 
-                   mirror = "useast")
-bm = getBM(attributes = c('ensembl_gene_id', 
-                          'chromosome_name',
-                          'start_position',
-                          'end_position'),
-      filters = 'ensembl_gene_id',
-      values = gene_names, 
-      mart = ensembl)
-colnames(bm) = c('Gene','Chromosome','Start','End')
+bm = data.frame(Gene = c('ENSG00000070831','ENSG00000162552','ENSG00000230068'),
+                Chromosome = 1,
+                Start = c(22052627,22117313,22059197),
+                End = c(22101360,22143969,22064199))
 isoform_new = merge(bm,isoform_new,by='Gene')
 
 isoform_new = isoform_new[order(isoform_new$Chromosome,

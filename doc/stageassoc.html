@@ -544,13 +544,13 @@ cross-validation.</p>
 <span id="cb8-46"><a href="#cb8-46" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb8-47"><a href="#cb8-47" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb8-48"><a href="#cb8-48" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(out_df)</span></code></pre></div>
-<pre><code>##              Gene         Feature         Z            P  permute.P     topSNP
-## 1 ENSG00000070831 ENST00000344548 -3.239210 0.0011986108 1.00000000  rs2143103
-## 2 ENSG00000070831 ENST00000315554  1.268410 0.2046514827 1.00000000 rs11582542
-## 3 ENSG00000070831 ENST00000656825  3.268385 0.0010816323 1.00000000 rs11582542
-## 4 ENSG00000070831 ENST00000498236 -2.906460 0.0036554386 1.00000000 rs11582542
-## 5 ENSG00000070831 ENST00000400259  3.344840 0.0008232993 0.01098901 rs11582542
-## 6 ENSG00000070831 ENST00000667384  0.575199 0.5651567515 1.00000000 rs11582542
+<pre><code>##              Gene         Feature         Z            P   permute.P     topSNP
+## 1 ENSG00000070831 ENST00000344548 -3.239210 0.0011986108 1.000000000  rs2143103
+## 2 ENSG00000070831 ENST00000315554  1.268410 0.2046514827 1.000000000 rs11582542
+## 3 ENSG00000070831 ENST00000656825  3.268385 0.0010816323 1.000000000 rs11582542
+## 4 ENSG00000070831 ENST00000498236 -2.906460 0.0036554386 1.000000000 rs11582542
+## 5 ENSG00000070831 ENST00000400259  3.344840 0.0008232993 0.006993007 rs11582542
+## 6 ENSG00000070831 ENST00000667384  0.575199 0.5651567515 1.000000000 rs11582542
 ##       topSNP.P
 ## 1 0.0004331767
 ## 2 0.0003396706
@@ -590,35 +590,22 @@ Shaffer’s modified sequentially rejective Bonferroni procedure. Here, we
 are controlling both the FDR (<code>alpha1</code>) and FWER
 (<code>alpha2</code>) to 0.05.</p>
 <p>Let’s run the first stage now: gene-level FDR control.</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">require</span>(<span class="st">&quot;tidyverse&quot;</span>, <span class="at">quietly =</span> <span class="cn">TRUE</span>)){</span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">install.packages</span>(<span class="st">&quot;tidyverse&quot;</span>,</span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>                     <span class="at">repos =</span> <span class="st">&#39;https://archive.linux.duke.edu/cran/&#39;</span>,</span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>                     <span class="at">dependencies =</span> T)</span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  }</span></code></pre></div>
-<pre><code>## ── Attaching packages ─────────────────────────────────────── tidyverse 1.3.2 ──
-## ✔ ggplot2 3.4.2     ✔ purrr   1.0.1
-## ✔ tibble  3.2.1     ✔ dplyr   1.1.2
-## ✔ tidyr   1.3.0     ✔ stringr 1.5.0
-## ✔ readr   2.1.3     ✔ forcats 1.0.0
-## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
-## ✖ dplyr::filter() masks stats::filter()
-## ✖ dplyr::lag()    masks stats::lag()</code></pre>
-<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>gene <span class="ot">=</span> out_df <span class="sc">%&gt;%</span></span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(Gene) <span class="sc">%&gt;%</span></span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">Screen.P =</span> isotwas<span class="sc">::</span><span class="fu">p_screen</span>(P))</span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>gene <span class="ot">=</span> <span class="fu">as.data.frame</span>(gene)</span>
-<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(gene)</span></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">suppressPackageStartupMessages</span>(<span class="fu">library</span>(tidyverse))</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>gene <span class="ot">=</span> out_df <span class="sc">%&gt;%</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(Gene) <span class="sc">%&gt;%</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">Screen.P =</span> isotwas<span class="sc">::</span><span class="fu">p_screen</span>(P))</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>gene <span class="ot">=</span> <span class="fu">as.data.frame</span>(gene)</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(gene)</span></code></pre></div>
 <pre><code>##              Gene     Screen.P
 ## 1 ENSG00000070831 0.0016636386
 ## 2 ENSG00000162552 0.0008302377
 ## 3 ENSG00000230068 0.0004539979</code></pre>
-<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>alpha1<span class="ot">=</span>.<span class="dv">05</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>G <span class="ot">=</span> <span class="fu">nrow</span>(gene)</span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>gene<span class="sc">$</span>Screen.P.Adjusted <span class="ot">=</span> <span class="fu">p.adjust</span>(gene<span class="sc">$</span>Screen.P,<span class="at">method =</span> <span class="st">&#39;fdr&#39;</span>)</span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>R <span class="ot">=</span> <span class="fu">length</span>(<span class="fu">unique</span>(gene<span class="sc">$</span>Gene[gene<span class="sc">$</span>Screen.P.Adjusted <span class="sc">&lt;</span> alpha1]))</span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>alpha2 <span class="ot">=</span> (R<span class="sc">*</span>alpha1)<span class="sc">/</span>G</span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(gene)</span></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>alpha1<span class="ot">=</span>.<span class="dv">05</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>G <span class="ot">=</span> <span class="fu">nrow</span>(gene)</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>gene<span class="sc">$</span>Screen.P.Adjusted <span class="ot">=</span> <span class="fu">p.adjust</span>(gene<span class="sc">$</span>Screen.P,<span class="at">method =</span> <span class="st">&#39;fdr&#39;</span>)</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>R <span class="ot">=</span> <span class="fu">length</span>(<span class="fu">unique</span>(gene<span class="sc">$</span>Gene[gene<span class="sc">$</span>Screen.P.Adjusted <span class="sc">&lt;</span> alpha1]))</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>alpha2 <span class="ot">=</span> (R<span class="sc">*</span>alpha1)<span class="sc">/</span>G</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(gene)</span></code></pre></div>
 <pre><code>##              Gene     Screen.P Screen.P.Adjusted
 ## 1 ENSG00000070831 0.0016636386       0.001663639
 ## 2 ENSG00000162552 0.0008302377       0.001245357
@@ -629,40 +616,40 @@ is, we see that the adjusted screening P-value is less than 0.05 for all
 genes.</p>
 <p>Let’s run the second stage: isoform-level FWER control for these gene
 families.</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>isoform_new <span class="ot">=</span> <span class="fu">as.data.frame</span>(<span class="fu">matrix</span>(<span class="at">nrow =</span> <span class="dv">0</span>,</span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>                                   <span class="at">ncol =</span> <span class="fu">ncol</span>(out_df)<span class="sc">+</span><span class="dv">2</span>))</span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(isoform_new) <span class="ot">=</span> <span class="fu">c</span>(<span class="fu">colnames</span>(out_df),<span class="st">&#39;Screen.P&#39;</span>,<span class="st">&#39;Confirmation.P&#39;</span>)</span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>gene <span class="ot">=</span> gene[<span class="fu">order</span>(gene<span class="sc">$</span>Screen.P),]</span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>ttt <span class="ot">=</span> <span class="fu">merge</span>(out_df,</span>
-<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>            gene[,<span class="fu">c</span>(<span class="st">&#39;Gene&#39;</span>,<span class="st">&#39;Screen.P&#39;</span>,</span>
-<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>                    <span class="st">&#39;Screen.P.Adjusted&#39;</span>)],</span>
-<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>            <span class="at">by =</span> <span class="st">&#39;Gene&#39;</span>)</span>
-<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>isoform_new <span class="ot">=</span> ttt <span class="sc">%&gt;%</span></span>
-<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(Gene) <span class="sc">%&gt;%</span></span>
-<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">Feature =</span> Feature,</span>
-<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>            <span class="at">Confirmation.P =</span> isotwas<span class="sc">::</span><span class="fu">p_confirm</span>(P,<span class="at">alpha =</span> alpha2))</span></code></pre></div>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>isoform_new <span class="ot">=</span> <span class="fu">as.data.frame</span>(<span class="fu">matrix</span>(<span class="at">nrow =</span> <span class="dv">0</span>,</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>                                   <span class="at">ncol =</span> <span class="fu">ncol</span>(out_df)<span class="sc">+</span><span class="dv">2</span>))</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(isoform_new) <span class="ot">=</span> <span class="fu">c</span>(<span class="fu">colnames</span>(out_df),<span class="st">&#39;Screen.P&#39;</span>,<span class="st">&#39;Confirmation.P&#39;</span>)</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>gene <span class="ot">=</span> gene[<span class="fu">order</span>(gene<span class="sc">$</span>Screen.P),]</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>ttt <span class="ot">=</span> <span class="fu">merge</span>(out_df,</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>            gene[,<span class="fu">c</span>(<span class="st">&#39;Gene&#39;</span>,<span class="st">&#39;Screen.P&#39;</span>,</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>                    <span class="st">&#39;Screen.P.Adjusted&#39;</span>)],</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>            <span class="at">by =</span> <span class="st">&#39;Gene&#39;</span>)</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>isoform_new <span class="ot">=</span> ttt <span class="sc">%&gt;%</span></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(Gene) <span class="sc">%&gt;%</span></span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">Feature =</span> Feature,</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>            <span class="at">Confirmation.P =</span> isotwas<span class="sc">::</span><span class="fu">p_confirm</span>(P,<span class="at">alpha =</span> alpha2))</span></code></pre></div>
 <pre><code>## `summarise()` has grouped output by &#39;Gene&#39;. You can override using the
 ## `.groups` argument.</code></pre>
-<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>isoform_new <span class="ot">=</span> <span class="fu">merge</span>(isoform_new,ttt,<span class="at">by=</span><span class="fu">c</span>(<span class="st">&#39;Gene&#39;</span>,<span class="st">&#39;Feature&#39;</span>))</span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>isoform_new<span class="sc">$</span>Confirmation.P <span class="ot">=</span> <span class="fu">ifelse</span>(isoform_new<span class="sc">$</span>Screen.P.Adjusted <span class="sc">&lt;</span> <span class="fl">0.05</span>,</span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>                                    isoform_new<span class="sc">$</span>Confirmation.P,</span>
-<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>                                    <span class="dv">1</span>)</span>
-<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>isoform_new <span class="ot">=</span> isoform_new[,<span class="fu">c</span>(<span class="st">&#39;Gene&#39;</span>,<span class="st">&#39;Feature&#39;</span>,<span class="st">&#39;Z&#39;</span>,<span class="st">&#39;P&#39;</span>,<span class="st">&#39;permute.P&#39;</span>,</span>
-<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>                             <span class="st">&#39;topSNP&#39;</span>,<span class="st">&#39;topSNP.P&#39;</span>,</span>
-<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>                             <span class="st">&#39;Screen.P&#39;</span>,<span class="st">&#39;Screen.P.Adjusted&#39;</span>,<span class="st">&#39;Confirmation.P&#39;</span>)]</span>
-<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(isoform_new)</span></code></pre></div>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>isoform_new <span class="ot">=</span> <span class="fu">merge</span>(isoform_new,ttt,<span class="at">by=</span><span class="fu">c</span>(<span class="st">&#39;Gene&#39;</span>,<span class="st">&#39;Feature&#39;</span>))</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>isoform_new<span class="sc">$</span>Confirmation.P <span class="ot">=</span> <span class="fu">ifelse</span>(isoform_new<span class="sc">$</span>Screen.P.Adjusted <span class="sc">&lt;</span> <span class="fl">0.05</span>,</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>                                    isoform_new<span class="sc">$</span>Confirmation.P,</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>                                    <span class="dv">1</span>)</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>isoform_new <span class="ot">=</span> isoform_new[,<span class="fu">c</span>(<span class="st">&#39;Gene&#39;</span>,<span class="st">&#39;Feature&#39;</span>,<span class="st">&#39;Z&#39;</span>,<span class="st">&#39;P&#39;</span>,<span class="st">&#39;permute.P&#39;</span>,</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>                             <span class="st">&#39;topSNP&#39;</span>,<span class="st">&#39;topSNP.P&#39;</span>,</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>                             <span class="st">&#39;Screen.P&#39;</span>,<span class="st">&#39;Screen.P.Adjusted&#39;</span>,<span class="st">&#39;Confirmation.P&#39;</span>)]</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(isoform_new)</span></code></pre></div>
 <pre><code>##               Gene         Feature         Z            P   permute.P
 ## 1  ENSG00000070831 ENST00000315554  1.268410 0.2046514827 1.000000000
 ## 2  ENSG00000070831 ENST00000344548 -3.239210 0.0011986108 1.000000000
-## 3  ENSG00000070831 ENST00000400259  3.344840 0.0008232993 0.010989011
+## 3  ENSG00000070831 ENST00000400259  3.344840 0.0008232993 0.006993007
 ## 4  ENSG00000070831 ENST00000498236 -2.906460 0.0036554386 1.000000000
 ## 5  ENSG00000070831 ENST00000656825  3.268385 0.0010816323 1.000000000
 ## 6  ENSG00000070831 ENST00000662562 -3.278162 0.0010448529 1.000000000
 ## 7  ENSG00000070831 ENST00000667384  0.575199 0.5651567515 1.000000000
-## 8  ENSG00000162552 ENST00000290167 -3.441877 0.0005776926 0.047952048
+## 8  ENSG00000162552 ENST00000290167 -3.441877 0.0005776926 0.039960040
 ## 9  ENSG00000162552 ENST00000415567 -3.179540 0.0014750883 1.000000000
-## 10 ENSG00000230068 ENST00000431803 -3.506525 0.0004539979 0.005994006
+## 10 ENSG00000230068 ENST00000431803 -3.506525 0.0004539979 0.008991009
 ##        topSNP     topSNP.P     Screen.P Screen.P.Adjusted Confirmation.P
 ## 1  rs11582542 0.0003396706 0.0016636386       0.001663639   1.0000000000
 ## 2   rs2143103 0.0004331767 0.0016636386       0.001663639   0.0062691173
@@ -674,13 +661,13 @@ families.</p>
 ## 8  rs11582542 0.0003396706 0.0008302377       0.001245357   0.0005776926
 ## 9  rs11582542 0.0003396706 0.0008302377       0.001245357   0.0014750883
 ## 10 rs11582542 0.0003396706 0.0004539979       0.001245357   0.0000000000</code></pre>
-<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">subset</span>(isoform_new,Screen.P.Adjusted <span class="sc">&lt;</span> alpha1 <span class="sc">&amp;</span></span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>               Confirmation.P <span class="sc">&lt;</span> alpha2 <span class="sc">&amp;</span></span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>               permute.P <span class="sc">&lt;</span> <span class="fl">0.05</span>))</span></code></pre></div>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">subset</span>(isoform_new,Screen.P.Adjusted <span class="sc">&lt;</span> alpha1 <span class="sc">&amp;</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>               Confirmation.P <span class="sc">&lt;</span> alpha2 <span class="sc">&amp;</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>               permute.P <span class="sc">&lt;</span> <span class="fl">0.05</span>))</span></code></pre></div>
 <pre><code>##               Gene         Feature         Z            P   permute.P
-## 3  ENSG00000070831 ENST00000400259  3.344840 0.0008232993 0.010989011
-## 8  ENSG00000162552 ENST00000290167 -3.441877 0.0005776926 0.047952048
-## 10 ENSG00000230068 ENST00000431803 -3.506525 0.0004539979 0.005994006
+## 3  ENSG00000070831 ENST00000400259  3.344840 0.0008232993 0.006993007
+## 8  ENSG00000162552 ENST00000290167 -3.441877 0.0005776926 0.039960040
+## 10 ENSG00000230068 ENST00000431803 -3.506525 0.0004539979 0.008991009
 ##        topSNP     topSNP.P     Screen.P Screen.P.Adjusted Confirmation.P
 ## 3  rs11582542 0.0003396706 0.0016636386       0.001663639   0.0049397958
 ## 8  rs11582542 0.0003396706 0.0008302377       0.001245357   0.0005776926
@@ -721,107 +708,112 @@ overlapping locus</strong>. If you do not have the in-sample
 individual-level genotypes, we recommend using 1000 Genomes. For ease in
 this tutorial, we have compiled the necessary LD matrix.</p>
 <p>First, we annotate each isoform with location and select the
-significantly associated isoforms that are within 1 Mb of one
-another.</p>
-<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">suppressPackageStartupMessages</span>(<span class="fu">require</span>(biomaRt))</span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>gene_names <span class="ot">=</span> <span class="fu">unique</span>(isoform_new<span class="sc">$</span>Gene)</span>
-<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>ensembl <span class="ot">&lt;-</span> <span class="fu">useEnsembl</span>(<span class="at">biomart =</span> <span class="st">&quot;ensembl&quot;</span>, </span>
-<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>                   <span class="at">dataset =</span> <span class="st">&quot;hsapiens_gene_ensembl&quot;</span>, </span>
-<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>                   <span class="at">mirror =</span> <span class="st">&quot;useast&quot;</span>)</span>
-<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>bm <span class="ot">=</span> <span class="fu">getBM</span>(<span class="at">attributes =</span> <span class="fu">c</span>(<span class="st">&#39;ensembl_gene_id&#39;</span>, </span>
-<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>                          <span class="st">&#39;chromosome_name&#39;</span>,</span>
-<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>                          <span class="st">&#39;start_position&#39;</span>,</span>
-<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>                          <span class="st">&#39;end_position&#39;</span>),</span>
-<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>      <span class="at">filters =</span> <span class="st">&#39;ensembl_gene_id&#39;</span>,</span>
-<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>      <span class="at">values =</span> gene_names, </span>
-<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>      <span class="at">mart =</span> ensembl)</span>
-<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(bm) <span class="ot">=</span> <span class="fu">c</span>(<span class="st">&#39;Gene&#39;</span>,<span class="st">&#39;Chromosome&#39;</span>,<span class="st">&#39;Start&#39;</span>,<span class="st">&#39;End&#39;</span>)</span>
-<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a>isoform_new <span class="ot">=</span> <span class="fu">merge</span>(bm,isoform_new,<span class="at">by=</span><span class="st">&#39;Gene&#39;</span>)</span>
-<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a>isoform_new <span class="ot">=</span> isoform_new[<span class="fu">order</span>(isoform_new<span class="sc">$</span>Chromosome,</span>
-<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a>                                isoform_new<span class="sc">$</span>Start,</span>
-<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a>                                <span class="at">decreasing =</span> F),]</span>
-<span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a>isoform_sig <span class="ot">=</span> <span class="fu">subset</span>(isoform_new,</span>
-<span id="cb22-20"><a href="#cb22-20" aria-hidden="true" tabindex="-1"></a>                     Screen.P.Adjusted <span class="sc">&lt;</span> alpha1 <span class="sc">&amp;</span></span>
-<span id="cb22-21"><a href="#cb22-21" aria-hidden="true" tabindex="-1"></a>                       Confirmation.P <span class="sc">&lt;</span> alpha2 <span class="sc">&amp;</span></span>
-<span id="cb22-22"><a href="#cb22-22" aria-hidden="true" tabindex="-1"></a>                       permute.P <span class="sc">&lt;</span> <span class="fl">0.05</span>)</span>
-<span id="cb22-23"><a href="#cb22-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-24"><a href="#cb22-24" aria-hidden="true" tabindex="-1"></a>keep.isoform <span class="ot">=</span> <span class="fu">c</span>()</span>
-<span id="cb22-25"><a href="#cb22-25" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">nrow</span>(isoform_sig) <span class="sc">&gt;</span> <span class="dv">1</span>){</span>
-<span id="cb22-26"><a href="#cb22-26" aria-hidden="true" tabindex="-1"></a>      <span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>(<span class="fu">nrow</span>(isoform_sig)<span class="sc">-</span><span class="dv">1</span>)){</span>
-<span id="cb22-27"><a href="#cb22-27" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (isoform_sig<span class="sc">$</span>End[i] <span class="sc">&gt;</span> isoform_sig<span class="sc">$</span>Start[i<span class="sc">+</span><span class="dv">1</span>] <span class="sc">-</span> <span class="fl">1e6</span>){</span>
-<span id="cb22-28"><a href="#cb22-28" aria-hidden="true" tabindex="-1"></a>          keep.isoform <span class="ot">=</span> <span class="fu">unique</span>(<span class="fu">c</span>(keep.isoform,</span>
-<span id="cb22-29"><a href="#cb22-29" aria-hidden="true" tabindex="-1"></a>                              <span class="fu">c</span>(isoform_sig<span class="sc">$</span>Feature[<span class="fu">c</span>(i,i<span class="sc">+</span><span class="dv">1</span>)])))</span>
-<span id="cb22-30"><a href="#cb22-30" aria-hidden="true" tabindex="-1"></a>        }</span>
-<span id="cb22-31"><a href="#cb22-31" aria-hidden="true" tabindex="-1"></a>      }</span>
-<span id="cb22-32"><a href="#cb22-32" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb22-33"><a href="#cb22-33" aria-hidden="true" tabindex="-1"></a>isoform_sig <span class="ot">=</span> <span class="fu">subset</span>(isoform_sig,Feature <span class="sc">%in%</span> keep.isoform)</span></code></pre></div>
+significantly associated isoforms that are within 1 Mb of one another.
+We can obtain the gene annotation with the following code:</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">suppressPackageStartupMessages</span>(<span class="fu">require</span>(biomaRt))</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>gene_names <span class="ot">=</span> <span class="fu">unique</span>(isoform_new<span class="sc">$</span>Gene)</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>ensembl <span class="ot">&lt;-</span> <span class="fu">useEnsembl</span>(<span class="at">biomart =</span> <span class="st">&quot;ensembl&quot;</span>, </span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>                   <span class="at">dataset =</span> <span class="st">&quot;hsapiens_gene_ensembl&quot;</span>, </span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>                   <span class="at">mirror =</span> <span class="st">&quot;useast&quot;</span>)</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>bm <span class="ot">=</span> <span class="fu">getBM</span>(<span class="at">attributes =</span> <span class="fu">c</span>(<span class="st">&#39;ensembl_gene_id&#39;</span>, </span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>                          <span class="st">&#39;chromosome_name&#39;</span>,</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>                          <span class="st">&#39;start_position&#39;</span>,</span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>                          <span class="st">&#39;end_position&#39;</span>),</span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>      <span class="at">filters =</span> <span class="st">&#39;ensembl_gene_id&#39;</span>,</span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>      <span class="at">values =</span> gene_names, </span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>      <span class="at">mart =</span> ensembl)</span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(bm) <span class="ot">=</span> <span class="fu">c</span>(<span class="st">&#39;Gene&#39;</span>,<span class="st">&#39;Chromosome&#39;</span>,<span class="st">&#39;Start&#39;</span>,<span class="st">&#39;End&#39;</span>)</span></code></pre></div>
+<p>Next, we select the overlapping isoforms.</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>bm <span class="ot">=</span> <span class="fu">data.frame</span>(<span class="at">Gene =</span> <span class="fu">c</span>(<span class="st">&#39;ENSG00000070831&#39;</span>,<span class="st">&#39;ENSG00000162552&#39;</span>,<span class="st">&#39;ENSG00000230068&#39;</span>),</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>                <span class="at">Chromosome =</span> <span class="dv">1</span>,</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>                <span class="at">Start =</span> <span class="fu">c</span>(<span class="dv">22052627</span>,<span class="dv">22117313</span>,<span class="dv">22059197</span>),</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>                <span class="at">End =</span> <span class="fu">c</span>(<span class="dv">22101360</span>,<span class="dv">22143969</span>,<span class="dv">22064199</span>))</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>isoform_new <span class="ot">=</span> <span class="fu">merge</span>(bm,isoform_new,<span class="at">by=</span><span class="st">&#39;Gene&#39;</span>)</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>isoform_new <span class="ot">=</span> isoform_new[<span class="fu">order</span>(isoform_new<span class="sc">$</span>Chromosome,</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>                                isoform_new<span class="sc">$</span>Start,</span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>                                <span class="at">decreasing =</span> F),]</span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>isoform_sig <span class="ot">=</span> <span class="fu">subset</span>(isoform_new,</span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>                     Screen.P.Adjusted <span class="sc">&lt;</span> alpha1 <span class="sc">&amp;</span></span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a>                       Confirmation.P <span class="sc">&lt;</span> alpha2 <span class="sc">&amp;</span></span>
+<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a>                       permute.P <span class="sc">&lt;</span> <span class="fl">0.05</span>)</span>
+<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a>keep.isoform <span class="ot">=</span> <span class="fu">c</span>()</span>
+<span id="cb21-16"><a href="#cb21-16" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">nrow</span>(isoform_sig) <span class="sc">&gt;</span> <span class="dv">1</span>){</span>
+<span id="cb21-17"><a href="#cb21-17" aria-hidden="true" tabindex="-1"></a>      <span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>(<span class="fu">nrow</span>(isoform_sig)<span class="sc">-</span><span class="dv">1</span>)){</span>
+<span id="cb21-18"><a href="#cb21-18" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (isoform_sig<span class="sc">$</span>End[i] <span class="sc">&gt;</span> isoform_sig<span class="sc">$</span>Start[i<span class="sc">+</span><span class="dv">1</span>] <span class="sc">-</span> <span class="fl">1e6</span>){</span>
+<span id="cb21-19"><a href="#cb21-19" aria-hidden="true" tabindex="-1"></a>          keep.isoform <span class="ot">=</span> <span class="fu">unique</span>(<span class="fu">c</span>(keep.isoform,</span>
+<span id="cb21-20"><a href="#cb21-20" aria-hidden="true" tabindex="-1"></a>                              <span class="fu">c</span>(isoform_sig<span class="sc">$</span>Feature[<span class="fu">c</span>(i,i<span class="sc">+</span><span class="dv">1</span>)])))</span>
+<span id="cb21-21"><a href="#cb21-21" aria-hidden="true" tabindex="-1"></a>        }</span>
+<span id="cb21-22"><a href="#cb21-22" aria-hidden="true" tabindex="-1"></a>      }</span>
+<span id="cb21-23"><a href="#cb21-23" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb21-24"><a href="#cb21-24" aria-hidden="true" tabindex="-1"></a>isoform_sig <span class="ot">=</span> <span class="fu">subset</span>(isoform_sig,Feature <span class="sc">%in%</span> keep.isoform)</span></code></pre></div>
 <p>Significant isoforms that do not overlap within 1 Mb of another
 significant isoform do not need to be fine-mapped.</p>
 <p>Now, we aggregate the models and generate a single table with the
 SNP-to-isoform weights of all the SNPs that predict these overlapping
 isoforms.</p>
-<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>all.snps <span class="ot">=</span> <span class="fu">c</span>()</span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>omega <span class="ot">=</span> <span class="fu">c</span>()</span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>pos <span class="ot">=</span> <span class="fu">c</span>()</span>
-<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>gene <span class="ot">=</span> <span class="fu">c</span>()</span>
-<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>snp.chr <span class="ot">=</span> <span class="fu">c</span>()</span>
-<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a><span class="do">### COLLECT WEIGHTS FOR SNPS IN THE MODELS</span></span>
-<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(isoform_sig)){</span>
-<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>  gene_in <span class="ot">=</span> isoform_sig<span class="sc">$</span>Gene[i]</span>
-<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>  model_in <span class="ot">=</span> <span class="fu">readRDS</span>(<span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>,</span>
-<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a>                              <span class="fu">paste0</span>(gene_in,<span class="st">&quot;_isoTWAS.RDS&quot;</span>),</span>
-<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a>                              <span class="at">package =</span> <span class="st">&quot;isotwas&quot;</span>))</span>
-<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a>  model_in <span class="ot">=</span> <span class="fu">subset</span>(model_in,</span>
-<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a>                    Feature <span class="sc">==</span> isoform_sig<span class="sc">$</span>Feature[i])</span>
-<span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a>  Model <span class="ot">=</span> <span class="fu">data.frame</span>(<span class="at">SNP =</span> model_in<span class="sc">$</span>SNP,</span>
-<span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a>                     <span class="at">Chromosome =</span> model_in<span class="sc">$</span>Chromosome,</span>
-<span id="cb23-17"><a href="#cb23-17" aria-hidden="true" tabindex="-1"></a>                     <span class="at">Position =</span> model_in<span class="sc">$</span>Position,</span>
-<span id="cb23-18"><a href="#cb23-18" aria-hidden="true" tabindex="-1"></a>                     <span class="at">Effect =</span> model_in<span class="sc">$</span>Weight,</span>
-<span id="cb23-19"><a href="#cb23-19" aria-hidden="true" tabindex="-1"></a>                     <span class="at">A1 =</span> model_in<span class="sc">$</span>ALT,</span>
-<span id="cb23-20"><a href="#cb23-20" aria-hidden="true" tabindex="-1"></a>                     <span class="at">A2 =</span> model_in<span class="sc">$</span>REF)</span>
-<span id="cb23-21"><a href="#cb23-21" aria-hidden="true" tabindex="-1"></a>  Model <span class="ot">=</span> <span class="fu">subset</span>(Model,Effect<span class="sc">!=</span><span class="dv">0</span>)</span>
-<span id="cb23-22"><a href="#cb23-22" aria-hidden="true" tabindex="-1"></a>  Model <span class="ot">=</span> Model[<span class="sc">!</span><span class="fu">duplicated</span>(Model<span class="sc">$</span>SNP),]</span>
-<span id="cb23-23"><a href="#cb23-23" aria-hidden="true" tabindex="-1"></a>  all.snps <span class="ot">=</span> <span class="fu">c</span>(all.snps,</span>
-<span id="cb23-24"><a href="#cb23-24" aria-hidden="true" tabindex="-1"></a>               <span class="fu">as.character</span>(Model<span class="sc">$</span>SNP))</span>
-<span id="cb23-25"><a href="#cb23-25" aria-hidden="true" tabindex="-1"></a>  omega <span class="ot">=</span> <span class="fu">c</span>(omega,</span>
-<span id="cb23-26"><a href="#cb23-26" aria-hidden="true" tabindex="-1"></a>            <span class="fu">as.numeric</span>(Model<span class="sc">$</span>Effect))</span>
-<span id="cb23-27"><a href="#cb23-27" aria-hidden="true" tabindex="-1"></a>  gene <span class="ot">=</span> <span class="fu">c</span>(gene,</span>
-<span id="cb23-28"><a href="#cb23-28" aria-hidden="true" tabindex="-1"></a>           <span class="fu">rep</span>(isoform_sig<span class="sc">$</span>Feature[i],<span class="fu">nrow</span>(Model)))</span>
-<span id="cb23-29"><a href="#cb23-29" aria-hidden="true" tabindex="-1"></a>  snp.chr <span class="ot">=</span> <span class="fu">c</span>(snp.chr,</span>
-<span id="cb23-30"><a href="#cb23-30" aria-hidden="true" tabindex="-1"></a>              <span class="fu">as.numeric</span>(Model<span class="sc">$</span>Chromosome))</span>
-<span id="cb23-31"><a href="#cb23-31" aria-hidden="true" tabindex="-1"></a>  pos <span class="ot">=</span> <span class="fu">c</span>(pos,<span class="fu">as.numeric</span>(Model<span class="sc">$</span>Position))</span>
-<span id="cb23-32"><a href="#cb23-32" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb23-33"><a href="#cb23-33" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-34"><a href="#cb23-34" aria-hidden="true" tabindex="-1"></a>tot.df <span class="ot">=</span> <span class="fu">data.frame</span>(<span class="at">SNP =</span> all.snps,</span>
-<span id="cb23-35"><a href="#cb23-35" aria-hidden="true" tabindex="-1"></a>                    <span class="at">Gene =</span> gene,</span>
-<span id="cb23-36"><a href="#cb23-36" aria-hidden="true" tabindex="-1"></a>                    <span class="at">Effect =</span> omega,</span>
-<span id="cb23-37"><a href="#cb23-37" aria-hidden="true" tabindex="-1"></a>                    <span class="at">Chromosome =</span> snp.chr)</span>
-<span id="cb23-38"><a href="#cb23-38" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-39"><a href="#cb23-39" aria-hidden="true" tabindex="-1"></a>model.df <span class="ot">=</span> <span class="fu">as.data.frame</span>(<span class="fu">matrix</span>(<span class="at">nrow =</span> <span class="fu">length</span>(<span class="fu">unique</span>(all.snps)),</span>
-<span id="cb23-40"><a href="#cb23-40" aria-hidden="true" tabindex="-1"></a>                                <span class="at">ncol =</span> <span class="fu">nrow</span>(isoform_sig)<span class="sc">+</span><span class="dv">1</span>))</span>
-<span id="cb23-41"><a href="#cb23-41" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(model.df) <span class="ot">=</span> <span class="fu">c</span>(<span class="st">&#39;SNP&#39;</span>,isoform_sig<span class="sc">$</span>Feature)</span>
-<span id="cb23-42"><a href="#cb23-42" aria-hidden="true" tabindex="-1"></a>model.df<span class="sc">$</span>SNP <span class="ot">=</span> <span class="fu">as.character</span>(<span class="fu">unique</span>(all.snps))</span>
-<span id="cb23-43"><a href="#cb23-43" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-44"><a href="#cb23-44" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (q <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(isoform_sig)){</span>
-<span id="cb23-45"><a href="#cb23-45" aria-hidden="true" tabindex="-1"></a>  cur.tot.df <span class="ot">=</span> <span class="fu">subset</span>(tot.df,Gene <span class="sc">==</span> isoform_sig<span class="sc">$</span>Feature[q])</span>
-<span id="cb23-46"><a href="#cb23-46" aria-hidden="true" tabindex="-1"></a>  cur.tot.df<span class="sc">$</span>SNP <span class="ot">=</span> <span class="fu">as.character</span>(cur.tot.df<span class="sc">$</span>SNP)</span>
-<span id="cb23-47"><a href="#cb23-47" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(model.df)){</span>
-<span id="cb23-48"><a href="#cb23-48" aria-hidden="true" tabindex="-1"></a>    w <span class="ot">=</span> <span class="fu">which</span>(cur.tot.df<span class="sc">$</span>SNP <span class="sc">==</span> model.df<span class="sc">$</span>SNP[i])</span>
-<span id="cb23-49"><a href="#cb23-49" aria-hidden="true" tabindex="-1"></a>    model.df[i,q<span class="sc">+</span><span class="dv">1</span>] <span class="ot">=</span> <span class="fu">ifelse</span>(<span class="fu">length</span>(w) <span class="sc">!=</span> <span class="dv">0</span>,</span>
-<span id="cb23-50"><a href="#cb23-50" aria-hidden="true" tabindex="-1"></a>                             cur.tot.df<span class="sc">$</span>Effect[w],</span>
-<span id="cb23-51"><a href="#cb23-51" aria-hidden="true" tabindex="-1"></a>                             <span class="dv">0</span>)</span>
-<span id="cb23-52"><a href="#cb23-52" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb23-53"><a href="#cb23-53" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb23-54"><a href="#cb23-54" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-55"><a href="#cb23-55" aria-hidden="true" tabindex="-1"></a>model.df<span class="sc">$</span>Chromosome <span class="ot">=</span> <span class="dv">2</span></span>
-<span id="cb23-56"><a href="#cb23-56" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(model.df)){</span>
-<span id="cb23-57"><a href="#cb23-57" aria-hidden="true" tabindex="-1"></a>  rrr <span class="ot">=</span> <span class="fu">subset</span>(tot.df,SNP <span class="sc">==</span> model.df<span class="sc">$</span>SNP[i])</span>
-<span id="cb23-58"><a href="#cb23-58" aria-hidden="true" tabindex="-1"></a>  model.df<span class="sc">$</span>Chromosome[i] <span class="ot">=</span> rrr<span class="sc">$</span>Chromosome[<span class="dv">1</span>]</span>
-<span id="cb23-59"><a href="#cb23-59" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb23-60"><a href="#cb23-60" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-61"><a href="#cb23-61" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(model.df)</span></code></pre></div>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>all.snps <span class="ot">=</span> <span class="fu">c</span>()</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>omega <span class="ot">=</span> <span class="fu">c</span>()</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>pos <span class="ot">=</span> <span class="fu">c</span>()</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>gene <span class="ot">=</span> <span class="fu">c</span>()</span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>snp.chr <span class="ot">=</span> <span class="fu">c</span>()</span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a><span class="do">### COLLECT WEIGHTS FOR SNPS IN THE MODELS</span></span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(isoform_sig)){</span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>  gene_in <span class="ot">=</span> isoform_sig<span class="sc">$</span>Gene[i]</span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>  model_in <span class="ot">=</span> <span class="fu">readRDS</span>(<span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>,</span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>                              <span class="fu">paste0</span>(gene_in,<span class="st">&quot;_isoTWAS.RDS&quot;</span>),</span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>                              <span class="at">package =</span> <span class="st">&quot;isotwas&quot;</span>))</span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>  model_in <span class="ot">=</span> <span class="fu">subset</span>(model_in,</span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a>                    Feature <span class="sc">==</span> isoform_sig<span class="sc">$</span>Feature[i])</span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a>  Model <span class="ot">=</span> <span class="fu">data.frame</span>(<span class="at">SNP =</span> model_in<span class="sc">$</span>SNP,</span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a>                     <span class="at">Chromosome =</span> model_in<span class="sc">$</span>Chromosome,</span>
+<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a>                     <span class="at">Position =</span> model_in<span class="sc">$</span>Position,</span>
+<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a>                     <span class="at">Effect =</span> model_in<span class="sc">$</span>Weight,</span>
+<span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a>                     <span class="at">A1 =</span> model_in<span class="sc">$</span>ALT,</span>
+<span id="cb22-20"><a href="#cb22-20" aria-hidden="true" tabindex="-1"></a>                     <span class="at">A2 =</span> model_in<span class="sc">$</span>REF)</span>
+<span id="cb22-21"><a href="#cb22-21" aria-hidden="true" tabindex="-1"></a>  Model <span class="ot">=</span> <span class="fu">subset</span>(Model,Effect<span class="sc">!=</span><span class="dv">0</span>)</span>
+<span id="cb22-22"><a href="#cb22-22" aria-hidden="true" tabindex="-1"></a>  Model <span class="ot">=</span> Model[<span class="sc">!</span><span class="fu">duplicated</span>(Model<span class="sc">$</span>SNP),]</span>
+<span id="cb22-23"><a href="#cb22-23" aria-hidden="true" tabindex="-1"></a>  all.snps <span class="ot">=</span> <span class="fu">c</span>(all.snps,</span>
+<span id="cb22-24"><a href="#cb22-24" aria-hidden="true" tabindex="-1"></a>               <span class="fu">as.character</span>(Model<span class="sc">$</span>SNP))</span>
+<span id="cb22-25"><a href="#cb22-25" aria-hidden="true" tabindex="-1"></a>  omega <span class="ot">=</span> <span class="fu">c</span>(omega,</span>
+<span id="cb22-26"><a href="#cb22-26" aria-hidden="true" tabindex="-1"></a>            <span class="fu">as.numeric</span>(Model<span class="sc">$</span>Effect))</span>
+<span id="cb22-27"><a href="#cb22-27" aria-hidden="true" tabindex="-1"></a>  gene <span class="ot">=</span> <span class="fu">c</span>(gene,</span>
+<span id="cb22-28"><a href="#cb22-28" aria-hidden="true" tabindex="-1"></a>           <span class="fu">rep</span>(isoform_sig<span class="sc">$</span>Feature[i],<span class="fu">nrow</span>(Model)))</span>
+<span id="cb22-29"><a href="#cb22-29" aria-hidden="true" tabindex="-1"></a>  snp.chr <span class="ot">=</span> <span class="fu">c</span>(snp.chr,</span>
+<span id="cb22-30"><a href="#cb22-30" aria-hidden="true" tabindex="-1"></a>              <span class="fu">as.numeric</span>(Model<span class="sc">$</span>Chromosome))</span>
+<span id="cb22-31"><a href="#cb22-31" aria-hidden="true" tabindex="-1"></a>  pos <span class="ot">=</span> <span class="fu">c</span>(pos,<span class="fu">as.numeric</span>(Model<span class="sc">$</span>Position))</span>
+<span id="cb22-32"><a href="#cb22-32" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb22-33"><a href="#cb22-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-34"><a href="#cb22-34" aria-hidden="true" tabindex="-1"></a>tot.df <span class="ot">=</span> <span class="fu">data.frame</span>(<span class="at">SNP =</span> all.snps,</span>
+<span id="cb22-35"><a href="#cb22-35" aria-hidden="true" tabindex="-1"></a>                    <span class="at">Gene =</span> gene,</span>
+<span id="cb22-36"><a href="#cb22-36" aria-hidden="true" tabindex="-1"></a>                    <span class="at">Effect =</span> omega,</span>
+<span id="cb22-37"><a href="#cb22-37" aria-hidden="true" tabindex="-1"></a>                    <span class="at">Chromosome =</span> snp.chr)</span>
+<span id="cb22-38"><a href="#cb22-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-39"><a href="#cb22-39" aria-hidden="true" tabindex="-1"></a>model.df <span class="ot">=</span> <span class="fu">as.data.frame</span>(<span class="fu">matrix</span>(<span class="at">nrow =</span> <span class="fu">length</span>(<span class="fu">unique</span>(all.snps)),</span>
+<span id="cb22-40"><a href="#cb22-40" aria-hidden="true" tabindex="-1"></a>                                <span class="at">ncol =</span> <span class="fu">nrow</span>(isoform_sig)<span class="sc">+</span><span class="dv">1</span>))</span>
+<span id="cb22-41"><a href="#cb22-41" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(model.df) <span class="ot">=</span> <span class="fu">c</span>(<span class="st">&#39;SNP&#39;</span>,isoform_sig<span class="sc">$</span>Feature)</span>
+<span id="cb22-42"><a href="#cb22-42" aria-hidden="true" tabindex="-1"></a>model.df<span class="sc">$</span>SNP <span class="ot">=</span> <span class="fu">as.character</span>(<span class="fu">unique</span>(all.snps))</span>
+<span id="cb22-43"><a href="#cb22-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-44"><a href="#cb22-44" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (q <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(isoform_sig)){</span>
+<span id="cb22-45"><a href="#cb22-45" aria-hidden="true" tabindex="-1"></a>  cur.tot.df <span class="ot">=</span> <span class="fu">subset</span>(tot.df,Gene <span class="sc">==</span> isoform_sig<span class="sc">$</span>Feature[q])</span>
+<span id="cb22-46"><a href="#cb22-46" aria-hidden="true" tabindex="-1"></a>  cur.tot.df<span class="sc">$</span>SNP <span class="ot">=</span> <span class="fu">as.character</span>(cur.tot.df<span class="sc">$</span>SNP)</span>
+<span id="cb22-47"><a href="#cb22-47" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(model.df)){</span>
+<span id="cb22-48"><a href="#cb22-48" aria-hidden="true" tabindex="-1"></a>    w <span class="ot">=</span> <span class="fu">which</span>(cur.tot.df<span class="sc">$</span>SNP <span class="sc">==</span> model.df<span class="sc">$</span>SNP[i])</span>
+<span id="cb22-49"><a href="#cb22-49" aria-hidden="true" tabindex="-1"></a>    model.df[i,q<span class="sc">+</span><span class="dv">1</span>] <span class="ot">=</span> <span class="fu">ifelse</span>(<span class="fu">length</span>(w) <span class="sc">!=</span> <span class="dv">0</span>,</span>
+<span id="cb22-50"><a href="#cb22-50" aria-hidden="true" tabindex="-1"></a>                             cur.tot.df<span class="sc">$</span>Effect[w],</span>
+<span id="cb22-51"><a href="#cb22-51" aria-hidden="true" tabindex="-1"></a>                             <span class="dv">0</span>)</span>
+<span id="cb22-52"><a href="#cb22-52" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb22-53"><a href="#cb22-53" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb22-54"><a href="#cb22-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-55"><a href="#cb22-55" aria-hidden="true" tabindex="-1"></a>model.df<span class="sc">$</span>Chromosome <span class="ot">=</span> <span class="dv">2</span></span>
+<span id="cb22-56"><a href="#cb22-56" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(model.df)){</span>
+<span id="cb22-57"><a href="#cb22-57" aria-hidden="true" tabindex="-1"></a>  rrr <span class="ot">=</span> <span class="fu">subset</span>(tot.df,SNP <span class="sc">==</span> model.df<span class="sc">$</span>SNP[i])</span>
+<span id="cb22-58"><a href="#cb22-58" aria-hidden="true" tabindex="-1"></a>  model.df<span class="sc">$</span>Chromosome[i] <span class="ot">=</span> rrr<span class="sc">$</span>Chromosome[<span class="dv">1</span>]</span>
+<span id="cb22-59"><a href="#cb22-59" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb22-60"><a href="#cb22-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-61"><a href="#cb22-61" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(model.df)</span></code></pre></div>
 <pre><code>##          SNP ENST00000400259 ENST00000431803 ENST00000290167 Chromosome
 ## 1  rs1002480   -3.437902e-04    8.726253e-05               0          1
 ## 2  rs1011380   -5.231286e-05    8.881914e-05               0          1
@@ -835,90 +827,90 @@ includes all SNPs in both isoTWAS models at the locus and their effect
 locus.</p>
 <p>Now, we obtain our LD matrix for the SNPs in
 <code>model.df$SNP</code></p>
-<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>V <span class="ot">=</span> <span class="fu">readRDS</span>(<span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>,</span>
-<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>                        <span class="st">&quot;test_LD_finemapping.RDS&quot;</span>,</span>
-<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>                        <span class="at">package =</span> <span class="st">&quot;isotwas&quot;</span>))</span></code></pre></div>
+<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>V <span class="ot">=</span> <span class="fu">readRDS</span>(<span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>,</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>                        <span class="st">&quot;test_LD_finemapping.RDS&quot;</span>,</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>                        <span class="at">package =</span> <span class="st">&quot;isotwas&quot;</span>))</span></code></pre></div>
 <p>Now, we run the fine-mapping process in the following steps: (1)
 compute the correlation between the genetically-predicted expression of
 the isoforms, (2) enumerate the causal configurations, (3) compute
 marginal likelihoods and Bayes factors for each isoform, and (4) compute
 posterior inclusion probabilities and credible sets.</p>
-<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>V <span class="ot">=</span> V[model.df<span class="sc">$</span>SNP,model.df<span class="sc">$</span>SNP]</span>
-<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>Omega <span class="ot">=</span> Matrix<span class="sc">::</span><span class="fu">Matrix</span>(<span class="fu">as.matrix</span>(model.df[,<span class="sc">-</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="fu">ncol</span>(model.df))]))</span>
-<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>zscores <span class="ot">=</span> isoform_sig<span class="sc">$</span>Z</span>
-<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>m <span class="ot">=</span> <span class="fu">length</span>(zscores)</span>
-<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a><span class="do">### COMPUTE LD BETWEEN TX ON THE GENETIC LEVEL</span></span>
-<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>wcor <span class="ot">=</span> isotwas<span class="sc">::</span><span class="fu">estimate_cor</span>(<span class="fu">as.matrix</span>(Omega),</span>
-<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>                             <span class="fu">as.matrix</span>(V),</span>
-<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>                             <span class="at">intercept=</span>T)[[<span class="dv">1</span>]]</span>
-<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a><span class="fu">diag</span>(wcor) <span class="ot">=</span> <span class="dv">1</span></span>
-<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a>wcor[<span class="fu">is.na</span>(wcor)] <span class="ot">=</span> <span class="dv">0</span></span>
-<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a><span class="do">### COMPUTE LD INTERCEPT BETWEEN ISOFRM ON THE GENETIC LEVEL</span></span>
-<span id="cb26-14"><a href="#cb26-14" aria-hidden="true" tabindex="-1"></a>swld <span class="ot">=</span> isotwas<span class="sc">::</span><span class="fu">estimate_cor</span>(<span class="fu">as.matrix</span>(Omega),</span>
-<span id="cb26-15"><a href="#cb26-15" aria-hidden="true" tabindex="-1"></a>                             <span class="fu">as.matrix</span>(V),</span>
-<span id="cb26-16"><a href="#cb26-16" aria-hidden="true" tabindex="-1"></a>                             <span class="at">intercept=</span>T)[[<span class="dv">2</span>]]</span>
-<span id="cb26-17"><a href="#cb26-17" aria-hidden="true" tabindex="-1"></a>        </span>
-<span id="cb26-18"><a href="#cb26-18" aria-hidden="true" tabindex="-1"></a>null_res <span class="ot">=</span> m <span class="sc">*</span> <span class="fu">log</span>(<span class="dv">1</span> <span class="sc">-</span> <span class="fl">1e-3</span>)</span>
-<span id="cb26-19"><a href="#cb26-19" aria-hidden="true" tabindex="-1"></a>marginal <span class="ot">=</span> m <span class="sc">*</span> <span class="fu">log</span>(<span class="dv">1</span> <span class="sc">-</span> <span class="fl">1e-3</span>)</span>
-<span id="cb26-20"><a href="#cb26-20" aria-hidden="true" tabindex="-1"></a>comb_list <span class="ot">=</span> <span class="fu">list</span>()</span>
-<span id="cb26-21"><a href="#cb26-21" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (n <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">min</span>(<span class="dv">3</span>,<span class="fu">length</span>(zscores))){</span>
-<span id="cb26-22"><a href="#cb26-22" aria-hidden="true" tabindex="-1"></a>  comb_list <span class="ot">=</span> <span class="fu">c</span>(comb_list,</span>
-<span id="cb26-23"><a href="#cb26-23" aria-hidden="true" tabindex="-1"></a>                <span class="fu">combn</span>(<span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(zscores),n,<span class="at">simplify=</span>F))</span>
-<span id="cb26-24"><a href="#cb26-24" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb26-25"><a href="#cb26-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-26"><a href="#cb26-26" aria-hidden="true" tabindex="-1"></a>pips <span class="ot">=</span> <span class="fu">rep</span>(<span class="dv">0</span>,<span class="fu">length</span>(zscores))</span>
-<span id="cb26-27"><a href="#cb26-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-28"><a href="#cb26-28" aria-hidden="true" tabindex="-1"></a><span class="do">### COMPUTE BAYES FACTORS/LIKELIHOOD AT EACH CAUSAL CONFIG</span></span>
-<span id="cb26-29"><a href="#cb26-29" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (j <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(comb_list)){</span>
-<span id="cb26-30"><a href="#cb26-30" aria-hidden="true" tabindex="-1"></a>  subset <span class="ot">=</span> comb_list[[j]]</span>
-<span id="cb26-31"><a href="#cb26-31" aria-hidden="true" tabindex="-1"></a>  local <span class="ot">=</span> isotwas<span class="sc">::</span><span class="fu">bayes_factor</span>(zscores,</span>
-<span id="cb26-32"><a href="#cb26-32" aria-hidden="true" tabindex="-1"></a>                                <span class="at">idx_set =</span> subset,</span>
-<span id="cb26-33"><a href="#cb26-33" aria-hidden="true" tabindex="-1"></a>                                <span class="at">wcor =</span> wcor)</span>
-<span id="cb26-34"><a href="#cb26-34" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb26-35"><a href="#cb26-35" aria-hidden="true" tabindex="-1"></a>  marginal <span class="ot">=</span> <span class="fu">log</span>(<span class="fu">exp</span>(local) <span class="sc">+</span> <span class="fu">exp</span>(marginal))</span>
-<span id="cb26-36"><a href="#cb26-36" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (idx <span class="cf">in</span> subset){</span>
-<span id="cb26-37"><a href="#cb26-37" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (pips[idx] <span class="sc">==</span> <span class="dv">0</span>){</span>
-<span id="cb26-38"><a href="#cb26-38" aria-hidden="true" tabindex="-1"></a>      pips[idx] <span class="ot">=</span> local</span>
-<span id="cb26-39"><a href="#cb26-39" aria-hidden="true" tabindex="-1"></a>      } <span class="cf">else</span> {</span>
-<span id="cb26-40"><a href="#cb26-40" aria-hidden="true" tabindex="-1"></a>        pips[idx] <span class="ot">=</span> <span class="fu">log</span>(<span class="fu">exp</span>(pips[idx]) <span class="sc">+</span> <span class="fu">exp</span>(local))</span>
-<span id="cb26-41"><a href="#cb26-41" aria-hidden="true" tabindex="-1"></a>      }</span>
-<span id="cb26-42"><a href="#cb26-42" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb26-43"><a href="#cb26-43" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb26-44"><a href="#cb26-44" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-45"><a href="#cb26-45" aria-hidden="true" tabindex="-1"></a>pips <span class="ot">=</span> <span class="fu">exp</span>(pips <span class="sc">-</span> marginal)</span>
-<span id="cb26-46"><a href="#cb26-46" aria-hidden="true" tabindex="-1"></a>null_res <span class="ot">=</span> <span class="fu">exp</span>(null_res <span class="sc">-</span> marginal)</span>
-<span id="cb26-47"><a href="#cb26-47" aria-hidden="true" tabindex="-1"></a>isoform_sig<span class="sc">$</span>pip <span class="ot">=</span> pips</span>
-<span id="cb26-48"><a href="#cb26-48" aria-hidden="true" tabindex="-1"></a>isoform_sig <span class="ot">=</span> isoform_sig[<span class="fu">order</span>(isoform_sig<span class="sc">$</span>pip,<span class="at">decreasing =</span> T),]</span>
-<span id="cb26-49"><a href="#cb26-49" aria-hidden="true" tabindex="-1"></a>npost <span class="ot">=</span> isoform_sig<span class="sc">$</span>pip<span class="sc">/</span><span class="fu">sum</span>(isoform_sig<span class="sc">$</span>pip)</span>
-<span id="cb26-50"><a href="#cb26-50" aria-hidden="true" tabindex="-1"></a>csum <span class="ot">=</span> <span class="fu">cumsum</span>(npost)</span>
-<span id="cb26-51"><a href="#cb26-51" aria-hidden="true" tabindex="-1"></a>isoform_sig<span class="sc">$</span>in_cred_set <span class="ot">=</span> F</span>
-<span id="cb26-52"><a href="#cb26-52" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-53"><a href="#cb26-53" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(isoform_sig)){</span>
-<span id="cb26-54"><a href="#cb26-54" aria-hidden="true" tabindex="-1"></a>  isoform_sig<span class="sc">$</span>in_cred_set[i] <span class="ot">=</span> T</span>
-<span id="cb26-55"><a href="#cb26-55" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (i <span class="sc">&gt;</span> <span class="dv">1</span>){</span>
-<span id="cb26-56"><a href="#cb26-56" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (csum[i] <span class="sc">&gt;</span> .<span class="dv">9</span> <span class="sc">&amp;</span> csum[i<span class="dv">-1</span>] <span class="sc">&lt;</span> .<span class="dv">9</span>){</span>
-<span id="cb26-57"><a href="#cb26-57" aria-hidden="true" tabindex="-1"></a>      isoform_sig<span class="sc">$</span>in_cred_set[i] <span class="ot">=</span> T</span>
-<span id="cb26-58"><a href="#cb26-58" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb26-59"><a href="#cb26-59" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (csum[i] <span class="sc">&lt;</span> .<span class="dv">9</span>){</span>
-<span id="cb26-60"><a href="#cb26-60" aria-hidden="true" tabindex="-1"></a>      isoform_sig<span class="sc">$</span>in_cred_set[i] <span class="ot">=</span> T</span>
-<span id="cb26-61"><a href="#cb26-61" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb26-62"><a href="#cb26-62" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (csum[i] <span class="sc">&gt;</span> .<span class="dv">9</span> <span class="sc">&amp;</span> csum[i<span class="dv">-1</span>] <span class="sc">&gt;</span> .<span class="dv">9</span>){</span>
-<span id="cb26-63"><a href="#cb26-63" aria-hidden="true" tabindex="-1"></a>      isoform_sig<span class="sc">$</span>in_cred_set[i] <span class="ot">=</span> F</span>
-<span id="cb26-64"><a href="#cb26-64" aria-hidden="true" tabindex="-1"></a>      }</span>
-<span id="cb26-65"><a href="#cb26-65" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb26-66"><a href="#cb26-66" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb26-67"><a href="#cb26-67" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-68"><a href="#cb26-68" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(isoform_sig)</span></code></pre></div>
+<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>V <span class="ot">=</span> V[model.df<span class="sc">$</span>SNP,model.df<span class="sc">$</span>SNP]</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>Omega <span class="ot">=</span> Matrix<span class="sc">::</span><span class="fu">Matrix</span>(<span class="fu">as.matrix</span>(model.df[,<span class="sc">-</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="fu">ncol</span>(model.df))]))</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>zscores <span class="ot">=</span> isoform_sig<span class="sc">$</span>Z</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>m <span class="ot">=</span> <span class="fu">length</span>(zscores)</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a><span class="do">### COMPUTE LD BETWEEN TX ON THE GENETIC LEVEL</span></span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>wcor <span class="ot">=</span> isotwas<span class="sc">::</span><span class="fu">estimate_cor</span>(<span class="fu">as.matrix</span>(Omega),</span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>                             <span class="fu">as.matrix</span>(V),</span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>                             <span class="at">intercept=</span>T)[[<span class="dv">1</span>]]</span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a><span class="fu">diag</span>(wcor) <span class="ot">=</span> <span class="dv">1</span></span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>wcor[<span class="fu">is.na</span>(wcor)] <span class="ot">=</span> <span class="dv">0</span></span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a><span class="do">### COMPUTE LD INTERCEPT BETWEEN ISOFRM ON THE GENETIC LEVEL</span></span>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a>swld <span class="ot">=</span> isotwas<span class="sc">::</span><span class="fu">estimate_cor</span>(<span class="fu">as.matrix</span>(Omega),</span>
+<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a>                             <span class="fu">as.matrix</span>(V),</span>
+<span id="cb25-16"><a href="#cb25-16" aria-hidden="true" tabindex="-1"></a>                             <span class="at">intercept=</span>T)[[<span class="dv">2</span>]]</span>
+<span id="cb25-17"><a href="#cb25-17" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb25-18"><a href="#cb25-18" aria-hidden="true" tabindex="-1"></a>null_res <span class="ot">=</span> m <span class="sc">*</span> <span class="fu">log</span>(<span class="dv">1</span> <span class="sc">-</span> <span class="fl">1e-3</span>)</span>
+<span id="cb25-19"><a href="#cb25-19" aria-hidden="true" tabindex="-1"></a>marginal <span class="ot">=</span> m <span class="sc">*</span> <span class="fu">log</span>(<span class="dv">1</span> <span class="sc">-</span> <span class="fl">1e-3</span>)</span>
+<span id="cb25-20"><a href="#cb25-20" aria-hidden="true" tabindex="-1"></a>comb_list <span class="ot">=</span> <span class="fu">list</span>()</span>
+<span id="cb25-21"><a href="#cb25-21" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (n <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">min</span>(<span class="dv">3</span>,<span class="fu">length</span>(zscores))){</span>
+<span id="cb25-22"><a href="#cb25-22" aria-hidden="true" tabindex="-1"></a>  comb_list <span class="ot">=</span> <span class="fu">c</span>(comb_list,</span>
+<span id="cb25-23"><a href="#cb25-23" aria-hidden="true" tabindex="-1"></a>                <span class="fu">combn</span>(<span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(zscores),n,<span class="at">simplify=</span>F))</span>
+<span id="cb25-24"><a href="#cb25-24" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb25-25"><a href="#cb25-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-26"><a href="#cb25-26" aria-hidden="true" tabindex="-1"></a>pips <span class="ot">=</span> <span class="fu">rep</span>(<span class="dv">0</span>,<span class="fu">length</span>(zscores))</span>
+<span id="cb25-27"><a href="#cb25-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-28"><a href="#cb25-28" aria-hidden="true" tabindex="-1"></a><span class="do">### COMPUTE BAYES FACTORS/LIKELIHOOD AT EACH CAUSAL CONFIG</span></span>
+<span id="cb25-29"><a href="#cb25-29" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (j <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(comb_list)){</span>
+<span id="cb25-30"><a href="#cb25-30" aria-hidden="true" tabindex="-1"></a>  subset <span class="ot">=</span> comb_list[[j]]</span>
+<span id="cb25-31"><a href="#cb25-31" aria-hidden="true" tabindex="-1"></a>  local <span class="ot">=</span> isotwas<span class="sc">::</span><span class="fu">bayes_factor</span>(zscores,</span>
+<span id="cb25-32"><a href="#cb25-32" aria-hidden="true" tabindex="-1"></a>                                <span class="at">idx_set =</span> subset,</span>
+<span id="cb25-33"><a href="#cb25-33" aria-hidden="true" tabindex="-1"></a>                                <span class="at">wcor =</span> wcor)</span>
+<span id="cb25-34"><a href="#cb25-34" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb25-35"><a href="#cb25-35" aria-hidden="true" tabindex="-1"></a>  marginal <span class="ot">=</span> <span class="fu">log</span>(<span class="fu">exp</span>(local) <span class="sc">+</span> <span class="fu">exp</span>(marginal))</span>
+<span id="cb25-36"><a href="#cb25-36" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (idx <span class="cf">in</span> subset){</span>
+<span id="cb25-37"><a href="#cb25-37" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (pips[idx] <span class="sc">==</span> <span class="dv">0</span>){</span>
+<span id="cb25-38"><a href="#cb25-38" aria-hidden="true" tabindex="-1"></a>      pips[idx] <span class="ot">=</span> local</span>
+<span id="cb25-39"><a href="#cb25-39" aria-hidden="true" tabindex="-1"></a>      } <span class="cf">else</span> {</span>
+<span id="cb25-40"><a href="#cb25-40" aria-hidden="true" tabindex="-1"></a>        pips[idx] <span class="ot">=</span> <span class="fu">log</span>(<span class="fu">exp</span>(pips[idx]) <span class="sc">+</span> <span class="fu">exp</span>(local))</span>
+<span id="cb25-41"><a href="#cb25-41" aria-hidden="true" tabindex="-1"></a>      }</span>
+<span id="cb25-42"><a href="#cb25-42" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb25-43"><a href="#cb25-43" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb25-44"><a href="#cb25-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-45"><a href="#cb25-45" aria-hidden="true" tabindex="-1"></a>pips <span class="ot">=</span> <span class="fu">exp</span>(pips <span class="sc">-</span> marginal)</span>
+<span id="cb25-46"><a href="#cb25-46" aria-hidden="true" tabindex="-1"></a>null_res <span class="ot">=</span> <span class="fu">exp</span>(null_res <span class="sc">-</span> marginal)</span>
+<span id="cb25-47"><a href="#cb25-47" aria-hidden="true" tabindex="-1"></a>isoform_sig<span class="sc">$</span>pip <span class="ot">=</span> pips</span>
+<span id="cb25-48"><a href="#cb25-48" aria-hidden="true" tabindex="-1"></a>isoform_sig <span class="ot">=</span> isoform_sig[<span class="fu">order</span>(isoform_sig<span class="sc">$</span>pip,<span class="at">decreasing =</span> T),]</span>
+<span id="cb25-49"><a href="#cb25-49" aria-hidden="true" tabindex="-1"></a>npost <span class="ot">=</span> isoform_sig<span class="sc">$</span>pip<span class="sc">/</span><span class="fu">sum</span>(isoform_sig<span class="sc">$</span>pip)</span>
+<span id="cb25-50"><a href="#cb25-50" aria-hidden="true" tabindex="-1"></a>csum <span class="ot">=</span> <span class="fu">cumsum</span>(npost)</span>
+<span id="cb25-51"><a href="#cb25-51" aria-hidden="true" tabindex="-1"></a>isoform_sig<span class="sc">$</span>in_cred_set <span class="ot">=</span> F</span>
+<span id="cb25-52"><a href="#cb25-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-53"><a href="#cb25-53" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(isoform_sig)){</span>
+<span id="cb25-54"><a href="#cb25-54" aria-hidden="true" tabindex="-1"></a>  isoform_sig<span class="sc">$</span>in_cred_set[i] <span class="ot">=</span> T</span>
+<span id="cb25-55"><a href="#cb25-55" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (i <span class="sc">&gt;</span> <span class="dv">1</span>){</span>
+<span id="cb25-56"><a href="#cb25-56" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (csum[i] <span class="sc">&gt;</span> .<span class="dv">9</span> <span class="sc">&amp;</span> csum[i<span class="dv">-1</span>] <span class="sc">&lt;</span> .<span class="dv">9</span>){</span>
+<span id="cb25-57"><a href="#cb25-57" aria-hidden="true" tabindex="-1"></a>      isoform_sig<span class="sc">$</span>in_cred_set[i] <span class="ot">=</span> T</span>
+<span id="cb25-58"><a href="#cb25-58" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb25-59"><a href="#cb25-59" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (csum[i] <span class="sc">&lt;</span> .<span class="dv">9</span>){</span>
+<span id="cb25-60"><a href="#cb25-60" aria-hidden="true" tabindex="-1"></a>      isoform_sig<span class="sc">$</span>in_cred_set[i] <span class="ot">=</span> T</span>
+<span id="cb25-61"><a href="#cb25-61" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb25-62"><a href="#cb25-62" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (csum[i] <span class="sc">&gt;</span> .<span class="dv">9</span> <span class="sc">&amp;</span> csum[i<span class="dv">-1</span>] <span class="sc">&gt;</span> .<span class="dv">9</span>){</span>
+<span id="cb25-63"><a href="#cb25-63" aria-hidden="true" tabindex="-1"></a>      isoform_sig<span class="sc">$</span>in_cred_set[i] <span class="ot">=</span> F</span>
+<span id="cb25-64"><a href="#cb25-64" aria-hidden="true" tabindex="-1"></a>      }</span>
+<span id="cb25-65"><a href="#cb25-65" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb25-66"><a href="#cb25-66" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb25-67"><a href="#cb25-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-68"><a href="#cb25-68" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(isoform_sig)</span></code></pre></div>
 <pre><code>##               Gene Chromosome    Start      End         Feature         Z
 ## 3  ENSG00000070831          1 22052627 22101360 ENST00000400259  3.344840
 ## 10 ENSG00000230068          1 22059197 22064199 ENST00000431803 -3.506525
 ## 8  ENSG00000162552          1 22117313 22143969 ENST00000290167 -3.441877
 ##               P   permute.P     topSNP     topSNP.P     Screen.P
-## 3  0.0008232993 0.010989011 rs11582542 0.0003396706 0.0016636386
-## 10 0.0004539979 0.005994006 rs11582542 0.0003396706 0.0004539979
-## 8  0.0005776926 0.047952048 rs11582542 0.0003396706 0.0008302377
+## 3  0.0008232993 0.006993007 rs11582542 0.0003396706 0.0016636386
+## 10 0.0004539979 0.008991009 rs11582542 0.0003396706 0.0004539979
+## 8  0.0005776926 0.039960040 rs11582542 0.0003396706 0.0008302377
 ##    Screen.P.Adjusted Confirmation.P       pip in_cred_set
 ## 3        0.001663639   0.0049397958 1.0000000        TRUE
 ## 10       0.001245357   0.0000000000 1.0000000        TRUE
