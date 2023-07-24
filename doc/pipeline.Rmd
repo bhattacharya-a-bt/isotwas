@@ -1,8 +1,8 @@
 ---
-title: "Train an isoTWAS models"
+title: "Train an isoTWAS model"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Run the isotwas pipeline}
+  %\VignetteIndexEntry{Train an isoTWAS model}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
