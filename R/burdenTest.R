@@ -42,14 +42,11 @@ burdenTest <- function(mod,
                        nperms = 1e3,
                        usePos = F){
 
-
-   if (all(is.null(c(Z,beta,se)))){
-      stop('Please provide a column name for the Z-score or beta and SE.')
-    }
-
-    if (is.null(Z) | any(is.null(c(beta,se)))){
-      stop('Please provide a column name for the Z-score or beta and SE.')
-    }
+    if (is.null(Z)){
+      if (any(is.null(beta,se))){
+        stop('Please provide a column name for the Z-score or beta and SE.')
+      }
+      }
 
     colnames(sumStats)[which(colnames(sumStats) == chr)] = 'Chromosome'
     colnames(sumStats)[which(colnames(sumStats) == pos)] = 'Position'
