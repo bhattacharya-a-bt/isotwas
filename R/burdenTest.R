@@ -57,8 +57,8 @@ burdenTest <- function(mod,
    colnames(sumStats)[which(colnames(sumStats) == snpName)] = 'SNP'
     colnames(sumStats)[which(colnames(sumStats) == chr)] = 'Chromosome'
     colnames(sumStats)[which(colnames(sumStats) == pos)] = 'Position'
-    colnames(sumStats)[which(colnames(sumStats) == a1)] = 'ALT'
-    colnames(sumStats)[which(colnames(sumStats) == a2)] = 'REF'
+    colnames(sumStats)[which(colnames(sumStats) == a1)] = 'A1'
+    colnames(sumStats)[which(colnames(sumStats) == a2)] = 'A2'
 
     if (!is.null(Z)){
       colnames(sumStats)[which(colnames(sumStats) == Z)] = 'Z'
@@ -91,7 +91,7 @@ burdenTest <- function(mod,
       return('SNPs not found.')
     }
 
-    tot$Z = ifelse(tot$ALT.x == tot$ALT.y,
+    tot$Z = ifelse(tot$A1.x == tot$A1.y,
                    tot$Z,
                    -1 * tot$Z)
 
