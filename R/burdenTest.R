@@ -67,8 +67,8 @@ burdenTest <- function(mod,
    }
     colnames(sumStats)[which(colnames(sumStats) == a1)] = 'A1_GWAS'
     colnames(sumStats)[which(colnames(sumStats) == a2)] = 'A2_GWAS'
-    colnames(sumStats)[which(colnames(mod) == a1_mod)] = 'A1_Mod'
-    colnames(sumStats)[which(colnames(mod) == a2_mod)] = 'A2_Mod'
+    colnames(mod)[which(colnames(mod) == a1_mod)] = 'A1_Mod'
+    colnames(mod)[which(colnames(mod) == a2_mod)] = 'A2_Mod'
 
     if (!is.null(Z)){
       colnames(sumStats)[which(colnames(sumStats) == Z)] = 'Z'
