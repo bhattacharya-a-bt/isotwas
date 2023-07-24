@@ -12,6 +12,8 @@
 #' @param pos character, colnames in sumStats that keeps the position
 #' @param a1 character, colnames in sumStats that keeps the ALT allele
 #' @param a2 character, colnames in sumStats that keeps the REF allele
+#' @param a1_mod character, colnames in model that keeps the ALT allele
+#' @param a2_mod character, colnames in model that keeps the REF allele
 #' @param snpName character, colnames in sumStats that keeps the SNP id
 #' @param Z character, colnames in sumStats that keeps the Z score
 #' @param beta character, colnames in sumStats that keeps the effect size
@@ -36,6 +38,8 @@ burdenTest <- function(mod,
                        pos,
                        a1,
                        a2,
+                       a1_mod = 'ALT',
+                       a2_mod = 'REF',
                        snpName = 'SNP',
                        Z = NULL,
                        beta = NULL,
@@ -55,10 +59,16 @@ burdenTest <- function(mod,
    colnames(mod)[which(colnames(mod) == featureName)] = 'Feature'
 
    colnames(sumStats)[which(colnames(sumStats) == snpName)] = 'SNP'
+   if (chr %in% colnames(sumStats)){
     colnames(sumStats)[which(colnames(sumStats) == chr)] = 'Chromosome'
+   }
+   if (pos %in% colnames(sumStats)){
     colnames(sumStats)[which(colnames(sumStats) == pos)] = 'Position'
-    colnames(sumStats)[which(colnames(sumStats) == a1)] = 'A1'
-    colnames(sumStats)[which(colnames(sumStats) == a2)] = 'A2'
+   }
+    colnames(sumStats)[which(colnames(sumStats) == a1)] = 'A1_GWAS'
+    colnames(sumStats)[which(colnames(sumStats) == a2)] = 'A2_GWAS'
+    colnames(sumStats)[which(colnames(mod) == a1_mod)] = 'A1_Mod'
+    colnames(sumStats)[which(colnames(mod) == a2_mod)] = 'A2_Mod'
 
     if (!is.null(Z)){
       colnames(sumStats)[which(colnames(sumStats) == Z)] = 'Z'
@@ -91,7 +101,7 @@ burdenTest <- function(mod,
       return('SNPs not found.')
     }
 
-    tot$Z = ifelse(tot$A1.x == tot$A1.y,
+    tot$Z = ifelse(tot$A1_GWAS == tot$A1_Mod,
                    tot$Z,
                    -1 * tot$Z)
 
