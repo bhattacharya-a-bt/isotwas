@@ -5,6 +5,7 @@ vignette: >
   %\VignetteIndexEntry{Run isoTWAS associations}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+  %\VignetteDepends{magrittr,dplyr,tidyverse}
 ---
 
 ```{r setup, include=FALSE}
