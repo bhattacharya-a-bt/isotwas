@@ -185,7 +185,9 @@ Let's run the first stage now: gene-level FDR control.
 
 ```{r stage1}
 if (!require("tidyverse", quietly = TRUE)){
-    install.packages("tidyverse")
+    install.packages("tidyverse",
+                     repos = 'https://archive.linux.duke.edu/cran/',
+                     dependencies = T)
   }
 
 library(tidyverse)
