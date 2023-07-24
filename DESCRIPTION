@@ -15,7 +15,10 @@ LazyData: true
 RoxygenNote: 7.2.3
 Suggests: 
     knitr,
-    rmarkdown
+    rmarkdown,
+    tidyverse,
+    magrittr,
+    dplyr
 VignetteBuilder: knitr
 Imports: 
     ACAT (>= 0.91),
@@ -40,7 +43,3 @@ Imports:
     tibble
 Remotes: 
     yaowuliu/ACAT
-Suggests:
-    tidyverse,
-    magrittr,
-    dplyr

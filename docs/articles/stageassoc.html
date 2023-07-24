@@ -294,13 +294,13 @@ cross-validation.</p>
 <span><span class="co">##   print.splsda   caret</span></span></code></pre>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">out_df</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">##              Gene         Feature         Z            P  permute.P     topSNP</span></span>
-<span><span class="co">## 1 ENSG00000070831 ENST00000344548 -3.239210 0.0011986108 1.00000000  rs2143103</span></span>
-<span><span class="co">## 2 ENSG00000070831 ENST00000315554  1.268410 0.2046514827 1.00000000 rs11582542</span></span>
-<span><span class="co">## 3 ENSG00000070831 ENST00000656825  3.268385 0.0010816323 1.00000000 rs11582542</span></span>
-<span><span class="co">## 4 ENSG00000070831 ENST00000498236 -2.906460 0.0036554386 1.00000000 rs11582542</span></span>
-<span><span class="co">## 5 ENSG00000070831 ENST00000400259  3.344840 0.0008232993 0.01098901 rs11582542</span></span>
-<span><span class="co">## 6 ENSG00000070831 ENST00000667384  0.575199 0.5651567515 1.00000000 rs11582542</span></span>
+<pre><code><span><span class="co">##              Gene         Feature         Z            P   permute.P     topSNP</span></span>
+<span><span class="co">## 1 ENSG00000070831 ENST00000344548 -3.239210 0.0011986108 1.000000000  rs2143103</span></span>
+<span><span class="co">## 2 ENSG00000070831 ENST00000315554  1.268410 0.2046514827 1.000000000 rs11582542</span></span>
+<span><span class="co">## 3 ENSG00000070831 ENST00000656825  3.268385 0.0010816323 1.000000000 rs11582542</span></span>
+<span><span class="co">## 4 ENSG00000070831 ENST00000498236 -2.906460 0.0036554386 1.000000000 rs11582542</span></span>
+<span><span class="co">## 5 ENSG00000070831 ENST00000400259  3.344840 0.0008232993 0.008991009 rs11582542</span></span>
+<span><span class="co">## 6 ENSG00000070831 ENST00000667384  0.575199 0.5651567515 1.000000000 rs11582542</span></span>
 <span><span class="co">##       topSNP.P</span></span>
 <span><span class="co">## 1 0.0004331767</span></span>
 <span><span class="co">## 2 0.0003396706</span></span>
@@ -342,7 +342,24 @@ are controlling both the FDR (<code>alpha1</code>) and FWER
 (<code>alpha2</code>) to 0.05.</p>
 <p>Let’s run the first stage now: gene-level FDR control.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">suppressPackageStartupMessages</a></span><span class="op">(</span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">require</a></span><span class="op">(</span><span class="va"><a href="https://tidyverse.tidyverse.org" class="external-link">tidyverse</a></span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">require</a></span><span class="op">(</span><span class="st"><a href="https://tidyverse.tidyverse.org" class="external-link">"tidyverse"</a></span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span><span class="op">{</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"tidyverse"</span>,</span>
+<span>                     repos <span class="op">=</span> <span class="st">'https://archive.linux.duke.edu/cran/'</span>,</span>
+<span>                     dependencies <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span>
+<span>  <span class="op">}</span></span></code></pre></div>
+<pre><code><span><span class="co">## ── <span style="font-weight: bold;">Attaching packages</span> ─────────────────────────────────────── tidyverse 1.3.2 ──</span></span>
+<span><span class="co">## <span style="color: #00BB00;">✔</span> <span style="color: #0000BB;">ggplot2</span> 3.4.2     <span style="color: #00BB00;">✔</span> <span style="color: #0000BB;">purrr  </span> 1.0.1</span></span>
+<span><span class="co">## <span style="color: #00BB00;">✔</span> <span style="color: #0000BB;">tibble </span> 3.2.1     <span style="color: #00BB00;">✔</span> <span style="color: #0000BB;">dplyr  </span> 1.1.2</span></span>
+<span><span class="co">## <span style="color: #00BB00;">✔</span> <span style="color: #0000BB;">tidyr  </span> 1.3.0     <span style="color: #00BB00;">✔</span> <span style="color: #0000BB;">stringr</span> 1.5.0</span></span>
+<span><span class="co">## <span style="color: #00BB00;">✔</span> <span style="color: #0000BB;">readr  </span> 2.1.3     <span style="color: #00BB00;">✔</span> <span style="color: #0000BB;">forcats</span> 1.0.0</span></span>
+<span><span class="co">## ── <span style="font-weight: bold;">Conflicts</span> ────────────────────────────────────────── tidyverse_conflicts() ──</span></span>
+<span><span class="co">## <span style="color: #BB0000;">✖</span> <span style="color: #0000BB;">tidyr</span>::<span style="color: #00BB00;">expand()</span> masks <span style="color: #0000BB;">Matrix</span>::expand()</span></span>
+<span><span class="co">## <span style="color: #BB0000;">✖</span> <span style="color: #0000BB;">dplyr</span>::<span style="color: #00BB00;">filter()</span> masks <span style="color: #0000BB;">stats</span>::filter()</span></span>
+<span><span class="co">## <span style="color: #BB0000;">✖</span> <span style="color: #0000BB;">dplyr</span>::<span style="color: #00BB00;">lag()</span>    masks <span style="color: #0000BB;">stats</span>::lag()</span></span>
+<span><span class="co">## <span style="color: #BB0000;">✖</span> <span style="color: #0000BB;">tidyr</span>::<span style="color: #00BB00;">pack()</span>   masks <span style="color: #0000BB;">Matrix</span>::pack()</span></span>
+<span><span class="co">## <span style="color: #BB0000;">✖</span> <span style="color: #0000BB;">tidyr</span>::<span style="color: #00BB00;">unpack()</span> masks <span style="color: #0000BB;">Matrix</span>::unpack()</span></span></code></pre>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://tidyverse.tidyverse.org" class="external-link">tidyverse</a></span><span class="op">)</span></span>
 <span><span class="va">gene</span> <span class="op">=</span> <span class="va">out_df</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">Gene</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarise</a></span><span class="op">(</span>Screen.P <span class="op">=</span> <span class="fu">isotwas</span><span class="fu">::</span><span class="fu"><a href="../reference/p_screen.html">p_screen</a></span><span class="op">(</span><span class="va">P</span><span class="op">)</span><span class="op">)</span></span>
@@ -352,7 +369,7 @@ are controlling both the FDR (<code>alpha1</code>) and FWER
 <span><span class="co">## 1 ENSG00000070831 0.0016636386</span></span>
 <span><span class="co">## 2 ENSG00000162552 0.0008302377</span></span>
 <span><span class="co">## 3 ENSG00000230068 0.0004539979</span></span></code></pre>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">alpha1</span><span class="op">=</span><span class="fl">.05</span></span>
 <span><span class="va">G</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">gene</span><span class="op">)</span></span>
 <span><span class="va">gene</span><span class="op">$</span><span class="va">Screen.P.Adjusted</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/p.adjust.html" class="external-link">p.adjust</a></span><span class="op">(</span><span class="va">gene</span><span class="op">$</span><span class="va">Screen.P</span>,method <span class="op">=</span> <span class="st">'fdr'</span><span class="op">)</span></span>
@@ -369,7 +386,7 @@ is, we see that the adjusted screening P-value is less than 0.05 for all
 genes.</p>
 <p>Let’s run the second stage: isoform-level FWER control for these gene
 families.</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">isoform_new</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span>nrow <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>                                   ncol <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">out_df</span><span class="op">)</span><span class="op">+</span><span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">isoform_new</span><span class="op">)</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">out_df</span><span class="op">)</span>,<span class="st">'Screen.P'</span>,<span class="st">'Confirmation.P'</span><span class="op">)</span></span>
@@ -385,7 +402,7 @@ families.</p>
 <span>            Confirmation.P <span class="op">=</span> <span class="fu">isotwas</span><span class="fu">::</span><span class="fu"><a href="../reference/p_confirm.html">p_confirm</a></span><span class="op">(</span><span class="va">P</span>,alpha <span class="op">=</span> <span class="va">alpha2</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## `summarise()` has grouped output by 'Gene'. You can override using the</span></span>
 <span><span class="co">## `.groups` argument.</span></span></code></pre>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">isoform_new</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/merge.html" class="external-link">merge</a></span><span class="op">(</span><span class="va">isoform_new</span>,<span class="va">ttt</span>,by<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">'Gene'</span>,<span class="st">'Feature'</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">isoform_new</span><span class="op">$</span><span class="va">Confirmation.P</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">isoform_new</span><span class="op">$</span><span class="va">Screen.P.Adjusted</span> <span class="op">&lt;</span> <span class="fl">0.05</span>,</span>
 <span>                                    <span class="va">isoform_new</span><span class="op">$</span><span class="va">Confirmation.P</span>,</span>
@@ -397,14 +414,14 @@ families.</p>
 <pre><code><span><span class="co">##               Gene         Feature         Z            P   permute.P</span></span>
 <span><span class="co">## 1  ENSG00000070831 ENST00000315554  1.268410 0.2046514827 1.000000000</span></span>
 <span><span class="co">## 2  ENSG00000070831 ENST00000344548 -3.239210 0.0011986108 1.000000000</span></span>
-<span><span class="co">## 3  ENSG00000070831 ENST00000400259  3.344840 0.0008232993 0.010989011</span></span>
+<span><span class="co">## 3  ENSG00000070831 ENST00000400259  3.344840 0.0008232993 0.008991009</span></span>
 <span><span class="co">## 4  ENSG00000070831 ENST00000498236 -2.906460 0.0036554386 1.000000000</span></span>
 <span><span class="co">## 5  ENSG00000070831 ENST00000656825  3.268385 0.0010816323 1.000000000</span></span>
 <span><span class="co">## 6  ENSG00000070831 ENST00000662562 -3.278162 0.0010448529 1.000000000</span></span>
 <span><span class="co">## 7  ENSG00000070831 ENST00000667384  0.575199 0.5651567515 1.000000000</span></span>
-<span><span class="co">## 8  ENSG00000162552 ENST00000290167 -3.441877 0.0005776926 0.052947053</span></span>
+<span><span class="co">## 8  ENSG00000162552 ENST00000290167 -3.441877 0.0005776926 0.044955045</span></span>
 <span><span class="co">## 9  ENSG00000162552 ENST00000415567 -3.179540 0.0014750883 1.000000000</span></span>
-<span><span class="co">## 10 ENSG00000230068 ENST00000431803 -3.506525 0.0004539979 0.005994006</span></span>
+<span><span class="co">## 10 ENSG00000230068 ENST00000431803 -3.506525 0.0004539979 0.004995005</span></span>
 <span><span class="co">##        topSNP     topSNP.P     Screen.P Screen.P.Adjusted Confirmation.P</span></span>
 <span><span class="co">## 1  rs11582542 0.0003396706 0.0016636386       0.001663639   1.0000000000</span></span>
 <span><span class="co">## 2   rs2143103 0.0004331767 0.0016636386       0.001663639   0.0062691173</span></span>
@@ -416,16 +433,18 @@ families.</p>
 <span><span class="co">## 8  rs11582542 0.0003396706 0.0008302377       0.001245357   0.0005776926</span></span>
 <span><span class="co">## 9  rs11582542 0.0003396706 0.0008302377       0.001245357   0.0014750883</span></span>
 <span><span class="co">## 10 rs11582542 0.0003396706 0.0004539979       0.001245357   0.0000000000</span></span></code></pre>
-<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">isoform_new</span>,<span class="va">Screen.P.Adjusted</span> <span class="op">&lt;</span> <span class="va">alpha1</span> <span class="op">&amp;</span></span>
 <span>               <span class="va">Confirmation.P</span> <span class="op">&lt;</span> <span class="va">alpha2</span> <span class="op">&amp;</span></span>
 <span>               <span class="va">permute.P</span> <span class="op">&lt;</span> <span class="fl">0.05</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##               Gene         Feature         Z            P   permute.P</span></span>
-<span><span class="co">## 3  ENSG00000070831 ENST00000400259  3.344840 0.0008232993 0.010989011</span></span>
-<span><span class="co">## 10 ENSG00000230068 ENST00000431803 -3.506525 0.0004539979 0.005994006</span></span>
+<span><span class="co">## 3  ENSG00000070831 ENST00000400259  3.344840 0.0008232993 0.008991009</span></span>
+<span><span class="co">## 8  ENSG00000162552 ENST00000290167 -3.441877 0.0005776926 0.044955045</span></span>
+<span><span class="co">## 10 ENSG00000230068 ENST00000431803 -3.506525 0.0004539979 0.004995005</span></span>
 <span><span class="co">##        topSNP     topSNP.P     Screen.P Screen.P.Adjusted Confirmation.P</span></span>
-<span><span class="co">## 3  rs11582542 0.0003396706 0.0016636386       0.001663639    0.004939796</span></span>
-<span><span class="co">## 10 rs11582542 0.0003396706 0.0004539979       0.001245357    0.000000000</span></span></code></pre>
+<span><span class="co">## 3  rs11582542 0.0003396706 0.0016636386       0.001663639   0.0049397958</span></span>
+<span><span class="co">## 8  rs11582542 0.0003396706 0.0008302377       0.001245357   0.0005776926</span></span>
+<span><span class="co">## 10 rs11582542 0.0003396706 0.0004539979       0.001245357   0.0000000000</span></span></code></pre>
 <p>We have now generated screening gene-level FDR-adjusted P-values and
 confirmation isoform-level FWER controlled P-values. We see that there
 are 3 isoforms at this locus that pass all 3 levels of hypothesis
@@ -465,7 +484,7 @@ this tutorial, we have compiled the necessary LD matrix.</p>
 <p>First, we annotate each isoform with location and select the
 significantly associated isoforms that are within 1 Mb of one
 another.</p>
-<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">suppressPackageStartupMessages</a></span><span class="op">(</span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">require</a></span><span class="op">(</span><span class="va">biomaRt</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">gene_names</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">isoform_new</span><span class="op">$</span><span class="va">Gene</span><span class="op">)</span></span>
 <span><span class="va">ensembl</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/biomaRt/man/useEnsembl.html" class="external-link">useEnsembl</a></span><span class="op">(</span>biomart <span class="op">=</span> <span class="st">"ensembl"</span>, </span>
@@ -504,7 +523,7 @@ significant isoform do not need to be fine-mapped.</p>
 <p>Now, we aggregate the models and generate a single table with the
 SNP-to-isoform weights of all the SNPs that predict these overlapping
 isoforms.</p>
-<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">all.snps</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">omega</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">pos</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">)</span></span>
@@ -566,20 +585,20 @@ isoforms.</p>
 <span><span class="op">}</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">model.df</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">##          SNP ENST00000400259 ENST00000431803 Chromosome</span></span>
-<span><span class="co">## 1  rs1002480   -3.437902e-04    8.726253e-05          1</span></span>
-<span><span class="co">## 2  rs1011380   -5.231286e-05    8.881914e-05          1</span></span>
-<span><span class="co">## 3  rs1014986    7.976357e-05    1.177811e-03          1</span></span>
-<span><span class="co">## 4 rs10157808    2.620658e-04    2.047407e-05          1</span></span>
-<span><span class="co">## 5  rs1018102    4.699228e-05    1.019356e-04          1</span></span>
-<span><span class="co">## 6 rs10218584   -6.270159e-05    3.580614e-06          1</span></span></code></pre>
+<pre><code><span><span class="co">##          SNP ENST00000400259 ENST00000431803 ENST00000290167 Chromosome</span></span>
+<span><span class="co">## 1  rs1002480   -3.437902e-04    8.726253e-05               0          1</span></span>
+<span><span class="co">## 2  rs1011380   -5.231286e-05    8.881914e-05               0          1</span></span>
+<span><span class="co">## 3  rs1014986    7.976357e-05    1.177811e-03               0          1</span></span>
+<span><span class="co">## 4 rs10157808    2.620658e-04    2.047407e-05               0          1</span></span>
+<span><span class="co">## 5  rs1018102    4.699228e-05    1.019356e-04               0          1</span></span>
+<span><span class="co">## 6 rs10218584   -6.270159e-05    3.580614e-06               0          1</span></span></code></pre>
 <p>This step generates a data frame in <code>model.df</code> that
 includes all SNPs in both isoTWAS models at the locus and their effect
 (non-zero or otherwise) on each isoforms we are fine-mapping at the
 locus.</p>
 <p>Now, we obtain our LD matrix for the SNPs in
 <code>model.df$SNP</code></p>
-<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">V</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>,</span>
 <span>                        <span class="st">"test_LD_finemapping.RDS"</span>,</span>
 <span>                        package <span class="op">=</span> <span class="st">"isotwas"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
@@ -588,7 +607,7 @@ compute the correlation between the genetically-predicted expression of
 the isoforms, (2) enumerate the causal configurations, (3) compute
 marginal likelihoods and Bayes factors for each isoform, and (4) compute
 posterior inclusion probabilities and credible sets.</p>
-<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">V</span> <span class="op">=</span> <span class="va">V</span><span class="op">[</span><span class="va">model.df</span><span class="op">$</span><span class="va">SNP</span>,<span class="va">model.df</span><span class="op">$</span><span class="va">SNP</span><span class="op">]</span></span>
 <span><span class="va">Omega</span> <span class="op">=</span> <span class="fu">Matrix</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/Matrix.html" class="external-link">Matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">model.df</span><span class="op">[</span>,<span class="op">-</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">model.df</span><span class="op">)</span><span class="op">)</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">zscores</span> <span class="op">=</span> <span class="va">isoform_sig</span><span class="op">$</span><span class="va">Z</span></span>
@@ -660,12 +679,15 @@ posterior inclusion probabilities and credible sets.</p>
 <pre><code><span><span class="co">##               Gene Chromosome    Start      End         Feature         Z</span></span>
 <span><span class="co">## 3  ENSG00000070831          1 22052627 22101360 ENST00000400259  3.344840</span></span>
 <span><span class="co">## 10 ENSG00000230068          1 22059197 22064199 ENST00000431803 -3.506525</span></span>
+<span><span class="co">## 8  ENSG00000162552          1 22117313 22143969 ENST00000290167 -3.441877</span></span>
 <span><span class="co">##               P   permute.P     topSNP     topSNP.P     Screen.P</span></span>
-<span><span class="co">## 3  0.0008232993 0.010989011 rs11582542 0.0003396706 0.0016636386</span></span>
-<span><span class="co">## 10 0.0004539979 0.005994006 rs11582542 0.0003396706 0.0004539979</span></span>
-<span><span class="co">##    Screen.P.Adjusted Confirmation.P pip in_cred_set</span></span>
-<span><span class="co">## 3        0.001663639    0.004939796   1        TRUE</span></span>
-<span><span class="co">## 10       0.001245357    0.000000000   1        TRUE</span></span></code></pre>
+<span><span class="co">## 3  0.0008232993 0.008991009 rs11582542 0.0003396706 0.0016636386</span></span>
+<span><span class="co">## 10 0.0004539979 0.004995005 rs11582542 0.0003396706 0.0004539979</span></span>
+<span><span class="co">## 8  0.0005776926 0.044955045 rs11582542 0.0003396706 0.0008302377</span></span>
+<span><span class="co">##    Screen.P.Adjusted Confirmation.P       pip in_cred_set</span></span>
+<span><span class="co">## 3        0.001663639   0.0049397958 1.0000000        TRUE</span></span>
+<span><span class="co">## 10       0.001245357   0.0000000000 1.0000000        TRUE</span></span>
+<span><span class="co">## 8        0.001245357   0.0005776926 0.2439366        TRUE</span></span></code></pre>
 <p>As you can see, ENST00000431803 and ENST00000290167 have
 <code>PIP = 1</code> and are both in the 90% credible set
 (<code>in_cred_set</code> column).</p>

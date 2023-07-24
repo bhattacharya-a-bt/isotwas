@@ -5,6 +5,7 @@ vignette: >
   %\VignetteIndexEntry{Run isoTWAS associations}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+  %\VignetteDepends{magrittr,dplyr,tidyverse}
 ---
 
 ```{r setup, include=FALSE}
@@ -184,7 +185,13 @@ The permutation test test assesses how much signal is added by isoform expressio
 Let's run the first stage now: gene-level FDR control.
 
 ```{r stage1}
-suppressPackageStartupMessages(require(tidyverse))
+if (!require("tidyverse", quietly = TRUE)){
+    install.packages("tidyverse",
+                     repos = 'https://archive.linux.duke.edu/cran/',
+                     dependencies = T)
+  }
+
+library(tidyverse)
 gene = out_df %>%
   group_by(Gene) %>%
   summarise(Screen.P = isotwas::p_screen(P))

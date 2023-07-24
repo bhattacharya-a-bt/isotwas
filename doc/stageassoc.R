@@ -71,7 +71,13 @@ for (gene in gene_names){
 head(out_df)
 
 ## ----stage1-------------------------------------------------------------------
-suppressPackageStartupMessages(require(tidyverse))
+if (!require("tidyverse", quietly = TRUE)){
+    install.packages("tidyverse",
+                     repos = 'https://archive.linux.duke.edu/cran/',
+                     dependencies = T)
+  }
+
+library(tidyverse)
 gene = out_df %>%
   group_by(Gene) %>%
   summarise(Screen.P = isotwas::p_screen(P))
