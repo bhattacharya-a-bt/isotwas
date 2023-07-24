@@ -184,6 +184,10 @@ The permutation test test assesses how much signal is added by isoform expressio
 Let's run the first stage now: gene-level FDR control.
 
 ```{r stage1}
+if (!require("tidyverse", quietly = TRUE)){
+    install.packages("tidyverse")
+  }
+
 library(tidyverse)
 gene = out_df %>%
   group_by(Gene) %>%
