@@ -12,9 +12,11 @@
 #' @param pos character, colnames in sumStats that keeps the position
 #' @param a1 character, colnames in sumStats that keeps the ALT allele
 #' @param a2 character, colnames in sumStats that keeps the REF allele
+#' @param snpName character, colnames in sumStats that keeps the SNP id
 #' @param Z character, colnames in sumStats that keeps the Z score
 #' @param beta character, colnames in sumStats that keeps the effect size
 #' @param se character, colnames in sumStats that keeps the standard error
+#' @param featureName character, colname in model that keeps the feature name
 #' @param R2cutoff numeric, predictive R2 cutoff
 #' @param alpha numeric, P-value threshold for permutation testing
 #' @param nperms numeric, number of permutations
@@ -55,8 +57,8 @@ burdenTest <- function(mod,
    colnames(sumStats)[which(colnames(sumStats) == snpName)] = 'SNP'
     colnames(sumStats)[which(colnames(sumStats) == chr)] = 'Chromosome'
     colnames(sumStats)[which(colnames(sumStats) == pos)] = 'Position'
-    colnames(sumStats)[which(colnames(sumStats) == a1)] = 'A1'
-    colnames(sumStats)[which(colnames(sumStats) == a2)] = 'A2'
+    colnames(sumStats)[which(colnames(sumStats) == a1)] = 'ALT'
+    colnames(sumStats)[which(colnames(sumStats) == a2)] = 'REF'
 
     if (!is.null(Z)){
       colnames(sumStats)[which(colnames(sumStats) == Z)] = 'Z'
@@ -89,7 +91,7 @@ burdenTest <- function(mod,
       return('SNPs not found.')
     }
 
-    tot$Z = ifelse(tot$A1.x == tot$A1.y,
+    tot$Z = ifelse(tot$ALT.x == tot$ALT.y,
                    tot$Z,
                    -1 * tot$Z)
 
