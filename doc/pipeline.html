@@ -12,7 +12,7 @@
 
 
 
-<title>Run the isotwas pipeline</title>
+<title>Train an isoTWAS models</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -336,7 +336,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 
 
-<h1 class="title toc-ignore">Run the isotwas pipeline</h1>
+<h1 class="title toc-ignore">Train an isoTWAS models</h1>
 
 
 
@@ -344,10 +344,8 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <h2>Introduction</h2>
 <p>This module will cover how to use functions from <code>isotwas</code>
 to train an multivariate <code>isotwas</code> model for isoform-level
-expression. Then, we will run summary statistics-based disease mapping
-using the stage-wise hypothesis testing procedure. Lastly, we will run
-probabilistic fine-mapping. Along the way, we’ll be covering some
-practical considerations for computation and feature selection.</p>
+expression. Along the way, we’ll be covering some practical
+considerations for computation and feature selection.</p>
 </div>
 <div id="train-predictive-model" class="section level2">
 <h2>Train predictive model</h2>
@@ -369,9 +367,14 @@ your memory usage, we recommend storing your genetic data as
 gene, use <code>PLINK</code> to <a href="https://www.cog-genomics.org/plink/2.0/filter">select only
 SNPs</a> on the same chromosome and within 1 Megabase of the gene body.
 Then, you can use the <a href="https://privefl.github.io/bigsnpr/"><code>bigsnpr</code>
-package</a> read in this “condensed” file set.</p>
-<p>For this vignette, we’ll use some toy genetic and transcriptomic data
-provided.</p>
+package</a> read in this “condensed” file set. Make sure your isoform
+expression matrix is log-transformed and residualized by covariates that
+are normally used in a QTL analysis (i.e., age, sex, principal
+components of the genotype matrix, <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3398141/">PEER
+factors</a> or <a href="https://pubmed.ncbi.nlm.nih.gov/23874524/">hidden covariates with
+prior</a> for the full expression matrix).</p>
+<p>For this vignette about training an model, we’ll use some toy genetic
+and transcriptomic data provided.</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>train_bed <span class="ot">=</span> <span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;train.bed&quot;</span>, <span class="at">package =</span> <span class="st">&quot;isotwas&quot;</span>)</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>snps <span class="ot">=</span> bigsnpr<span class="sc">::</span><span class="fu">snp_attach</span>(bigsnpr<span class="sc">::</span><span class="fu">snp_readBed2</span>(train_bed,</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>                                                 <span class="at">backingfile =</span> <span class="fu">tempfile</span>()))</span>
@@ -630,136 +633,6 @@ annotation object to have position and REF/ALT allele information.</p>
 <span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 10 SNP1042  -1.09e-2 Isoform2   0.463     0          1            0      1042088</span></span>
 <span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # ℹ 690 more rows</span></span>
 <span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # ℹ 2 more variables: allele1 &lt;chr&gt;, allele2 &lt;chr&gt;</span></span></code></pre></div>
-</div>
-<div id="run-stage-wise-trait-mapping" class="section level2">
-<h2>Run stage-wise trait mapping</h2>
-<p>Let’s load up the sample GWAS data that’s provided and read in the
-reference linkage disequilibrium data. Again, these GWAS summary
-statistic files and LD reference files are large and unwieldy. Try to
-use bash or <code>PLINK</code> commands to cut down the file to the
-variants you need. You need to have standardized effect sizes for the
-GWAS (i.e. <code>beta</code>/<code>SE</code>). You only need to provide
-a numeric matrix for the LD reference in the burden test function. Here,
-we use <code>bigsnpr</code> to calculate the reference LD.</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>gwas <span class="ot">=</span> <span class="fu">read.table</span>(<span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;gwas.txt&quot;</span>, <span class="at">package =</span> <span class="st">&quot;isotwas&quot;</span>),<span class="at">header =</span> T)</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(gwas)</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    SNP Chromosome Position A1 A2          Z           SE         Beta</span></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 SNP0          1      112  A  T 3.29858740 0.0040093308 0.0132251279</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 SNP1          1     1098  T  A 2.45795205 0.0158409710 0.0389363471</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3 SNP2          1     2089  T  A 1.01641540 0.0139658745 0.0141951299</span></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4 SNP3          1     3107  T  A 0.07231828 0.0065715300 0.0004752417</span></span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5 SNP4          1     4091  A  T 0.70070754 0.0306798485 0.0214976013</span></span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 6 SNP5          1     5091  A  T 2.23586998 0.0009621161 0.0021511665</span></span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>ld_bed <span class="ot">=</span> <span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;ld.bed&quot;</span>, <span class="at">package =</span> <span class="st">&quot;isotwas&quot;</span>)</span>
-<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>ld_ref <span class="ot">=</span> bigsnpr<span class="sc">::</span><span class="fu">snp_attach</span>(bigsnpr<span class="sc">::</span><span class="fu">snp_readBed2</span>(ld_bed,</span>
-<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>                                                   <span class="at">backingfile =</span> <span class="fu">tempfile</span>()))</span>
-<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>ld_cor <span class="ot">=</span> bigsnpr<span class="sc">::</span><span class="fu">snp_cor</span>(ld_ref<span class="sc">$</span>genotypes)</span>
-<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(ld_cor) <span class="ot">=</span> <span class="fu">rownames</span>(ld_cor) <span class="ot">=</span> ld_ref<span class="sc">$</span>map<span class="sc">$</span>marker.ID</span></code></pre></div>
-<p>Let’s now generate TWAS Z-scores for each isoform using
-<code>burdenTest()</code> modified from the <a href="https://github.com/bhattacharya-a-bt/MOSTWAS"><code>MOSTWAS</code>
-package</a>. Ensure that you have a column named
-<code>Chromosome</code>, <code>Position</code>, <code>A1</code>
-(alternative allele) and <code>A2</code> (reference allele) in your
-model tibble.</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>model_tsv<span class="sc">$</span>Chromosome <span class="ot">=</span> model_tsv<span class="sc">$</span>chromosome</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>model_tsv<span class="sc">$</span>Position <span class="ot">=</span> model_tsv<span class="sc">$</span>physical.pos</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>model_tsv<span class="sc">$</span>A1 <span class="ot">=</span> model_tsv<span class="sc">$</span>allele1</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>model_tsv<span class="sc">$</span>A2 <span class="ot">=</span> model_tsv<span class="sc">$</span>allele2</span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>res.df <span class="ot">=</span> <span class="fu">data.frame</span>(<span class="at">Gene =</span> <span class="fu">c</span>(),</span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>                    <span class="at">Transcript =</span> <span class="fu">c</span>(),</span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>                    <span class="at">Z =</span> <span class="fu">c</span>(),</span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>                    <span class="at">P =</span> <span class="fu">c</span>(),</span>
-<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>                    <span class="at">permute.P =</span> <span class="fu">c</span>(),</span>
-<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>                    <span class="at">topSNP =</span> <span class="fu">c</span>(),</span>
-<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>                    <span class="at">topSNP.P =</span> <span class="fu">c</span>())</span>
-<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (isoform <span class="cf">in</span> <span class="fu">unique</span>(model_tsv<span class="sc">$</span>Transcript)){</span>
-<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>  model_this <span class="ot">=</span> <span class="fu">subset</span>(model_tsv,</span>
-<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>                      Transcript <span class="sc">==</span> isoform)</span>
-<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>  gwas_cur <span class="ot">=</span> <span class="fu">subset</span>(gwas,SNP <span class="sc">%in%</span> model_this<span class="sc">$</span>SNP)</span>
-<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>  gwas_cur <span class="ot">=</span> gwas_cur[<span class="fu">match</span>(model_this<span class="sc">$</span>SNP,</span>
-<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>                            gwas_cur<span class="sc">$</span>SNP),]</span>
-<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>  res.df <span class="ot">=</span> <span class="fu">rbind</span>(res.df,</span>
-<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>                 <span class="fu">burdenTest</span>(<span class="at">mod =</span> model_this,</span>
-<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>                            <span class="at">ld =</span> ld_cor,</span>
-<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>                            <span class="at">gene =</span> <span class="st">&#39;GeneExample&#39;</span>,</span>
-<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a>                            <span class="at">sumStats =</span> gwas_cur,</span>
-<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a>                            <span class="at">chr =</span> <span class="st">&#39;Chromosome&#39;</span>,</span>
-<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a>                            <span class="at">pos =</span> <span class="st">&#39;Position&#39;</span>,</span>
-<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a>                            <span class="at">a1 =</span> <span class="st">&#39;A1&#39;</span>,</span>
-<span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a>                            <span class="at">a2 =</span> <span class="st">&#39;A2&#39;</span>,</span>
-<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a>                            <span class="at">Z =</span> <span class="st">&#39;Z&#39;</span>,</span>
-<span id="cb7-29"><a href="#cb7-29" aria-hidden="true" tabindex="-1"></a>                            <span class="at">beta =</span> <span class="st">&#39;Beta&#39;</span>,</span>
-<span id="cb7-30"><a href="#cb7-30" aria-hidden="true" tabindex="-1"></a>                            <span class="at">se =</span> <span class="st">&#39;SE&#39;</span>,</span>
-<span id="cb7-31"><a href="#cb7-31" aria-hidden="true" tabindex="-1"></a>                            <span class="at">R2cutoff =</span> <span class="fl">0.01</span>,</span>
-<span id="cb7-32"><a href="#cb7-32" aria-hidden="true" tabindex="-1"></a>                            <span class="at">alpha =</span> <span class="fl">0.25</span>,</span>
-<span id="cb7-33"><a href="#cb7-33" aria-hidden="true" tabindex="-1"></a>                            <span class="at">nperms =</span> <span class="fl">1e2</span>,</span>
-<span id="cb7-34"><a href="#cb7-34" aria-hidden="true" tabindex="-1"></a>                            <span class="at">usePos =</span> F))</span>
-<span id="cb7-35"><a href="#cb7-35" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb7-36"><a href="#cb7-36" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb7-37"><a href="#cb7-37" aria-hidden="true" tabindex="-1"></a>res.df</span>
-<span id="cb7-38"><a href="#cb7-38" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;          Gene Transcript            Z         P permute.P  topSNP     topSNP.P</span></span>
-<span id="cb7-39"><a href="#cb7-39" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 GeneExample   Isoform1 -0.885378410 0.3759526 1.0000000 SNP4334 3.700510e-08</span></span>
-<span id="cb7-40"><a href="#cb7-40" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 GeneExample   Isoform3  0.003277902 0.9973846 1.0000000  SNP585 9.759435e-15</span></span>
-<span id="cb7-41"><a href="#cb7-41" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3 GeneExample   Isoform2 -1.380675303 0.1673788 0.4752475 SNP1751 7.638442e-09</span></span></code></pre></div>
-<p>Now, we have individual isoform-level associations for all isoforms
-of our example gene. We can run a screening-level test to test whether
-at least one of the isoforms of the gene is significantly associated
-with the trait using <code>p_screen(res.df$P,mode = &#39;P&#39;)</code>. For a
-panel of genes, we run false discovery control on these screening
-P-values. If a gene has a small enough P-value on the screening level,
-we run <code>p_confirm(res.df$P)</code> to control the family-wise error
-rate within each gene family. This will provide a set of isoforms that
-pass stage-wise hypothesis testing.</p>
-<p>We recommend permutation testing on the isoform-level to make sure
-you aren’t proritizing an isoform-trait association only because of
-strong GWAS or strong QTL effects; read <a href="https://www.nature.com/articles/ng.3506">Gusev et al 2016</a> for
-more information. <code>burdenTest()</code> will automatically run
-permutations if the nominal TWAS P-value for an isoform is under the
-specified <code>alpha</code>.</p>
-</div>
-<div id="probabilistic-fine-mapping" class="section level2">
-<h2>Probabilistic fine-mapping</h2>
-<p>We have modified functions from Mancuso et al 2019’s <a href="https://github.com/bogdanlab/focus">FOCUS software</a>; here’s a
-<a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6619422/">link to
-the paper</a>. All you need for this is the models for the transcript
-you’re interested in, an LD reference matrix, and the TWAS Z-scores.</p>
-<p>We’ll generate one matrix: <code>Omega</code> with 3 columns for each
-isoform and SNPs along the rows. And then we will make sure the LD
-matrix aligns with the SNPs in <code>Omega</code>.</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>Omega <span class="ot">=</span> <span class="fu">matrix</span>(<span class="at">nrow =</span> <span class="fu">length</span>(<span class="fu">unique</span>(model_tsv<span class="sc">$</span>SNP)),</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>               <span class="at">ncol =</span> <span class="fu">nrow</span>(res.df))</span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(Omega) <span class="ot">=</span> res.df<span class="sc">$</span>Transcript</span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(Omega) <span class="ot">=</span> <span class="fu">unique</span>(model_tsv<span class="sc">$</span>SNP)</span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>V <span class="ot">=</span> ld_cor[<span class="fu">rownames</span>(Omega),<span class="fu">rownames</span>(Omega)]</span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">ncol</span>(Omega)){</span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (j <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(Omega)){</span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>    mod_this <span class="ot">=</span> <span class="fu">subset</span>(model_tsv,Transcript <span class="sc">==</span> <span class="fu">colnames</span>(Omega)[i])</span>
-<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>    Omega[j,i] <span class="ot">=</span> <span class="fu">ifelse</span>(<span class="fu">rownames</span>(Omega)[j] <span class="sc">%in%</span> mod_this<span class="sc">$</span>SNP,</span>
-<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>                        mod_this<span class="sc">$</span>Weight[mod_this<span class="sc">$</span>SNP <span class="sc">==</span> <span class="fu">rownames</span>(Omega)[j]],</span>
-<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>                        <span class="dv">0</span>)</span>
-<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>res.df <span class="ot">=</span> <span class="fu">twas_finemap</span>(<span class="at">res.df =</span> res.df,</span>
-<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>                      <span class="at">z =</span> <span class="st">&#39;Z&#39;</span>,</span>
-<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>                      <span class="at">Omega =</span> Omega,</span>
-<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>                      <span class="at">V =</span> V, </span>
-<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>                      <span class="at">max_enum =</span> <span class="dv">3</span>,</span>
-<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>                      <span class="at">cutoff =</span> .<span class="dv">9</span>)</span>
-<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>res.df</span>
-<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;          Gene Transcript            Z         P permute.P  topSNP     topSNP.P</span></span>
-<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3 GeneExample   Isoform2 -1.380675303 0.1673788 0.4752475 SNP1751 7.638442e-09</span></span>
-<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 GeneExample   Isoform1 -0.885378410 0.3759526 1.0000000 SNP4334 3.700510e-08</span></span>
-<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 GeneExample   Isoform3  0.003277902 0.9973846 1.0000000  SNP585 9.759435e-15</span></span>
-<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;            pip in_cred_set</span></span>
-<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3 0.0002818156        TRUE</span></span>
-<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 0.0002753093        TRUE</span></span>
-<span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 0.0001630614       FALSE</span></span></code></pre></div>
 </div>
 
 

@@ -29,7 +29,8 @@ carries out the weighted burden Z-test for a trait"><!-- mathjax --><script src=
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
     <a class="dropdown-item" href="../articles/motivation.html">Motivation for isotwas</a>
-    <a class="dropdown-item" href="../articles/pipeline.html">Run the isotwas pipeline</a>
+    <a class="dropdown-item" href="../articles/pipeline.html">Train an isoTWAS models</a>
+    <a class="dropdown-item" href="../articles/stageassoc.html">Run isoTWAS associations</a>
   </div>
 </li>
       </ul><form class="form-inline my-2 my-lg-0" role="search">
@@ -64,9 +65,11 @@ carries out the weighted burden Z-test for a trait</p>
 <span>  <span class="va">pos</span>,</span>
 <span>  <span class="va">a1</span>,</span>
 <span>  <span class="va">a2</span>,</span>
+<span>  snpName <span class="op">=</span> <span class="st">"SNP"</span>,</span>
 <span>  Z <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  beta <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  se <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  featureName <span class="op">=</span> <span class="st">"Feature"</span>,</span>
 <span>  R2cutoff <span class="op">=</span> <span class="fl">0.01</span>,</span>
 <span>  alpha <span class="op">=</span> <span class="fl">2.5e-06</span>,</span>
 <span>  nperms <span class="op">=</span> <span class="fl">1000</span>,</span>
@@ -108,6 +111,10 @@ carries out the weighted burden Z-test for a trait</p>
 <dd><p>character, colnames in sumStats that keeps the REF allele</p></dd>
 
 
+<dt>snpName</dt>
+<dd><p>character, colnames in sumStats that keeps the SNP id</p></dd>
+
+
 <dt>Z</dt>
 <dd><p>character, colnames in sumStats that keeps the Z score</p></dd>
 
@@ -118,6 +125,10 @@ carries out the weighted burden Z-test for a trait</p>
 
 <dt>se</dt>
 <dd><p>character, colnames in sumStats that keeps the standard error</p></dd>
+
+
+<dt>featureName</dt>
+<dd><p>character, colname in model that keeps the feature name</p></dd>
 
 
 <dt>R2cutoff</dt>

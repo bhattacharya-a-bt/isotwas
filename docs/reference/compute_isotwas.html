@@ -27,7 +27,8 @@ the best model"><!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/l
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
     <a class="dropdown-item" href="../articles/motivation.html">Motivation for isotwas</a>
-    <a class="dropdown-item" href="../articles/pipeline.html">Run the isotwas pipeline</a>
+    <a class="dropdown-item" href="../articles/pipeline.html">Train an isoTWAS models</a>
+    <a class="dropdown-item" href="../articles/stageassoc.html">Run isoTWAS associations</a>
   </div>
 </li>
       </ul><form class="form-inline my-2 my-lg-0" role="search">
@@ -61,8 +62,8 @@ the best model</p>
 <span>  <span class="va">id</span>,</span>
 <span>  omega_est <span class="op">=</span> <span class="st">"replicates"</span>,</span>
 <span>  omega_nlambda <span class="op">=</span> <span class="fl">10</span>,</span>
-<span>  method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"mrce_lasso"</span>, <span class="st">"curds_whey"</span>, <span class="st">"multi_enet"</span>, <span class="st">"joinet"</span>, <span class="st">"mvsusie"</span>, <span class="st">"spls"</span>,</span>
-<span>    <span class="st">"mrmash"</span>, <span class="st">"finemap"</span>, <span class="st">"univariate"</span><span class="op">)</span>,</span>
+<span>  method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"mrce_lasso"</span>, <span class="st">"curds_whey"</span>, <span class="st">"multi_enet"</span>, <span class="st">"joinet"</span>, <span class="st">"spls"</span>, <span class="st">"finemap"</span>,</span>
+<span>    <span class="st">"univariate"</span><span class="op">)</span>,</span>
 <span>  predict_nlambda <span class="op">=</span> <span class="fl">50</span>,</span>
 <span>  family <span class="op">=</span> <span class="st">"gaussian"</span>,</span>
 <span>  scale <span class="op">=</span> <span class="cn">F</span>,</span>

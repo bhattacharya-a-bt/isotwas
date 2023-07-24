@@ -13,9 +13,13 @@ burdenTest(
   pos,
   a1,
   a2,
+  a1_mod = "ALT",
+  a2_mod = "REF",
+  snpName = "SNP",
   Z = NULL,
   beta = NULL,
   se = NULL,
+  featureName = "Feature",
   R2cutoff = 0.01,
   alpha = 2.5e-06,
   nperms = 1000,
@@ -39,11 +43,19 @@ burdenTest(
 
 \item{a2}{character, colnames in sumStats that keeps the REF allele}
 
+\item{a1_mod}{character, colnames in model that keeps the ALT allele}
+
+\item{a2_mod}{character, colnames in model that keeps the REF allele}
+
+\item{snpName}{character, colnames in sumStats that keeps the SNP id}
+
 \item{Z}{character, colnames in sumStats that keeps the Z score}
 
 \item{beta}{character, colnames in sumStats that keeps the effect size}
 
 \item{se}{character, colnames in sumStats that keeps the standard error}
+
+\item{featureName}{character, colname in model that keeps the feature name}
 
 \item{R2cutoff}{numeric, predictive R2 cutoff}
 

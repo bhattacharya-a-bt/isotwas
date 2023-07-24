@@ -25,7 +25,8 @@
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
     <a class="dropdown-item" href="../articles/motivation.html">Motivation for isotwas</a>
-    <a class="dropdown-item" href="../articles/pipeline.html">Run the isotwas pipeline</a>
+    <a class="dropdown-item" href="../articles/pipeline.html">Train an isoTWAS models</a>
+    <a class="dropdown-item" href="../articles/stageassoc.html">Run isoTWAS associations</a>
   </div>
 </li>
       </ul><form class="form-inline my-2 my-lg-0" role="search">
@@ -42,9 +43,9 @@
     </div>
 
     <div class="section level2">
-      <h2 id="all-functions">All functions<a class="anchor" aria-label="anchor" href="#all-functions"></a></h2>
+      <h2 id="training-models">Training models<a class="anchor" aria-label="anchor" href="#training-models"></a></h2>
       
-      
+      <p class="section-desc"></p><p>Functions for training multivariate predictive models</p>
 
       
     </div><div id="" class="section level2">
@@ -54,24 +55,24 @@
 
       <dl><dt>
           
-          <code><a href="bayes_factor.html">bayes_factor()</a></code> 
+          <code><a href="compute_isotwas.html">compute_isotwas()</a></code> 
         </dt>
-        <dd>Compute Bayes factors for TWAS Z-scores</dd>
+        <dd>Compute isoTWAS model for a set of isoforms/transcripts</dd>
       </dl><dl><dt>
           
-          <code><a href="burdenTest.html">burdenTest()</a></code> 
+          <code><a href="curds_whey.html">curds_whey()</a></code> 
         </dt>
-        <dd>Compute weighted burden test</dd>
-      </dl><dl><dt>
-          
-          <code><a href="compute_blup.html">compute_blup()</a></code> 
-        </dt>
-        <dd>Univariate BLUP on all columns</dd>
+        <dd>Breiman and Friedman's curds and whey multivariate regression</dd>
       </dl><dl><dt>
           
           <code><a href="compute_curds_whey.html">compute_curds_whey()</a></code> 
         </dt>
         <dd>Breiman and Friedman's curds and whey multivariate regression with CV</dd>
+      </dl><dl><dt>
+          
+          <code><a href="finemap_regress.html">finemap_regress()</a></code> 
+        </dt>
+        <dd>Fine-mapping and clustering SEs with SUR</dd>
       </dl><dl><dt>
           
           <code><a href="compute_finemap_regress.html">compute_finemap_regress()</a></code> 
@@ -84,11 +85,6 @@
         <dd>Multivariate regression with covariance estimate</dd>
       </dl><dl><dt>
           
-          <code><a href="compute_isotwas.html">compute_isotwas()</a></code> 
-        </dt>
-        <dd>Compute isoTWAS model for a set of isoforms/transcripts</dd>
-      </dl><dl><dt>
-          
           <code><a href="compute_mrce.html">compute_mrce()</a></code> 
         </dt>
         <dd>Multivariate regression with covariance estimate</dd>
@@ -99,39 +95,9 @@
         <dd>Compute precision matrix between isoforms</dd>
       </dl><dl><dt>
           
-          <code><a href="conditional_test.html">conditional_test()</a></code> 
+          <code><a href="compute_blup.html">compute_blup()</a></code> 
         </dt>
-        <dd>Conditional gene-level test</dd>
-      </dl><dl><dt>
-          
-          <code><a href="conditional_test_focus.html">conditional_test_focus()</a></code> 
-        </dt>
-        <dd>Conditional gene-level test</dd>
-      </dl><dl><dt>
-          
-          <code><a href="convert_model.html">convert_model()</a></code> 
-        </dt>
-        <dd>Convert isotwas model list to tibble</dd>
-      </dl><dl><dt>
-          
-          <code><a href="curds_whey.html">curds_whey()</a></code> 
-        </dt>
-        <dd>Breiman and Friedman's curds and whey multivariate regression</dd>
-      </dl><dl><dt>
-          
-          <code><a href="estimate_cor.html">estimate_cor()</a></code> 
-        </dt>
-        <dd>Compute correlation for fine-mapping</dd>
-      </dl><dl><dt>
-          
-          <code><a href="finemap_regress.html">finemap_regress()</a></code> 
-        </dt>
-        <dd>Fine-mapping and clustering SEs with SUR</dd>
-      </dl><dl><dt>
-          
-          <code><a href="get_resid.html">get_resid()</a></code> 
-        </dt>
-        <dd>Compute residuals for Z-scores</dd>
+        <dd>Univariate BLUP on all columns</dd>
       </dl><dl><dt>
           
           <code><a href="multivariate_elasticnet.html">multivariate_elasticnet()</a></code> 
@@ -144,34 +110,9 @@
         <dd>Multivariate stacked elastic net on all columns using joinet</dd>
       </dl><dl><dt>
           
-          <code><a href="multivariate_mmbr.html">multivariate_mmbr()</a></code> 
-        </dt>
-        <dd>Multivariate SuSiE model</dd>
-      </dl><dl><dt>
-          
-          <code><a href="multivariate_mrmash.html">multivariate_mrmash()</a></code> 
-        </dt>
-        <dd>Multivariate MrMash model</dd>
-      </dl><dl><dt>
-          
           <code><a href="multivariate_spls.html">multivariate_spls()</a></code> 
         </dt>
         <dd>Multivariate sparse partial least squares</dd>
-      </dl><dl><dt>
-          
-          <code><a href="p_confirm.html">p_confirm()</a></code> 
-        </dt>
-        <dd>Compute confirmation P-value for one gene</dd>
-      </dl><dl><dt>
-          
-          <code><a href="p_screen.html">p_screen()</a></code> 
-        </dt>
-        <dd>Compute screening P-value for one gene</dd>
-      </dl><dl><dt>
-          
-          <code><a href="twas_finemap.html">twas_finemap()</a></code> 
-        </dt>
-        <dd>FOCUS-like gene-level finemapping</dd>
       </dl><dl><dt>
           
           <code><a href="univariate_blup.html">univariate_blup()</a></code> 
@@ -187,8 +128,81 @@
           <code><a href="univariate_susie.html">univariate_susie()</a></code> 
         </dt>
         <dd>Univariate SuSiE on all columns</dd>
+      </dl><dl><dt>
+          
+          <code><a href="convert_model.html">convert_model()</a></code> 
+        </dt>
+        <dd>Convert isotwas model list to tibble</dd>
+      </dl></div><div class="section level2">
+      <h2 id="trait-mapping">Trait mapping<a class="anchor" aria-label="anchor" href="#trait-mapping"></a></h2>
+      
+      <p class="section-desc"></p><p>Stage-wise trait mapping</p>
+
+      
+    </div><div id="" class="section level2">
+      
+      
+      
+
+      <dl><dt>
+          
+          <code><a href="p_screen.html">p_screen()</a></code> 
+        </dt>
+        <dd>Compute screening P-value for one gene</dd>
+      </dl><dl><dt>
+          
+          <code><a href="p_confirm.html">p_confirm()</a></code> 
+        </dt>
+        <dd>Compute confirmation P-value for one gene</dd>
+      </dl><dl><dt>
+          
+          <code><a href="burdenTest.html">burdenTest()</a></code> 
+        </dt>
+        <dd>Compute weighted burden test</dd>
+      </dl></div><div class="section level2">
+      <h2 id="probabilistic-fine-mapping">Probabilistic fine-mapping<a class="anchor" aria-label="anchor" href="#probabilistic-fine-mapping"></a></h2>
+      
+      <p class="section-desc"></p><p>Functions for FOCUS-like probabilistic fine-mapping</p>
+
+      
+    </div><div id="" class="section level2">
+      
+      
+      
+
+      <dl><dt>
+          
+          <code><a href="twas_finemap.html">twas_finemap()</a></code> 
+        </dt>
+        <dd>FOCUS-like gene-level finemapping</dd>
+      </dl><dl><dt>
+          
+          <code><a href="estimate_cor.html">estimate_cor()</a></code> 
+        </dt>
+        <dd>Compute correlation for fine-mapping</dd>
+      </dl><dl><dt>
+          
+          <code><a href="get_resid.html">get_resid()</a></code> 
+        </dt>
+        <dd>Compute residuals for Z-scores</dd>
+      </dl><dl><dt>
+          
+          <code><a href="bayes_factor.html">bayes_factor()</a></code> 
+        </dt>
+        <dd>Compute Bayes factors for TWAS Z-scores</dd>
+      </dl><dl><dt>
+          
+          <code><a href="conditional_test_focus.html">conditional_test_focus()</a></code> 
+        </dt>
+        <dd>Conditional gene-level test</dd>
+      </dl><dl><dt>
+          
+          <code><a href="conditional_test.html">conditional_test()</a></code> 
+        </dt>
+        <dd>Conditional gene-level test</dd>
       </dl></div>
-  </main></div>
+  </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
+    </nav></aside></div>
 
 
     <footer><div class="pkgdown-footer-left">
