@@ -110,7 +110,8 @@ cortex repository off Zenodo:</p>
 (<em>ENSG00000230068</em>). Let’s take a look at what the models look
 like, which are saved as <code>.RDS</code> files.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">model_test</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>,</span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1789</span><span class="op">)</span></span>
+<span><span class="va">model_test</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>,</span>
 <span>                                 <span class="st">"ENSG00000070831_isoTWAS.RDS"</span>,</span>
 <span>                                 package <span class="op">=</span> <span class="st">"isotwas"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">model_test</span><span class="op">)</span></span></code></pre></div>
@@ -294,13 +295,13 @@ cross-validation.</p>
 <span><span class="co">##   print.splsda   caret</span></span></code></pre>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">out_df</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">##              Gene         Feature         Z            P   permute.P     topSNP</span></span>
-<span><span class="co">## 1 ENSG00000070831 ENST00000344548 -3.239210 0.0011986108 1.000000000  rs2143103</span></span>
-<span><span class="co">## 2 ENSG00000070831 ENST00000315554  1.268410 0.2046514827 1.000000000 rs11582542</span></span>
-<span><span class="co">## 3 ENSG00000070831 ENST00000656825  3.268385 0.0010816323 1.000000000 rs11582542</span></span>
-<span><span class="co">## 4 ENSG00000070831 ENST00000498236 -2.906460 0.0036554386 1.000000000 rs11582542</span></span>
-<span><span class="co">## 5 ENSG00000070831 ENST00000400259  3.344840 0.0008232993 0.006993007 rs11582542</span></span>
-<span><span class="co">## 6 ENSG00000070831 ENST00000667384  0.575199 0.5651567515 1.000000000 rs11582542</span></span>
+<pre><code><span><span class="co">##              Gene         Feature         Z            P  permute.P     topSNP</span></span>
+<span><span class="co">## 1 ENSG00000070831 ENST00000344548 -3.239210 0.0011986108 1.00000000  rs2143103</span></span>
+<span><span class="co">## 2 ENSG00000070831 ENST00000315554  1.268410 0.2046514827 1.00000000 rs11582542</span></span>
+<span><span class="co">## 3 ENSG00000070831 ENST00000656825  3.268385 0.0010816323 1.00000000 rs11582542</span></span>
+<span><span class="co">## 4 ENSG00000070831 ENST00000498236 -2.906460 0.0036554386 1.00000000 rs11582542</span></span>
+<span><span class="co">## 5 ENSG00000070831 ENST00000400259  3.344840 0.0008232993 0.01198801 rs11582542</span></span>
+<span><span class="co">## 6 ENSG00000070831 ENST00000667384  0.575199 0.5651567515 1.00000000 rs11582542</span></span>
 <span><span class="co">##       topSNP.P</span></span>
 <span><span class="co">## 1 0.0004331767</span></span>
 <span><span class="co">## 2 0.0003396706</span></span>
@@ -397,14 +398,14 @@ families.</p>
 <pre><code><span><span class="co">##               Gene         Feature         Z            P   permute.P</span></span>
 <span><span class="co">## 1  ENSG00000070831 ENST00000315554  1.268410 0.2046514827 1.000000000</span></span>
 <span><span class="co">## 2  ENSG00000070831 ENST00000344548 -3.239210 0.0011986108 1.000000000</span></span>
-<span><span class="co">## 3  ENSG00000070831 ENST00000400259  3.344840 0.0008232993 0.006993007</span></span>
+<span><span class="co">## 3  ENSG00000070831 ENST00000400259  3.344840 0.0008232993 0.011988012</span></span>
 <span><span class="co">## 4  ENSG00000070831 ENST00000498236 -2.906460 0.0036554386 1.000000000</span></span>
 <span><span class="co">## 5  ENSG00000070831 ENST00000656825  3.268385 0.0010816323 1.000000000</span></span>
 <span><span class="co">## 6  ENSG00000070831 ENST00000662562 -3.278162 0.0010448529 1.000000000</span></span>
 <span><span class="co">## 7  ENSG00000070831 ENST00000667384  0.575199 0.5651567515 1.000000000</span></span>
-<span><span class="co">## 8  ENSG00000162552 ENST00000290167 -3.441877 0.0005776926 0.048951049</span></span>
+<span><span class="co">## 8  ENSG00000162552 ENST00000290167 -3.441877 0.0005776926 0.041958042</span></span>
 <span><span class="co">## 9  ENSG00000162552 ENST00000415567 -3.179540 0.0014750883 1.000000000</span></span>
-<span><span class="co">## 10 ENSG00000230068 ENST00000431803 -3.506525 0.0004539979 0.002997003</span></span>
+<span><span class="co">## 10 ENSG00000230068 ENST00000431803 -3.506525 0.0004539979 0.007992008</span></span>
 <span><span class="co">##        topSNP     topSNP.P     Screen.P Screen.P.Adjusted Confirmation.P</span></span>
 <span><span class="co">## 1  rs11582542 0.0003396706 0.0016636386       0.001663639   1.0000000000</span></span>
 <span><span class="co">## 2   rs2143103 0.0004331767 0.0016636386       0.001663639   0.0062691173</span></span>
@@ -421,9 +422,9 @@ families.</p>
 <span>               <span class="va">Confirmation.P</span> <span class="op">&lt;</span> <span class="va">alpha2</span> <span class="op">&amp;</span></span>
 <span>               <span class="va">permute.P</span> <span class="op">&lt;</span> <span class="fl">0.05</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##               Gene         Feature         Z            P   permute.P</span></span>
-<span><span class="co">## 3  ENSG00000070831 ENST00000400259  3.344840 0.0008232993 0.006993007</span></span>
-<span><span class="co">## 8  ENSG00000162552 ENST00000290167 -3.441877 0.0005776926 0.048951049</span></span>
-<span><span class="co">## 10 ENSG00000230068 ENST00000431803 -3.506525 0.0004539979 0.002997003</span></span>
+<span><span class="co">## 3  ENSG00000070831 ENST00000400259  3.344840 0.0008232993 0.011988012</span></span>
+<span><span class="co">## 8  ENSG00000162552 ENST00000290167 -3.441877 0.0005776926 0.041958042</span></span>
+<span><span class="co">## 10 ENSG00000230068 ENST00000431803 -3.506525 0.0004539979 0.007992008</span></span>
 <span><span class="co">##        topSNP     topSNP.P     Screen.P Screen.P.Adjusted Confirmation.P</span></span>
 <span><span class="co">## 3  rs11582542 0.0003396706 0.0016636386       0.001663639   0.0049397958</span></span>
 <span><span class="co">## 8  rs11582542 0.0003396706 0.0008302377       0.001245357   0.0005776926</span></span>
@@ -617,7 +618,7 @@ posterior inclusion probabilities and credible sets.</p>
 <span><span class="va">null_res</span> <span class="op">=</span> <span class="va">m</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="fl">1e-3</span><span class="op">)</span></span>
 <span><span class="va">marginal</span> <span class="op">=</span> <span class="va">m</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="fl">1e-3</span><span class="op">)</span></span>
 <span><span class="va">comb_list</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="kw">for</span> <span class="op">(</span><span class="va">n</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="fl">3</span>,<span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">zscores</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">{</span></span>
+<span><span class="kw">for</span> <span class="op">(</span><span class="va">n</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="fl">2</span>,<span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">zscores</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">{</span></span>
 <span>  <span class="va">comb_list</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">comb_list</span>,</span>
 <span>                <span class="fu"><a href="https://rdrr.io/r/utils/combn.html" class="external-link">combn</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">zscores</span><span class="op">)</span>,<span class="va">n</span>,simplify<span class="op">=</span><span class="cn">F</span><span class="op">)</span><span class="op">)</span></span>
 <span>  <span class="op">}</span></span>
@@ -654,15 +655,15 @@ posterior inclusion probabilities and credible sets.</p>
 <span>  <span class="kw">if</span> <span class="op">(</span><span class="va">i</span> <span class="op">&gt;</span> <span class="fl">1</span><span class="op">)</span><span class="op">{</span></span>
 <span>    <span class="kw">if</span> <span class="op">(</span><span class="va">csum</span><span class="op">[</span><span class="va">i</span><span class="op">]</span> <span class="op">&gt;</span> <span class="fl">.9</span> <span class="op">&amp;</span> <span class="va">csum</span><span class="op">[</span><span class="va">i</span><span class="op">-</span><span class="fl">1</span><span class="op">]</span> <span class="op">&lt;</span> <span class="fl">.9</span><span class="op">)</span><span class="op">{</span></span>
 <span>      <span class="va">isoform_sig</span><span class="op">$</span><span class="va">in_cred_set</span><span class="op">[</span><span class="va">i</span><span class="op">]</span> <span class="op">=</span> <span class="cn">T</span></span>
-<span>    <span class="op">}</span></span>
+<span>      <span class="op">}</span></span>
 <span>    <span class="kw">if</span> <span class="op">(</span><span class="va">csum</span><span class="op">[</span><span class="va">i</span><span class="op">]</span> <span class="op">&lt;</span> <span class="fl">.9</span><span class="op">)</span><span class="op">{</span></span>
 <span>      <span class="va">isoform_sig</span><span class="op">$</span><span class="va">in_cred_set</span><span class="op">[</span><span class="va">i</span><span class="op">]</span> <span class="op">=</span> <span class="cn">T</span></span>
-<span>    <span class="op">}</span></span>
+<span>      <span class="op">}</span></span>
 <span>    <span class="kw">if</span> <span class="op">(</span><span class="va">csum</span><span class="op">[</span><span class="va">i</span><span class="op">]</span> <span class="op">&gt;</span> <span class="fl">.9</span> <span class="op">&amp;</span> <span class="va">csum</span><span class="op">[</span><span class="va">i</span><span class="op">-</span><span class="fl">1</span><span class="op">]</span> <span class="op">&gt;</span> <span class="fl">.9</span><span class="op">)</span><span class="op">{</span></span>
 <span>      <span class="va">isoform_sig</span><span class="op">$</span><span class="va">in_cred_set</span><span class="op">[</span><span class="va">i</span><span class="op">]</span> <span class="op">=</span> <span class="cn">F</span></span>
-<span>      <span class="op">}</span></span>
+<span>    <span class="op">}</span></span>
 <span>  <span class="op">}</span></span>
-<span><span class="op">}</span></span>
+<span>  <span class="op">}</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">isoform_sig</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##               Gene Chromosome    Start      End         Feature         Z</span></span>
@@ -670,13 +671,13 @@ posterior inclusion probabilities and credible sets.</p>
 <span><span class="co">## 10 ENSG00000230068          1 22059197 22064199 ENST00000431803 -3.506525</span></span>
 <span><span class="co">## 8  ENSG00000162552          1 22117313 22143969 ENST00000290167 -3.441877</span></span>
 <span><span class="co">##               P   permute.P     topSNP     topSNP.P     Screen.P</span></span>
-<span><span class="co">## 3  0.0008232993 0.006993007 rs11582542 0.0003396706 0.0016636386</span></span>
-<span><span class="co">## 10 0.0004539979 0.002997003 rs11582542 0.0003396706 0.0004539979</span></span>
-<span><span class="co">## 8  0.0005776926 0.048951049 rs11582542 0.0003396706 0.0008302377</span></span>
-<span><span class="co">##    Screen.P.Adjusted Confirmation.P       pip in_cred_set</span></span>
-<span><span class="co">## 3        0.001663639   0.0049397958 1.0000000        TRUE</span></span>
-<span><span class="co">## 10       0.001245357   0.0000000000 1.0000000        TRUE</span></span>
-<span><span class="co">## 8        0.001245357   0.0005776926 0.2439366        TRUE</span></span></code></pre>
+<span><span class="co">## 3  0.0008232993 0.011988012 rs11582542 0.0003396706 0.0016636386</span></span>
+<span><span class="co">## 10 0.0004539979 0.007992008 rs11582542 0.0003396706 0.0004539979</span></span>
+<span><span class="co">## 8  0.0005776926 0.041958042 rs11582542 0.0003396706 0.0008302377</span></span>
+<span><span class="co">##    Screen.P.Adjusted Confirmation.P          pip in_cred_set</span></span>
+<span><span class="co">## 3        0.001663639   0.0049397958 1.000000e+00        TRUE</span></span>
+<span><span class="co">## 10       0.001245357   0.0000000000 1.000000e+00        TRUE</span></span>
+<span><span class="co">## 8        0.001245357   0.0005776926 1.419146e-18       FALSE</span></span></code></pre>
 <p>As you can see, ENST00000431803 and ENST00000290167 have
 <code>PIP = 1</code> and are both in the 90% credible set
 (<code>in_cred_set</code> column).</p>

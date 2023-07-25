@@ -2,6 +2,7 @@
 knitr::opts_chunk$set(echo = TRUE,warning = FALSE)
 
 ## ----lookmod------------------------------------------------------------------
+set.seed(1789)
 model_test = readRDS(system.file("extdata",
                                  "ENSG00000070831_isoTWAS.RDS",
                                  package = "isotwas"))
@@ -241,7 +242,7 @@ swld = isotwas::estimate_cor(as.matrix(Omega),
 null_res = m * log(1 - 1e-3)
 marginal = m * log(1 - 1e-3)
 comb_list = list()
-for (n in 1:min(3,length(zscores))){
+for (n in 1:min(2,length(zscores))){
   comb_list = c(comb_list,
                 combn(1:length(zscores),n,simplify=F))
   }
@@ -278,15 +279,15 @@ for (i in 1:nrow(isoform_sig)){
   if (i > 1){
     if (csum[i] > .9 & csum[i-1] < .9){
       isoform_sig$in_cred_set[i] = T
-    }
+      }
     if (csum[i] < .9){
       isoform_sig$in_cred_set[i] = T
-    }
+      }
     if (csum[i] > .9 & csum[i-1] > .9){
       isoform_sig$in_cred_set[i] = F
-      }
+    }
   }
-}
+  }
 
 print(isoform_sig)
 
