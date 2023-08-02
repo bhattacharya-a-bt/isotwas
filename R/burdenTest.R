@@ -51,7 +51,7 @@ burdenTest <- function(mod,
                        usePos = F){
 
     if (is.null(Z)){
-      if (any(is.null(beta,se))){
+      if (any(is.null(c(beta,se)))){
         stop('Please provide a column name for the Z-score or beta and SE.')
       }
     }
