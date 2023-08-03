@@ -67,8 +67,8 @@ We also include in-sample LD matrices for each isoTWAS model. These are simply `
 
 ```{r lookLD}
 LD_test = readRDS(system.file("extdata",
-                                 "ENSG00000070831_LDMatrix.RDS",
-                                 package = "isotwas"))
+                              "ENSG00000070831_LDMatrix.RDS",
+                              package = "isotwas"))
 head(as.matrix(LD_test)[,1:10])
 ```
 
@@ -82,7 +82,7 @@ The last file you will need is the GWAS summary statistics for your trait of int
 
 Since GWAS summary statistics often have varied column names, we use a munging script to clean the data. In addition, we subset the GWAS summary statistics to only SNPs annotated in [HapMap3](https://www.nature.com/articles/nature02168) to ensure that there is maximal overlap. This munging script is available [here](https://github.com/bhattacharya-a-bt/isotwas_manu_scripts/blob/98a76279037003e0e30de964b26fe7d5a49961df/Real%20Data/Association%20Testing/MungeSumStats/Snakefile), courtesy of Michael Margolis.
 
-In this tutorial, we have subsetted only to the SNPs that are within the *SCN2A*/*SCN3A* locus. Let's take a look at this munged file.
+In this tutorial, we have subsetted only to the SNPs that are within the locus of the example genes. Let's take a look at this munged file.
 
 ```{r lookGWAS}
 gwas = read.table(system.file("extdata",

@@ -379,15 +379,15 @@ present in the LD reference panel or to those annotated by the <a href="https://
 This will ensure proper standard error calculations.</p>
 <p>For this vignette about training an model, we’ll use some toy genetic
 and transcriptomic data provided.</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>train_bed <span class="ot">=</span> <span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;train.bed&quot;</span>, <span class="at">package =</span> <span class="st">&quot;isotwas&quot;</span>)</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>snps <span class="ot">=</span> bigsnpr<span class="sc">::</span><span class="fu">snp_attach</span>(bigsnpr<span class="sc">::</span><span class="fu">snp_readBed2</span>(train_bed,</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>                                                 <span class="at">backingfile =</span> <span class="fu">tempfile</span>()))</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(snps<span class="sc">$</span>genotypes[])</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1]  300 4542</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>isoform_mat <span class="ot">=</span> <span class="fu">readRDS</span>(<span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;isoform_exp.RDS&quot;</span>, <span class="at">package =</span> <span class="st">&quot;isotwas&quot;</span>))</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(isoform_mat)</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 300   3</span></span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a>train_bed <span class="ot">=</span> <span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;train.bed&quot;</span>, <span class="at">package =</span> <span class="st">&quot;isotwas&quot;</span>)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>snps <span class="ot">=</span> bigsnpr<span class="sc">::</span><span class="fu">snp_attach</span>(bigsnpr<span class="sc">::</span><span class="fu">snp_readBed2</span>(train_bed,</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>                                                 <span class="at">backingfile =</span> <span class="fu">tempfile</span>()))</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="fu">dim</span>(snps<span class="sc">$</span>genotypes[])</span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a><span class="co">#&gt; [1]  300 4542</span></span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a>isoform_mat <span class="ot">=</span> <span class="fu">readRDS</span>(<span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;isoform_exp.RDS&quot;</span>, <span class="at">package =</span> <span class="st">&quot;isotwas&quot;</span>))</span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a><span class="fu">dim</span>(isoform_mat)</span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a><span class="co">#&gt; [1] 300   3</span></span></code></pre></div>
 <p>This reads in a SNP matrix with dimensions <span class="math inline">\(300 \times 4542\)</span>, with samples along the
 rows and SNPs along the columns and a isoform-level expression matrix of
 dimension <span class="math inline">\(300 \times 3\)</span>, with
@@ -412,41 +412,41 @@ bootstrapped estimates of the matrix. Keep in mind that these
 replicates, theoretically, should not affect the effect size estimates
 but will help in seeding the estimation process of the correlation
 between isoforms/error in the multivariate model.</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>boot_list <span class="ot">=</span> <span class="fu">lapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>,<span class="cf">function</span>(i){<span class="fu">jitter</span>(isoform_mat)}) </span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>isoform_mat_rep <span class="ot">=</span> rlist<span class="sc">::</span><span class="fu">list.rbind</span>(boot_list) </span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(isoform_mat_rep) <span class="ot">=</span> <span class="fu">rep</span>(<span class="fu">paste0</span>(<span class="st">&#39;Sample&#39;</span>,<span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(snps<span class="sc">$</span>fam)),<span class="dv">10</span>) </span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(isoform_mat_rep) <span class="ot">=</span> <span class="fu">paste0</span>(<span class="st">&#39;Isoform&#39;</span>,<span class="dv">1</span><span class="sc">:</span><span class="fu">ncol</span>(isoform_mat_rep)) </span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(isoform_mat_rep)</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 3000    3</span></span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>boot_list <span class="ot">=</span> <span class="fu">lapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>,<span class="cf">function</span>(i){<span class="fu">jitter</span>(isoform_mat)}) </span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>isoform_mat_rep <span class="ot">=</span> rlist<span class="sc">::</span><span class="fu">list.rbind</span>(boot_list) </span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="fu">rownames</span>(isoform_mat_rep) <span class="ot">=</span> <span class="fu">rep</span>(<span class="fu">paste0</span>(<span class="st">&#39;Sample&#39;</span>,<span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(snps<span class="sc">$</span>fam)),<span class="dv">10</span>) </span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="fu">colnames</span>(isoform_mat_rep) <span class="ot">=</span> <span class="fu">paste0</span>(<span class="st">&#39;Isoform&#39;</span>,<span class="dv">1</span><span class="sc">:</span><span class="fu">ncol</span>(isoform_mat_rep)) </span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="fu">dim</span>(isoform_mat_rep)</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a><span class="co">#&gt; [1] 3000    3</span></span></code></pre></div>
 <p>Now, we can train the model using the <code>compute_isotwas()</code>
 function. Make sure the SNP matrix has clear labels for the SNP
 identifiers that are relevant to your study. This is a large SNP matrix
 which will take a few minutes to run on your local machine.</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>snp_mat <span class="ot">=</span> <span class="fu">as.matrix</span>(snps<span class="sc">$</span>genotypes[])</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(snp_mat) <span class="ot">=</span> snps<span class="sc">$</span>map<span class="sc">$</span>marker.ID</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(snp_mat) <span class="ot">=</span> snps<span class="sc">$</span>fam<span class="sc">$</span>sample.ID</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>isotwas_model <span class="ot">=</span> <span class="fu">compute_isotwas</span>(<span class="at">X =</span> snp_mat, </span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>                                <span class="at">Y =</span> isoform_mat, </span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>                                <span class="at">Y.rep =</span> isoform_mat_rep,</span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>                                <span class="at">R =</span> <span class="dv">10</span>, </span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>                                <span class="at">id =</span> <span class="fu">rownames</span>(isoform_mat_rep), </span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>                                <span class="at">omega_est =</span> <span class="st">&#39;replicates&#39;</span>, </span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>                                <span class="at">omega_nlambda =</span> <span class="dv">5</span>, </span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>                                <span class="at">method =</span> <span class="fu">c</span>(<span class="st">&#39;mrce_lasso&#39;</span>, </span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>                                           <span class="st">&#39;multi_enet&#39;</span>, </span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>                                           <span class="st">&#39;univariate&#39;</span>,</span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>                                           <span class="st">&#39;joinet&#39;</span>,</span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>                                           <span class="st">&#39;spls&#39;</span>),</span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>                                <span class="at">predict_nlambda =</span> <span class="dv">10</span>, </span>
-<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>                                <span class="at">family =</span> <span class="st">&#39;gaussian&#39;</span>, </span>
-<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>                                <span class="at">scale =</span> <span class="cn">FALSE</span>, </span>
-<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>                                <span class="at">alpha =</span> <span class="fl">0.5</span>, </span>
-<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>                                <span class="at">nfolds =</span> <span class="dv">5</span>, </span>
-<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>                                <span class="at">verbose =</span> <span class="cn">TRUE</span>, </span>
-<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>                                <span class="at">tx_names =</span> <span class="fu">paste0</span>(<span class="st">&#39;Isoform&#39;</span>,<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>), </span>
-<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>                                <span class="at">seed =</span> <span class="dv">1789</span>, </span>
-<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>                                <span class="at">run_all =</span> <span class="cn">FALSE</span>, </span>
-<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>                                <span class="at">return_all =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>snp_mat <span class="ot">=</span> <span class="fu">as.matrix</span>(snps<span class="sc">$</span>genotypes[])</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="fu">colnames</span>(snp_mat) <span class="ot">=</span> snps<span class="sc">$</span>map<span class="sc">$</span>marker.ID</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="fu">rownames</span>(snp_mat) <span class="ot">=</span> snps<span class="sc">$</span>fam<span class="sc">$</span>sample.ID</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>isotwas_model <span class="ot">=</span> <span class="fu">compute_isotwas</span>(<span class="at">X =</span> snp_mat, </span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>                                <span class="at">Y =</span> isoform_mat, </span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>                                <span class="at">Y.rep =</span> isoform_mat_rep,</span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>                                <span class="at">R =</span> <span class="dv">10</span>, </span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>                                <span class="at">id =</span> <span class="fu">rownames</span>(isoform_mat_rep), </span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a>                                <span class="at">omega_est =</span> <span class="st">&#39;replicates&#39;</span>, </span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a>                                <span class="at">omega_nlambda =</span> <span class="dv">5</span>, </span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a>                                <span class="at">method =</span> <span class="fu">c</span>(<span class="st">&#39;mrce_lasso&#39;</span>, </span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a>                                           <span class="st">&#39;multi_enet&#39;</span>, </span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a>                                           <span class="st">&#39;univariate&#39;</span>,</span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a>                                           <span class="st">&#39;joinet&#39;</span>,</span>
+<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a>                                           <span class="st">&#39;spls&#39;</span>),</span>
+<span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a>                                <span class="at">predict_nlambda =</span> <span class="dv">10</span>, </span>
+<span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a>                                <span class="at">family =</span> <span class="st">&#39;gaussian&#39;</span>, </span>
+<span id="cb3-18"><a href="#cb3-18" tabindex="-1"></a>                                <span class="at">scale =</span> <span class="cn">FALSE</span>, </span>
+<span id="cb3-19"><a href="#cb3-19" tabindex="-1"></a>                                <span class="at">alpha =</span> <span class="fl">0.5</span>, </span>
+<span id="cb3-20"><a href="#cb3-20" tabindex="-1"></a>                                <span class="at">nfolds =</span> <span class="dv">5</span>, </span>
+<span id="cb3-21"><a href="#cb3-21" tabindex="-1"></a>                                <span class="at">verbose =</span> <span class="cn">TRUE</span>, </span>
+<span id="cb3-22"><a href="#cb3-22" tabindex="-1"></a>                                <span class="at">tx_names =</span> <span class="fu">paste0</span>(<span class="st">&#39;Isoform&#39;</span>,<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>), </span>
+<span id="cb3-23"><a href="#cb3-23" tabindex="-1"></a>                                <span class="at">seed =</span> <span class="dv">1789</span>, </span>
+<span id="cb3-24"><a href="#cb3-24" tabindex="-1"></a>                                <span class="at">run_all =</span> <span class="cn">FALSE</span>, </span>
+<span id="cb3-25"><a href="#cb3-25" tabindex="-1"></a>                                <span class="at">return_all =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
 <p>A few notes on the options in the function:</p>
 <ul>
 <li><p>By selecting <code>omega_est = &#39;replicates&#39;</code> , we are used
@@ -477,166 +477,166 @@ be outputted.</p></li>
 <code>compute_isotwas()</code>) to a tibble or data.frame using
 <code>convert_model(isotwas_model)</code>.</p>
 <p>Let’s take a look at what a sample model looks like:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>model_isotwas <span class="ot">=</span> <span class="fu">readRDS</span>(<span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;model_example.RDS&quot;</span>, <span class="at">package =</span> <span class="st">&quot;isotwas&quot;</span>))</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">class</span>(model_isotwas)</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;list&quot;</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="fu">length</span>(model_isotwas)</span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 2</span></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(model_isotwas)</span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Model&quot; &quot;R2&quot;</span></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>model_isotwas<span class="sc">$</span>Model[[<span class="dv">1</span>]]</span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $Transcript</span></span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Isoform1&quot;</span></span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $Model</span></span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # A tibble: 187 × 2</span></span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    SNP        Weight</span></span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    &lt;chr&gt;       &lt;dbl&gt;</span></span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  1 SNP10  -0.0000957</span></span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  2 SNP19  -0.00158  </span></span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  3 SNP80  -0.00375  </span></span>
-<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  4 SNP89  -0.000884 </span></span>
-<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  5 SNP94  -0.00504  </span></span>
-<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  6 SNP124  0.00586  </span></span>
-<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  7 SNP195 -0.0201   </span></span>
-<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  8 SNP232 -0.00627  </span></span>
-<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  9 SNP233  0.000960 </span></span>
-<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 10 SNP261 -0.00688  </span></span>
-<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # ℹ 177 more rows</span></span>
-<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $R2</span></span>
-<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 0.3174829</span></span>
-<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $P</span></span>
-<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; value </span></span>
-<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     0 </span></span>
-<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $Pred</span></span>
-<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       IND190       IND380       IND130       IND314       IND462       IND137 </span></span>
-<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; -0.395051620 -0.405521454 -0.405642239 -0.513143425 -0.219109235 -0.472395293 </span></span>
-<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       IND191       IND228       IND253       IND358       IND318         IND3 </span></span>
-<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; -0.186011347 -0.047232532 -0.039820719 -0.203023847 -0.279393749 -0.177154706 </span></span>
-<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;        IND28       IND182        IND91       IND476       IND255       IND209 </span></span>
-<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; -0.261468441 -0.572125420 -0.351933854 -0.493579401 -0.417614473 -0.059488250 </span></span>
-<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       IND135       IND223       IND340       IND120       IND115       IND391 </span></span>
-<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; -0.318086976 -0.319871820 -0.135863999  0.083039071 -0.469286056 -0.281497318 </span></span>
-<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       IND304       IND163       IND386        IND69       IND121       IND269 </span></span>
-<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; -0.342756842 -0.169790486 -0.552650084 -0.339994140  0.018921426 -0.359762240 </span></span>
-<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;        IND24        IND31       IND349        IND32       IND332       IND495 </span></span>
-<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; -0.171493417 -0.450912106 -0.411439831 -0.220513041 -0.445241556 -0.302148360 </span></span>
-<span id="cb4-48"><a href="#cb4-48" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       IND328       IND371       IND272        IND23        IND55       IND463 </span></span>
-<span id="cb4-49"><a href="#cb4-49" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; -0.572640195 -0.090248595 -0.172602006 -0.107964558 -0.450873553 -0.297293819 </span></span>
-<span id="cb4-50"><a href="#cb4-50" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       IND194       IND441       IND113        IND47       IND502       IND409 </span></span>
-<span id="cb4-51"><a href="#cb4-51" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  0.002500033 -0.082561510 -0.053926154  0.014315858 -0.263294983 -0.424747059 </span></span>
-<span id="cb4-52"><a href="#cb4-52" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;        IND82        IND48       IND303       IND176       IND393        IND52 </span></span>
-<span id="cb4-53"><a href="#cb4-53" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; -0.215259827 -0.180472021 -0.566428240 -0.154369420 -0.292469824 -0.125122866 </span></span>
-<span id="cb4-54"><a href="#cb4-54" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       IND458       IND426        IND15        IND10       IND211       IND244 </span></span>
-<span id="cb4-55"><a href="#cb4-55" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; -0.297137749 -0.571241703 -0.271153164 -0.372562537 -0.139310663  0.058872696 </span></span>
-<span id="cb4-56"><a href="#cb4-56" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;        IND65        IND50       IND442       IND213       IND157       IND300 </span></span>
-<span id="cb4-57"><a href="#cb4-57" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; -0.353977257 -0.370280430 -0.369661968 -0.308463656 -0.015128680 -0.372327867 </span></span>
-<span id="cb4-58"><a href="#cb4-58" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;        IND25       IND254        IND49       IND199       IND189       IND295 </span></span>
-<span id="cb4-59"><a href="#cb4-59" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; -0.294685131  0.207142198 -0.265891894 -0.210070398 -0.125493031 -0.208084001 </span></span>
-<span id="cb4-60"><a href="#cb4-60" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;        IND88       IND459       IND339        IND46       IND325       IND419 </span></span>
-<span id="cb4-61"><a href="#cb4-61" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; -0.188952067 -0.341369214 -0.323699038 -0.194042453 -0.177038660  0.040164417 </span></span>
-<span id="cb4-62"><a href="#cb4-62" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       IND302       IND216       IND178       IND282       IND186       IND239 </span></span>
-<span id="cb4-63"><a href="#cb4-63" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; -0.388742683 -0.144205644 -0.215211141 -0.347436381  0.070054061 -0.016246983 </span></span>
-<span id="cb4-64"><a href="#cb4-64" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;        IND89        IND71        IND33       IND494       IND369       IND109 </span></span>
-<span id="cb4-65"><a href="#cb4-65" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; -0.558938422 -0.009956788 -0.518804964 -0.397442503 -0.462158482 -0.620882241 </span></span>
-<span id="cb4-66"><a href="#cb4-66" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;        IND64       IND364         IND1       IND323        IND60       IND151 </span></span>
-<span id="cb4-67"><a href="#cb4-67" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; -0.470768744 -0.505031962 -0.474205183 -0.369106906 -0.183303208 -0.474395370 </span></span>
-<span id="cb4-68"><a href="#cb4-68" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       IND293       IND437        IND85       IND324       IND375       IND423 </span></span>
-<span id="cb4-69"><a href="#cb4-69" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; -0.216436666 -0.452684526 -0.437603184 -0.588708106 -0.588703304 -0.443682464 </span></span>
-<span id="cb4-70"><a href="#cb4-70" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       IND367       IND516        IND95       IND461       IND451        IND76 </span></span>
-<span id="cb4-71"><a href="#cb4-71" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; -0.601498157 -0.233798606 -0.410275308 -0.511844894 -0.326213821 -0.370696978 </span></span>
-<span id="cb4-72"><a href="#cb4-72" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       IND298       IND310       IND222       IND102       IND491       IND422 </span></span>
-<span id="cb4-73"><a href="#cb4-73" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; -0.502436692 -0.408828852 -0.111287912 -0.226551260 -0.223498530  0.158679573 </span></span>
-<span id="cb4-74"><a href="#cb4-74" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       IND351       IND309       IND277       IND214         IND0       IND438 </span></span>
-<span id="cb4-75"><a href="#cb4-75" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; -0.344041151 -0.424716100 -0.612379239 -0.231148880 -0.417714624 -0.438855224 </span></span>
-<span id="cb4-76"><a href="#cb4-76" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       IND453       IND400       IND443       IND227       IND331       IND169 </span></span>
-<span id="cb4-77"><a href="#cb4-77" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; -0.594149200 -0.385144435 -0.456708590 -0.532575545 -0.315295504 -0.235696550 </span></span>
-<span id="cb4-78"><a href="#cb4-78" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       IND197       IND142       IND416        IND51       IND346        IND27 </span></span>
-<span id="cb4-79"><a href="#cb4-79" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; -0.298466128  0.034104976 -0.526523901  0.508010660 -0.126042297 -0.128398444 </span></span>
-<span id="cb4-80"><a href="#cb4-80" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       IND297       IND479       IND488       IND290        IND44       IND308 </span></span>
-<span id="cb4-81"><a href="#cb4-81" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; -0.259539348 -0.454747553 -0.504412520 -0.510470021 -0.142340184  0.072124794 </span></span>
-<span id="cb4-82"><a href="#cb4-82" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       IND486         IND7       IND284       IND444       IND220       IND374 </span></span>
-<span id="cb4-83"><a href="#cb4-83" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; -0.329956853 -0.350941227 -0.163496962 -0.413414477 -0.593246582 -0.818095517 </span></span>
-<span id="cb4-84"><a href="#cb4-84" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       IND500        IND11       IND354       IND246       IND439       IND392 </span></span>
-<span id="cb4-85"><a href="#cb4-85" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; -0.501920608 -0.214219476  0.007729149 -0.275404004 -0.644399750 -0.285348795 </span></span>
-<span id="cb4-86"><a href="#cb4-86" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       IND448       IND506       IND192       IND484       IND203       IND452 </span></span>
-<span id="cb4-87"><a href="#cb4-87" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; -0.492513383 -0.310190245 -0.024709405 -0.435482280 -0.269321957 -0.552898172 </span></span>
-<span id="cb4-88"><a href="#cb4-88" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;        IND92       IND134       IND287       IND424       IND307       IND122 </span></span>
-<span id="cb4-89"><a href="#cb4-89" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; -0.101055241  0.008905316 -0.306358542 -0.461001763 -0.356879362  0.058371001 </span></span>
-<span id="cb4-90"><a href="#cb4-90" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       IND414       IND212        IND20       IND127       IND236       IND258 </span></span>
-<span id="cb4-91"><a href="#cb4-91" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; -0.311646715 -0.111162671 -0.193471243  0.028880043 -0.407672480  0.142610577 </span></span>
-<span id="cb4-92"><a href="#cb4-92" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       IND305       IND268       IND513       IND496       IND147       IND322 </span></span>
-<span id="cb4-93"><a href="#cb4-93" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; -0.340565157 -0.471679317 -0.404866473 -0.395120760 -0.072070907 -0.277843970 </span></span>
-<span id="cb4-94"><a href="#cb4-94" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;        IND45        IND68       IND201       IND348        IND43        IND75 </span></span>
-<span id="cb4-95"><a href="#cb4-95" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  0.035081966 -0.363338384 -0.652974372 -0.412158936 -0.071163309 -0.080312324 </span></span>
-<span id="cb4-96"><a href="#cb4-96" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;        IND90        IND41       IND387       IND276       IND465       IND224 </span></span>
-<span id="cb4-97"><a href="#cb4-97" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  0.025514564 -0.323200418 -0.477190145 -0.154720858 -0.341964318 -0.196673915 </span></span>
-<span id="cb4-98"><a href="#cb4-98" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       IND481       IND143       IND226       IND480       IND126       IND498 </span></span>
-<span id="cb4-99"><a href="#cb4-99" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; -0.663275058 -0.056703898 -0.082764588 -0.210979906  0.048488465 -0.283945815 </span></span>
-<span id="cb4-100"><a href="#cb4-100" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       IND233       IND195        IND61       IND173        IND97       IND478 </span></span>
-<span id="cb4-101"><a href="#cb4-101" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; -0.266472867 -0.217675991  0.014263476 -0.454493334 -0.550484287 -0.041911623 </span></span>
-<span id="cb4-102"><a href="#cb4-102" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;        IND18       IND397       IND180       IND315       IND338       IND359 </span></span>
-<span id="cb4-103"><a href="#cb4-103" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; -0.330665666 -0.436392508 -0.609082779 -0.569036586 -0.212491654 -0.343991921 </span></span>
-<span id="cb4-104"><a href="#cb4-104" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       IND508       IND101       IND232       IND454       IND145       IND370 </span></span>
-<span id="cb4-105"><a href="#cb4-105" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; -0.477263014 -0.464338378 -0.072071562 -0.227516541 -0.389293368 -0.173894914 </span></span>
-<span id="cb4-106"><a href="#cb4-106" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       IND159        IND12        IND77       IND421       IND112       IND289 </span></span>
-<span id="cb4-107"><a href="#cb4-107" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  0.119232022 -0.094999753 -0.481360824 -0.433878747 -0.100941994 -0.581080319 </span></span>
-<span id="cb4-108"><a href="#cb4-108" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       IND353       IND235        IND29       IND221       IND335       IND249 </span></span>
-<span id="cb4-109"><a href="#cb4-109" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; -0.332866777 -0.078403530 -0.340509458 -0.130391230 -0.223907121 -0.298415252 </span></span>
-<span id="cb4-110"><a href="#cb4-110" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;        IND84       IND296       IND183       IND344       IND259       IND384 </span></span>
-<span id="cb4-111"><a href="#cb4-111" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; -0.199496411 -0.410031721 -0.377059571 -0.693998245 -0.370623474 -0.246649423 </span></span>
-<span id="cb4-112"><a href="#cb4-112" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       IND148       IND485       IND264        IND54       IND119       IND146 </span></span>
-<span id="cb4-113"><a href="#cb4-113" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; -0.271335029 -0.225853454 -0.261874967  0.087807798 -0.158416463 -0.214176185 </span></span>
-<span id="cb4-114"><a href="#cb4-114" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;        IND93        IND80        IND16       IND350       IND503       IND490 </span></span>
-<span id="cb4-115"><a href="#cb4-115" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; -0.420587615 -0.521984344 -0.070014457 -0.477095206 -0.366749255 -0.412342395 </span></span>
-<span id="cb4-116"><a href="#cb4-116" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       IND270        IND70       IND385       IND433       IND428       IND280 </span></span>
-<span id="cb4-117"><a href="#cb4-117" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; -0.502675568 -0.087020068 -0.312957603 -0.141636588 -0.630821691 -0.190763136 </span></span>
-<span id="cb4-118"><a href="#cb4-118" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       IND234       IND104       IND155       IND417       IND207        IND67 </span></span>
-<span id="cb4-119"><a href="#cb4-119" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; -0.145463209 -0.065338172 -0.102717325 -0.406053957 -0.487929907 -0.542512235 </span></span>
-<span id="cb4-120"><a href="#cb4-120" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       IND471         IND6       IND413       IND412       IND245        IND96 </span></span>
-<span id="cb4-121"><a href="#cb4-121" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  0.034250790 -0.327396727 -0.497126708 -0.185326538 -0.331678057 -0.078888704 </span></span>
-<span id="cb4-122"><a href="#cb4-122" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;        IND63       IND301       IND401       IND263       IND352       IND316 </span></span>
-<span id="cb4-123"><a href="#cb4-123" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; -0.238519359 -0.297359129 -0.424067348 -0.282617895 -0.050625075 -0.255118778 </span></span>
-<span id="cb4-124"><a href="#cb4-124" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       IND341       IND489       IND388       IND457       IND181       IND431 </span></span>
-<span id="cb4-125"><a href="#cb4-125" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; -0.459988827 -0.313308038 -0.311893938  0.040361232 -0.454678575 -0.575772676 </span></span>
-<span id="cb4-126"><a href="#cb4-126" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       IND140       IND512       IND330       IND420       IND377       IND139 </span></span>
-<span id="cb4-127"><a href="#cb4-127" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; -0.218079182 -0.400390897 -0.392403815 -0.258866066 -0.353999148  0.032783885 </span></span>
-<span id="cb4-128"><a href="#cb4-128" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       IND171       IND165       IND395       IND436       IND475       IND167 </span></span>
-<span id="cb4-129"><a href="#cb4-129" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  0.002110163 -0.083110045 -0.540800075 -0.680934271 -0.444409304 -0.160315170 </span></span>
-<span id="cb4-130"><a href="#cb4-130" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       IND111       IND473       IND379       IND501       IND164       IND360 </span></span>
-<span id="cb4-131"><a href="#cb4-131" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; -0.189364791 -0.415996781 -0.534266922 -0.437482227 -0.269667607 -0.244362503 </span></span>
-<span id="cb4-132"><a href="#cb4-132" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       IND390       IND376       IND425        IND66       IND243        IND39 </span></span>
-<span id="cb4-133"><a href="#cb4-133" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; -0.016687981 -0.300365083 -0.559132052 -0.397677303 -0.253962997 -0.157969029 </span></span>
-<span id="cb4-134"><a href="#cb4-134" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       IND125        IND59       IND218       IND361       IND469       IND321 </span></span>
-<span id="cb4-135"><a href="#cb4-135" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  0.198755812 -0.270404134 -0.157473118 -0.435929952 -0.198513588 -0.471754809</span></span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>model_isotwas <span class="ot">=</span> <span class="fu">readRDS</span>(<span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;model_example.RDS&quot;</span>, <span class="at">package =</span> <span class="st">&quot;isotwas&quot;</span>))</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="fu">class</span>(model_isotwas)</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="co">#&gt; [1] &quot;list&quot;</span></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="fu">length</span>(model_isotwas)</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="co">#&gt; [1] 2</span></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="fu">names</span>(model_isotwas)</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Model&quot; &quot;R2&quot;</span></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>model_isotwas<span class="sc">$</span>Model[[<span class="dv">1</span>]]</span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="co">#&gt; $Transcript</span></span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Isoform1&quot;</span></span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a><span class="co">#&gt; $Model</span></span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a><span class="co">#&gt; # A tibble: 187 × 2</span></span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a><span class="co">#&gt;    SNP        Weight</span></span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a><span class="co">#&gt;    &lt;chr&gt;       &lt;dbl&gt;</span></span>
+<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a><span class="co">#&gt;  1 SNP10  -0.0000957</span></span>
+<span id="cb4-17"><a href="#cb4-17" tabindex="-1"></a><span class="co">#&gt;  2 SNP19  -0.00158  </span></span>
+<span id="cb4-18"><a href="#cb4-18" tabindex="-1"></a><span class="co">#&gt;  3 SNP80  -0.00375  </span></span>
+<span id="cb4-19"><a href="#cb4-19" tabindex="-1"></a><span class="co">#&gt;  4 SNP89  -0.000884 </span></span>
+<span id="cb4-20"><a href="#cb4-20" tabindex="-1"></a><span class="co">#&gt;  5 SNP94  -0.00504  </span></span>
+<span id="cb4-21"><a href="#cb4-21" tabindex="-1"></a><span class="co">#&gt;  6 SNP124  0.00586  </span></span>
+<span id="cb4-22"><a href="#cb4-22" tabindex="-1"></a><span class="co">#&gt;  7 SNP195 -0.0201   </span></span>
+<span id="cb4-23"><a href="#cb4-23" tabindex="-1"></a><span class="co">#&gt;  8 SNP232 -0.00627  </span></span>
+<span id="cb4-24"><a href="#cb4-24" tabindex="-1"></a><span class="co">#&gt;  9 SNP233  0.000960 </span></span>
+<span id="cb4-25"><a href="#cb4-25" tabindex="-1"></a><span class="co">#&gt; 10 SNP261 -0.00688  </span></span>
+<span id="cb4-26"><a href="#cb4-26" tabindex="-1"></a><span class="co">#&gt; # ℹ 177 more rows</span></span>
+<span id="cb4-27"><a href="#cb4-27" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-28"><a href="#cb4-28" tabindex="-1"></a><span class="co">#&gt; $R2</span></span>
+<span id="cb4-29"><a href="#cb4-29" tabindex="-1"></a><span class="co">#&gt; [1] 0.3174829</span></span>
+<span id="cb4-30"><a href="#cb4-30" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-31"><a href="#cb4-31" tabindex="-1"></a><span class="co">#&gt; $P</span></span>
+<span id="cb4-32"><a href="#cb4-32" tabindex="-1"></a><span class="co">#&gt; value </span></span>
+<span id="cb4-33"><a href="#cb4-33" tabindex="-1"></a><span class="co">#&gt;     0 </span></span>
+<span id="cb4-34"><a href="#cb4-34" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-35"><a href="#cb4-35" tabindex="-1"></a><span class="co">#&gt; $Pred</span></span>
+<span id="cb4-36"><a href="#cb4-36" tabindex="-1"></a><span class="co">#&gt;       IND190       IND380       IND130       IND314       IND462       IND137 </span></span>
+<span id="cb4-37"><a href="#cb4-37" tabindex="-1"></a><span class="co">#&gt; -0.395051620 -0.405521454 -0.405642239 -0.513143425 -0.219109235 -0.472395293 </span></span>
+<span id="cb4-38"><a href="#cb4-38" tabindex="-1"></a><span class="co">#&gt;       IND191       IND228       IND253       IND358       IND318         IND3 </span></span>
+<span id="cb4-39"><a href="#cb4-39" tabindex="-1"></a><span class="co">#&gt; -0.186011347 -0.047232532 -0.039820719 -0.203023847 -0.279393749 -0.177154706 </span></span>
+<span id="cb4-40"><a href="#cb4-40" tabindex="-1"></a><span class="co">#&gt;        IND28       IND182        IND91       IND476       IND255       IND209 </span></span>
+<span id="cb4-41"><a href="#cb4-41" tabindex="-1"></a><span class="co">#&gt; -0.261468441 -0.572125420 -0.351933854 -0.493579401 -0.417614473 -0.059488250 </span></span>
+<span id="cb4-42"><a href="#cb4-42" tabindex="-1"></a><span class="co">#&gt;       IND135       IND223       IND340       IND120       IND115       IND391 </span></span>
+<span id="cb4-43"><a href="#cb4-43" tabindex="-1"></a><span class="co">#&gt; -0.318086976 -0.319871820 -0.135863999  0.083039071 -0.469286056 -0.281497318 </span></span>
+<span id="cb4-44"><a href="#cb4-44" tabindex="-1"></a><span class="co">#&gt;       IND304       IND163       IND386        IND69       IND121       IND269 </span></span>
+<span id="cb4-45"><a href="#cb4-45" tabindex="-1"></a><span class="co">#&gt; -0.342756842 -0.169790486 -0.552650084 -0.339994140  0.018921426 -0.359762240 </span></span>
+<span id="cb4-46"><a href="#cb4-46" tabindex="-1"></a><span class="co">#&gt;        IND24        IND31       IND349        IND32       IND332       IND495 </span></span>
+<span id="cb4-47"><a href="#cb4-47" tabindex="-1"></a><span class="co">#&gt; -0.171493417 -0.450912106 -0.411439831 -0.220513041 -0.445241556 -0.302148360 </span></span>
+<span id="cb4-48"><a href="#cb4-48" tabindex="-1"></a><span class="co">#&gt;       IND328       IND371       IND272        IND23        IND55       IND463 </span></span>
+<span id="cb4-49"><a href="#cb4-49" tabindex="-1"></a><span class="co">#&gt; -0.572640195 -0.090248595 -0.172602006 -0.107964558 -0.450873553 -0.297293819 </span></span>
+<span id="cb4-50"><a href="#cb4-50" tabindex="-1"></a><span class="co">#&gt;       IND194       IND441       IND113        IND47       IND502       IND409 </span></span>
+<span id="cb4-51"><a href="#cb4-51" tabindex="-1"></a><span class="co">#&gt;  0.002500033 -0.082561510 -0.053926154  0.014315858 -0.263294983 -0.424747059 </span></span>
+<span id="cb4-52"><a href="#cb4-52" tabindex="-1"></a><span class="co">#&gt;        IND82        IND48       IND303       IND176       IND393        IND52 </span></span>
+<span id="cb4-53"><a href="#cb4-53" tabindex="-1"></a><span class="co">#&gt; -0.215259827 -0.180472021 -0.566428240 -0.154369420 -0.292469824 -0.125122866 </span></span>
+<span id="cb4-54"><a href="#cb4-54" tabindex="-1"></a><span class="co">#&gt;       IND458       IND426        IND15        IND10       IND211       IND244 </span></span>
+<span id="cb4-55"><a href="#cb4-55" tabindex="-1"></a><span class="co">#&gt; -0.297137749 -0.571241703 -0.271153164 -0.372562537 -0.139310663  0.058872696 </span></span>
+<span id="cb4-56"><a href="#cb4-56" tabindex="-1"></a><span class="co">#&gt;        IND65        IND50       IND442       IND213       IND157       IND300 </span></span>
+<span id="cb4-57"><a href="#cb4-57" tabindex="-1"></a><span class="co">#&gt; -0.353977257 -0.370280430 -0.369661968 -0.308463656 -0.015128680 -0.372327867 </span></span>
+<span id="cb4-58"><a href="#cb4-58" tabindex="-1"></a><span class="co">#&gt;        IND25       IND254        IND49       IND199       IND189       IND295 </span></span>
+<span id="cb4-59"><a href="#cb4-59" tabindex="-1"></a><span class="co">#&gt; -0.294685131  0.207142198 -0.265891894 -0.210070398 -0.125493031 -0.208084001 </span></span>
+<span id="cb4-60"><a href="#cb4-60" tabindex="-1"></a><span class="co">#&gt;        IND88       IND459       IND339        IND46       IND325       IND419 </span></span>
+<span id="cb4-61"><a href="#cb4-61" tabindex="-1"></a><span class="co">#&gt; -0.188952067 -0.341369214 -0.323699038 -0.194042453 -0.177038660  0.040164417 </span></span>
+<span id="cb4-62"><a href="#cb4-62" tabindex="-1"></a><span class="co">#&gt;       IND302       IND216       IND178       IND282       IND186       IND239 </span></span>
+<span id="cb4-63"><a href="#cb4-63" tabindex="-1"></a><span class="co">#&gt; -0.388742683 -0.144205644 -0.215211141 -0.347436381  0.070054061 -0.016246983 </span></span>
+<span id="cb4-64"><a href="#cb4-64" tabindex="-1"></a><span class="co">#&gt;        IND89        IND71        IND33       IND494       IND369       IND109 </span></span>
+<span id="cb4-65"><a href="#cb4-65" tabindex="-1"></a><span class="co">#&gt; -0.558938422 -0.009956788 -0.518804964 -0.397442503 -0.462158482 -0.620882241 </span></span>
+<span id="cb4-66"><a href="#cb4-66" tabindex="-1"></a><span class="co">#&gt;        IND64       IND364         IND1       IND323        IND60       IND151 </span></span>
+<span id="cb4-67"><a href="#cb4-67" tabindex="-1"></a><span class="co">#&gt; -0.470768744 -0.505031962 -0.474205183 -0.369106906 -0.183303208 -0.474395370 </span></span>
+<span id="cb4-68"><a href="#cb4-68" tabindex="-1"></a><span class="co">#&gt;       IND293       IND437        IND85       IND324       IND375       IND423 </span></span>
+<span id="cb4-69"><a href="#cb4-69" tabindex="-1"></a><span class="co">#&gt; -0.216436666 -0.452684526 -0.437603184 -0.588708106 -0.588703304 -0.443682464 </span></span>
+<span id="cb4-70"><a href="#cb4-70" tabindex="-1"></a><span class="co">#&gt;       IND367       IND516        IND95       IND461       IND451        IND76 </span></span>
+<span id="cb4-71"><a href="#cb4-71" tabindex="-1"></a><span class="co">#&gt; -0.601498157 -0.233798606 -0.410275308 -0.511844894 -0.326213821 -0.370696978 </span></span>
+<span id="cb4-72"><a href="#cb4-72" tabindex="-1"></a><span class="co">#&gt;       IND298       IND310       IND222       IND102       IND491       IND422 </span></span>
+<span id="cb4-73"><a href="#cb4-73" tabindex="-1"></a><span class="co">#&gt; -0.502436692 -0.408828852 -0.111287912 -0.226551260 -0.223498530  0.158679573 </span></span>
+<span id="cb4-74"><a href="#cb4-74" tabindex="-1"></a><span class="co">#&gt;       IND351       IND309       IND277       IND214         IND0       IND438 </span></span>
+<span id="cb4-75"><a href="#cb4-75" tabindex="-1"></a><span class="co">#&gt; -0.344041151 -0.424716100 -0.612379239 -0.231148880 -0.417714624 -0.438855224 </span></span>
+<span id="cb4-76"><a href="#cb4-76" tabindex="-1"></a><span class="co">#&gt;       IND453       IND400       IND443       IND227       IND331       IND169 </span></span>
+<span id="cb4-77"><a href="#cb4-77" tabindex="-1"></a><span class="co">#&gt; -0.594149200 -0.385144435 -0.456708590 -0.532575545 -0.315295504 -0.235696550 </span></span>
+<span id="cb4-78"><a href="#cb4-78" tabindex="-1"></a><span class="co">#&gt;       IND197       IND142       IND416        IND51       IND346        IND27 </span></span>
+<span id="cb4-79"><a href="#cb4-79" tabindex="-1"></a><span class="co">#&gt; -0.298466128  0.034104976 -0.526523901  0.508010660 -0.126042297 -0.128398444 </span></span>
+<span id="cb4-80"><a href="#cb4-80" tabindex="-1"></a><span class="co">#&gt;       IND297       IND479       IND488       IND290        IND44       IND308 </span></span>
+<span id="cb4-81"><a href="#cb4-81" tabindex="-1"></a><span class="co">#&gt; -0.259539348 -0.454747553 -0.504412520 -0.510470021 -0.142340184  0.072124794 </span></span>
+<span id="cb4-82"><a href="#cb4-82" tabindex="-1"></a><span class="co">#&gt;       IND486         IND7       IND284       IND444       IND220       IND374 </span></span>
+<span id="cb4-83"><a href="#cb4-83" tabindex="-1"></a><span class="co">#&gt; -0.329956853 -0.350941227 -0.163496962 -0.413414477 -0.593246582 -0.818095517 </span></span>
+<span id="cb4-84"><a href="#cb4-84" tabindex="-1"></a><span class="co">#&gt;       IND500        IND11       IND354       IND246       IND439       IND392 </span></span>
+<span id="cb4-85"><a href="#cb4-85" tabindex="-1"></a><span class="co">#&gt; -0.501920608 -0.214219476  0.007729149 -0.275404004 -0.644399750 -0.285348795 </span></span>
+<span id="cb4-86"><a href="#cb4-86" tabindex="-1"></a><span class="co">#&gt;       IND448       IND506       IND192       IND484       IND203       IND452 </span></span>
+<span id="cb4-87"><a href="#cb4-87" tabindex="-1"></a><span class="co">#&gt; -0.492513383 -0.310190245 -0.024709405 -0.435482280 -0.269321957 -0.552898172 </span></span>
+<span id="cb4-88"><a href="#cb4-88" tabindex="-1"></a><span class="co">#&gt;        IND92       IND134       IND287       IND424       IND307       IND122 </span></span>
+<span id="cb4-89"><a href="#cb4-89" tabindex="-1"></a><span class="co">#&gt; -0.101055241  0.008905316 -0.306358542 -0.461001763 -0.356879362  0.058371001 </span></span>
+<span id="cb4-90"><a href="#cb4-90" tabindex="-1"></a><span class="co">#&gt;       IND414       IND212        IND20       IND127       IND236       IND258 </span></span>
+<span id="cb4-91"><a href="#cb4-91" tabindex="-1"></a><span class="co">#&gt; -0.311646715 -0.111162671 -0.193471243  0.028880043 -0.407672480  0.142610577 </span></span>
+<span id="cb4-92"><a href="#cb4-92" tabindex="-1"></a><span class="co">#&gt;       IND305       IND268       IND513       IND496       IND147       IND322 </span></span>
+<span id="cb4-93"><a href="#cb4-93" tabindex="-1"></a><span class="co">#&gt; -0.340565157 -0.471679317 -0.404866473 -0.395120760 -0.072070907 -0.277843970 </span></span>
+<span id="cb4-94"><a href="#cb4-94" tabindex="-1"></a><span class="co">#&gt;        IND45        IND68       IND201       IND348        IND43        IND75 </span></span>
+<span id="cb4-95"><a href="#cb4-95" tabindex="-1"></a><span class="co">#&gt;  0.035081966 -0.363338384 -0.652974372 -0.412158936 -0.071163309 -0.080312324 </span></span>
+<span id="cb4-96"><a href="#cb4-96" tabindex="-1"></a><span class="co">#&gt;        IND90        IND41       IND387       IND276       IND465       IND224 </span></span>
+<span id="cb4-97"><a href="#cb4-97" tabindex="-1"></a><span class="co">#&gt;  0.025514564 -0.323200418 -0.477190145 -0.154720858 -0.341964318 -0.196673915 </span></span>
+<span id="cb4-98"><a href="#cb4-98" tabindex="-1"></a><span class="co">#&gt;       IND481       IND143       IND226       IND480       IND126       IND498 </span></span>
+<span id="cb4-99"><a href="#cb4-99" tabindex="-1"></a><span class="co">#&gt; -0.663275058 -0.056703898 -0.082764588 -0.210979906  0.048488465 -0.283945815 </span></span>
+<span id="cb4-100"><a href="#cb4-100" tabindex="-1"></a><span class="co">#&gt;       IND233       IND195        IND61       IND173        IND97       IND478 </span></span>
+<span id="cb4-101"><a href="#cb4-101" tabindex="-1"></a><span class="co">#&gt; -0.266472867 -0.217675991  0.014263476 -0.454493334 -0.550484287 -0.041911623 </span></span>
+<span id="cb4-102"><a href="#cb4-102" tabindex="-1"></a><span class="co">#&gt;        IND18       IND397       IND180       IND315       IND338       IND359 </span></span>
+<span id="cb4-103"><a href="#cb4-103" tabindex="-1"></a><span class="co">#&gt; -0.330665666 -0.436392508 -0.609082779 -0.569036586 -0.212491654 -0.343991921 </span></span>
+<span id="cb4-104"><a href="#cb4-104" tabindex="-1"></a><span class="co">#&gt;       IND508       IND101       IND232       IND454       IND145       IND370 </span></span>
+<span id="cb4-105"><a href="#cb4-105" tabindex="-1"></a><span class="co">#&gt; -0.477263014 -0.464338378 -0.072071562 -0.227516541 -0.389293368 -0.173894914 </span></span>
+<span id="cb4-106"><a href="#cb4-106" tabindex="-1"></a><span class="co">#&gt;       IND159        IND12        IND77       IND421       IND112       IND289 </span></span>
+<span id="cb4-107"><a href="#cb4-107" tabindex="-1"></a><span class="co">#&gt;  0.119232022 -0.094999753 -0.481360824 -0.433878747 -0.100941994 -0.581080319 </span></span>
+<span id="cb4-108"><a href="#cb4-108" tabindex="-1"></a><span class="co">#&gt;       IND353       IND235        IND29       IND221       IND335       IND249 </span></span>
+<span id="cb4-109"><a href="#cb4-109" tabindex="-1"></a><span class="co">#&gt; -0.332866777 -0.078403530 -0.340509458 -0.130391230 -0.223907121 -0.298415252 </span></span>
+<span id="cb4-110"><a href="#cb4-110" tabindex="-1"></a><span class="co">#&gt;        IND84       IND296       IND183       IND344       IND259       IND384 </span></span>
+<span id="cb4-111"><a href="#cb4-111" tabindex="-1"></a><span class="co">#&gt; -0.199496411 -0.410031721 -0.377059571 -0.693998245 -0.370623474 -0.246649423 </span></span>
+<span id="cb4-112"><a href="#cb4-112" tabindex="-1"></a><span class="co">#&gt;       IND148       IND485       IND264        IND54       IND119       IND146 </span></span>
+<span id="cb4-113"><a href="#cb4-113" tabindex="-1"></a><span class="co">#&gt; -0.271335029 -0.225853454 -0.261874967  0.087807798 -0.158416463 -0.214176185 </span></span>
+<span id="cb4-114"><a href="#cb4-114" tabindex="-1"></a><span class="co">#&gt;        IND93        IND80        IND16       IND350       IND503       IND490 </span></span>
+<span id="cb4-115"><a href="#cb4-115" tabindex="-1"></a><span class="co">#&gt; -0.420587615 -0.521984344 -0.070014457 -0.477095206 -0.366749255 -0.412342395 </span></span>
+<span id="cb4-116"><a href="#cb4-116" tabindex="-1"></a><span class="co">#&gt;       IND270        IND70       IND385       IND433       IND428       IND280 </span></span>
+<span id="cb4-117"><a href="#cb4-117" tabindex="-1"></a><span class="co">#&gt; -0.502675568 -0.087020068 -0.312957603 -0.141636588 -0.630821691 -0.190763136 </span></span>
+<span id="cb4-118"><a href="#cb4-118" tabindex="-1"></a><span class="co">#&gt;       IND234       IND104       IND155       IND417       IND207        IND67 </span></span>
+<span id="cb4-119"><a href="#cb4-119" tabindex="-1"></a><span class="co">#&gt; -0.145463209 -0.065338172 -0.102717325 -0.406053957 -0.487929907 -0.542512235 </span></span>
+<span id="cb4-120"><a href="#cb4-120" tabindex="-1"></a><span class="co">#&gt;       IND471         IND6       IND413       IND412       IND245        IND96 </span></span>
+<span id="cb4-121"><a href="#cb4-121" tabindex="-1"></a><span class="co">#&gt;  0.034250790 -0.327396727 -0.497126708 -0.185326538 -0.331678057 -0.078888704 </span></span>
+<span id="cb4-122"><a href="#cb4-122" tabindex="-1"></a><span class="co">#&gt;        IND63       IND301       IND401       IND263       IND352       IND316 </span></span>
+<span id="cb4-123"><a href="#cb4-123" tabindex="-1"></a><span class="co">#&gt; -0.238519359 -0.297359129 -0.424067348 -0.282617895 -0.050625075 -0.255118778 </span></span>
+<span id="cb4-124"><a href="#cb4-124" tabindex="-1"></a><span class="co">#&gt;       IND341       IND489       IND388       IND457       IND181       IND431 </span></span>
+<span id="cb4-125"><a href="#cb4-125" tabindex="-1"></a><span class="co">#&gt; -0.459988827 -0.313308038 -0.311893938  0.040361232 -0.454678575 -0.575772676 </span></span>
+<span id="cb4-126"><a href="#cb4-126" tabindex="-1"></a><span class="co">#&gt;       IND140       IND512       IND330       IND420       IND377       IND139 </span></span>
+<span id="cb4-127"><a href="#cb4-127" tabindex="-1"></a><span class="co">#&gt; -0.218079182 -0.400390897 -0.392403815 -0.258866066 -0.353999148  0.032783885 </span></span>
+<span id="cb4-128"><a href="#cb4-128" tabindex="-1"></a><span class="co">#&gt;       IND171       IND165       IND395       IND436       IND475       IND167 </span></span>
+<span id="cb4-129"><a href="#cb4-129" tabindex="-1"></a><span class="co">#&gt;  0.002110163 -0.083110045 -0.540800075 -0.680934271 -0.444409304 -0.160315170 </span></span>
+<span id="cb4-130"><a href="#cb4-130" tabindex="-1"></a><span class="co">#&gt;       IND111       IND473       IND379       IND501       IND164       IND360 </span></span>
+<span id="cb4-131"><a href="#cb4-131" tabindex="-1"></a><span class="co">#&gt; -0.189364791 -0.415996781 -0.534266922 -0.437482227 -0.269667607 -0.244362503 </span></span>
+<span id="cb4-132"><a href="#cb4-132" tabindex="-1"></a><span class="co">#&gt;       IND390       IND376       IND425        IND66       IND243        IND39 </span></span>
+<span id="cb4-133"><a href="#cb4-133" tabindex="-1"></a><span class="co">#&gt; -0.016687981 -0.300365083 -0.559132052 -0.397677303 -0.253962997 -0.157969029 </span></span>
+<span id="cb4-134"><a href="#cb4-134" tabindex="-1"></a><span class="co">#&gt;       IND125        IND59       IND218       IND361       IND469       IND321 </span></span>
+<span id="cb4-135"><a href="#cb4-135" tabindex="-1"></a><span class="co">#&gt;  0.198755812 -0.270404134 -0.157473118 -0.435929952 -0.198513588 -0.471754809</span></span></code></pre></div>
 <p>This model object is a list with a <code>Model</code> and a
 <code>R2</code> slot. The <code>Model</code> slot stores a list of
 models for each isoform.</p>
 <p>We can convert this model from a list to a <code>tibble</code> using
 the <code>convert_model()</code> function. Make sure you have an
 annotation object to have position and REF/ALT allele information.</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>model_tsv <span class="ot">=</span> <span class="fu">convert_model</span>(model_isotwas,</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>                          <span class="at">snp_annot =</span> snps<span class="sc">$</span>map,</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>                          <span class="at">snp_var =</span> <span class="st">&#39;marker.ID&#39;</span>)</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>model_tsv</span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # A tibble: 700 × 10</span></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    SNP        Weight Transcript    R2  R2.P chromosome genetic.dist physical.pos</span></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    &lt;chr&gt;       &lt;dbl&gt; &lt;chr&gt;      &lt;dbl&gt; &lt;dbl&gt;      &lt;int&gt;        &lt;int&gt;        &lt;int&gt;</span></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  1 SNP10    -9.57e-5 Isoform1   0.317     0          1            0        10099</span></span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  2 SNP100   -2.42e-3 Isoform3   0.425     0          1            0       100107</span></span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  3 SNP1009   2.15e-3 Isoform3   0.425     0          1            0      1009108</span></span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  4 SNP101    8.68e-3 Isoform2   0.463     0          1            0       101086</span></span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  5 SNP1012  -1.99e-2 Isoform1   0.317     0          1            0      1012093</span></span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  6 SNP1017  -7.31e-3 Isoform2   0.463     0          1            0      1017093</span></span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  7 SNP1020   4.89e-3 Isoform2   0.463     0          1            0      1020103</span></span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  8 SNP1025   3.36e-2 Isoform1   0.317     0          1            0      1025113</span></span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  9 SNP103   -5.00e-2 Isoform2   0.463     0          1            0       103078</span></span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 10 SNP1042  -1.09e-2 Isoform2   0.463     0          1            0      1042088</span></span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # ℹ 690 more rows</span></span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # ℹ 2 more variables: allele1 &lt;chr&gt;, allele2 &lt;chr&gt;</span></span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>model_tsv <span class="ot">=</span> <span class="fu">convert_model</span>(model_isotwas,</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>                          <span class="at">snp_annot =</span> snps<span class="sc">$</span>map,</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>                          <span class="at">snp_var =</span> <span class="st">&#39;marker.ID&#39;</span>)</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>model_tsv</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="co">#&gt; # A tibble: 700 × 10</span></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a><span class="co">#&gt;    SNP        Weight Transcript    R2  R2.P chromosome genetic.dist physical.pos</span></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a><span class="co">#&gt;    &lt;chr&gt;       &lt;dbl&gt; &lt;chr&gt;      &lt;dbl&gt; &lt;dbl&gt;      &lt;int&gt;        &lt;int&gt;        &lt;int&gt;</span></span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="co">#&gt;  1 SNP10    -9.57e-5 Isoform1   0.317     0          1            0        10099</span></span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a><span class="co">#&gt;  2 SNP100   -2.42e-3 Isoform3   0.425     0          1            0       100107</span></span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a><span class="co">#&gt;  3 SNP1009   2.15e-3 Isoform3   0.425     0          1            0      1009108</span></span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a><span class="co">#&gt;  4 SNP101    8.68e-3 Isoform2   0.463     0          1            0       101086</span></span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a><span class="co">#&gt;  5 SNP1012  -1.99e-2 Isoform1   0.317     0          1            0      1012093</span></span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a><span class="co">#&gt;  6 SNP1017  -7.31e-3 Isoform2   0.463     0          1            0      1017093</span></span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a><span class="co">#&gt;  7 SNP1020   4.89e-3 Isoform2   0.463     0          1            0      1020103</span></span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a><span class="co">#&gt;  8 SNP1025   3.36e-2 Isoform1   0.317     0          1            0      1025113</span></span>
+<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a><span class="co">#&gt;  9 SNP103   -5.00e-2 Isoform2   0.463     0          1            0       103078</span></span>
+<span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a><span class="co">#&gt; 10 SNP1042  -1.09e-2 Isoform2   0.463     0          1            0      1042088</span></span>
+<span id="cb5-18"><a href="#cb5-18" tabindex="-1"></a><span class="co">#&gt; # ℹ 690 more rows</span></span>
+<span id="cb5-19"><a href="#cb5-19" tabindex="-1"></a><span class="co">#&gt; # ℹ 2 more variables: allele1 &lt;chr&gt;, allele2 &lt;chr&gt;</span></span></code></pre></div>
 </div>
 
 

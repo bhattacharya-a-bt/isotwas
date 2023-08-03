@@ -102,8 +102,8 @@ use these models.</p>
 package <code>Zenodo_get</code> (<a href="https://zenodo.org/record/1261813" class="external-link uri">https://zenodo.org/record/1261813</a>). To install and use,
 here are some sample commands to directly download all of the adult
 cortex repository off Zenodo:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install zenodo-get</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="ex">zenodo_get</span> 8048198</span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="ex">pip</span> install zenodo-get</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="ex">zenodo_get</span> 8048198</span></code></pre></div>
 <p>In this tutorial, we are only using isoTWAS models for 3 genes:
 <em>CDC42</em> (<em>ENSG00000070831</em>), <em>WNT4</em>
 (<em>ENSG00000162552</em>), and <em>CDC42-IT1</em>
@@ -148,8 +148,8 @@ are simply <code>.RDS</code> files that contain a square matrix with the
 LD between the SNPs in the correspondin row and column.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">LD_test</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>,</span>
-<span>                                 <span class="st">"ENSG00000070831_LDMatrix.RDS"</span>,</span>
-<span>                                 package <span class="op">=</span> <span class="st">"isotwas"</span><span class="op">)</span><span class="op">)</span></span>
+<span>                              <span class="st">"ENSG00000070831_LDMatrix.RDS"</span>,</span>
+<span>                              package <span class="op">=</span> <span class="st">"isotwas"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">LD_test</span><span class="op">)</span><span class="op">[</span>,<span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## Loading required package: Matrix</span></span></code></pre>
 <pre><code><span><span class="co">##            rs10916927  rs6658526  rs1354792 rs12567861 rs10916930  rs7521711</span></span>
@@ -196,8 +196,8 @@ summary statistics to only SNPs annotated in <a href="https://www.nature.com/art
 that there is maximal overlap. This munging script is available <a href="https://github.com/bhattacharya-a-bt/isotwas_manu_scripts/blob/98a76279037003e0e30de964b26fe7d5a49961df/Real%20Data/Association%20Testing/MungeSumStats/Snakefile" class="external-link">here</a>,
 courtesy of Michael Margolis.</p>
 <p>In this tutorial, we have subsetted only to the SNPs that are within
-the <em>SCN2A</em>/<em>SCN3A</em> locus. Let’s take a look at this
-munged file.</p>
+the locus of the example genes. Let’s take a look at this munged
+file.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">gwas</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.table</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>,</span>
 <span>                              <span class="st">"tutorial_SCZ_2022.hm3_filter.sumstats.gz"</span>,</span>
@@ -471,10 +471,10 @@ We can obtain the gene annotation with the following code:</p>
 <div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">suppressPackageStartupMessages</a></span><span class="op">(</span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">require</a></span><span class="op">(</span><span class="va">biomaRt</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">gene_names</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">isoform_new</span><span class="op">$</span><span class="va">Gene</span><span class="op">)</span></span>
-<span><span class="va">ensembl</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/biomaRt/man/useEnsembl.html" class="external-link">useEnsembl</a></span><span class="op">(</span>biomart <span class="op">=</span> <span class="st">"ensembl"</span>, </span>
+<span><span class="va">ensembl</span> <span class="op">&lt;-</span> <span class="fu">useEnsembl</span><span class="op">(</span>biomart <span class="op">=</span> <span class="st">"ensembl"</span>, </span>
 <span>                   dataset <span class="op">=</span> <span class="st">"hsapiens_gene_ensembl"</span>, </span>
 <span>                   mirror <span class="op">=</span> <span class="st">"useast"</span><span class="op">)</span></span>
-<span><span class="va">bm</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/biomaRt/man/getBM.html" class="external-link">getBM</a></span><span class="op">(</span>attributes <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">'ensembl_gene_id'</span>, </span>
+<span><span class="va">bm</span> <span class="op">=</span> <span class="fu">getBM</span><span class="op">(</span>attributes <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">'ensembl_gene_id'</span>, </span>
 <span>                          <span class="st">'chromosome_name'</span>,</span>
 <span>                          <span class="st">'start_position'</span>,</span>
 <span>                          <span class="st">'end_position'</span><span class="op">)</span>,</span>
