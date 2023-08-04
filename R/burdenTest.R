@@ -50,11 +50,11 @@ burdenTest <- function(mod,
                        nperms = 1e3,
                        usePos = F){
 
-    if (is.null(Z)){
-      if (any(is.null(beta,se))){
-        stop('Please provide a column name for the Z-score or beta and SE.')
-      }
+  if (is.null(Z)){
+    if (any(is.null(c(beta,se)))){
+      stop('Please provide a column name for the Z-score or beta and SE.')
     }
+  }
 
    colnames(mod)[which(colnames(mod) == featureName)] = 'Feature'
 
