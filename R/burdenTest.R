@@ -94,8 +94,12 @@ burdenTest <- function(mod,
       mod$SNP = paste(mod$Chromosome,mod$Position,sep=':')
 
     }
-
-    tot = merge(mod,sumStats,by = 'SNP')
+ 
+	tot = merge(mod,sumStats,by = 'SNP')
+	
+	# making sure all alleles are in the same case
+	cols_toupper <- c("A1_GWAS", "A2_GWAS", "A1_Mod", "A2_Mod")
+	tot[, (cols_toupper) := lapply(.SD, toupper), .SDcols = cols_toupper]
 
     if (nrow(tot) == 0){
       return('SNPs not found.')
