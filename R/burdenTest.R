@@ -100,7 +100,7 @@ burdenTest <- function(mod,
 	# making sure all alleles are in the same case
 	cols_toupper <- c("A1_GWAS", "A2_GWAS", "A1_Mod", "A2_Mod")
 	tot$A1_GWAS = toupper(tot$A1_GWAS)
-	tot$A2_GWAS = toupper(tot$A1_GWAS)
+	tot$A2_GWAS = toupper(tot$A2_GWAS)
 	tot$A1_Mod = toupper(tot$A1_Mod)
 	tot$A2_Mod = toupper(tot$A2_Mod)
 	
