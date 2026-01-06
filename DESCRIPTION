@@ -47,5 +47,9 @@ Imports:
     spls,
     susieR,
     tibble
-Remotes: 
-    yaowuliu/ACAT
+Remotes:
+    yaowuliu/ACAT,
+    bioc::BiocGenerics,
+    bioc::GenomicRanges,
+    bioc::rtracklayer,
+    bioc::S4Vectors
