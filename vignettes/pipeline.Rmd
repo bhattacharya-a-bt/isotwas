@@ -55,60 +55,156 @@ This reads in a SNP matrix with dimensions $300 \times 4542$, with samples along
 Let's jitter our expression matrix a little to generate 10 bootstrapped estimates of the matrix. Keep in mind that these replicates, theoretically, should not affect the effect size estimates but will help in seeding the estimation process of the correlation between isoforms/error in the multivariate model.
 
 ```{r bootstrap}
-boot_list = lapply(1:10,function(i){jitter(isoform_mat)}) 
-isoform_mat_rep = rlist::list.rbind(boot_list) 
-rownames(isoform_mat_rep) = rep(paste0('Sample',1:nrow(snps$fam)),10) 
-colnames(isoform_mat_rep) = paste0('Isoform',1:ncol(isoform_mat_rep)) 
+boot_list = lapply(1:10,function(i){jitter(isoform_mat)})
+isoform_mat_rep = rlist::list.rbind(boot_list)
+rownames(isoform_mat_rep) = rep(paste0('Sample',1:nrow(snps$fam)),10)
+colnames(isoform_mat_rep) = paste0('Isoform',1:ncol(isoform_mat_rep))
 dim(isoform_mat_rep)
 ```
 
-Now, we can train the model using the `compute_isotwas()` function. Make sure the SNP matrix has clear labels for the SNP identifiers that are relevant to your study. This is a large SNP matrix which will take a few minutes to run on your local machine.
+## Available Prediction Methods
+
+The `compute_isotwas()` function supports 9 multivariate prediction methods:
+
+| Method | Description |
+|--------|-------------|
+| `mrce_lasso` | Multivariate Regression with Covariance Estimation (MRCE) - jointly estimates regression coefficients and error covariance |
+| `multi_enet` | Multivariate elastic net - fits elastic net for each isoform with shared penalty |
+| `joinet` | Joinet stacked elastic net - uses cross-predictions to improve multivariate prediction |
+| `spls` | Sparse partial least squares - finds latent components that predict all isoforms |
+| `sgl` | Sparse group lasso - encourages both within-group and across-group sparsity |
+| `mtlasso` | Multi-task lasso (L21) - joint feature selection across all isoforms |
+| `stacking` | Super learner stacking - combines predictions from multiple base methods |
+| `graph_reg` | Graph-regularized regression - incorporates isoform similarity structure |
+| `univariate` | Best of univariate methods (elastic net, BLUP, SuSiE) per isoform |
+
+## Training a Model
+
+Now, we can train the model using the `compute_isotwas()` function. Make sure the SNP matrix has clear labels for the SNP identifiers that are relevant to your study.
+
+The function now provides detailed progress output by default (`verbose = TRUE`), showing:
+
+- Data summary (samples, SNPs, transcripts)
+- Method-by-method progress with timing
+- Per-method R² performance
+- Final results comparison table
 
 ```{r train, message = F, warning=FALSE, eval=F}
 snp_mat = as.matrix(snps$genotypes[])
 colnames(snp_mat) = snps$map$marker.ID
 rownames(snp_mat) = snps$fam$sample.ID
-isotwas_model = compute_isotwas(X = snp_mat, 
-                                Y = isoform_mat, 
-                                Y.rep = isoform_mat_rep,
-                                R = 10, 
-                                id = rownames(isoform_mat_rep), 
-                                omega_est = 'replicates', 
-                                omega_nlambda = 5, 
-                                method = c('mrce_lasso', 
-                                           'multi_enet', 
-                                           'univariate',
-                                           'joinet',
-                                           'spls'),
-                                predict_nlambda = 10, 
-                                family = 'gaussian', 
-                                scale = FALSE, 
-                                alpha = 0.5, 
-                                nfolds = 5, 
-                                verbose = TRUE, 
-                                tx_names = paste0('Isoform',1:3), 
-                                seed = 1789, 
-                                run_all = FALSE, 
-                                return_all = TRUE)
+
+# Train with all methods (recommended for best model selection)
+isotwas_model = compute_isotwas(
+  X = snp_mat,
+  Y = isoform_mat,
+  Y.rep = isoform_mat_rep,
+  R = 10,
+  id = rownames(isoform_mat_rep),
+  omega_est = 'replicates',
+  omega_nlambda = 5,
+  nfolds = 5,
+  verbose = TRUE,
+  seed = 1789,
+  run_all = TRUE,        # Run all 9 methods
+  return_all = TRUE      # Return results from all methods
+)
 ```
 
-A few notes on the options in the function:
+### Running Specific Methods
 
--   By selecting `omega_est = 'replicates'` , we are used the bootstrapped replicates to estimate the correlation between isoforms to seed any methods that require this matrix. The alternative is `omega_est = 'mean'` , which will use whatever matrix you submit for `Y`.
+If you want to run only specific methods (e.g., for faster computation), set `run_all = FALSE` and specify the methods:
 
--   `omega_nlambda` selects the number of steps between fully dense to fully sparse in the correlation matrix estimation. We recommend 5-10 as the default here.
+```{r train_specific, message = F, warning=FALSE, eval=F}
+# Run only a subset of methods
+isotwas_model = compute_isotwas(
+  X = snp_mat,
+  Y = isoform_mat,
+  Y.rep = isoform_mat_rep,
+  R = 10,
+  id = rownames(isoform_mat_rep),
+  method = c('mrce_lasso', 'multi_enet', 'sgl', 'univariate'),
+  nfolds = 5,
+  verbose = TRUE,
+  seed = 1789,
+  run_all = FALSE
+)
+```
 
--   There are multiple methods to predict expression. However, through simulations and real data examples, we recommend the five shown here as the default in the `method` option.
+### Using Graph-Regularized Regression
 
--   `predict_nlambda` is the number of penalty variables that are considered from the `mrce_lasso` method. We recommend 10-20 for this variable.
+The `graph_reg` method can incorporate prior knowledge about isoform similarity (e.g., shared exon structure). You can create a similarity matrix from a GTF annotation file:
 
--   `family` and `alpha` are for `multi_enet` and `univariate` to determine how elastic net regression is run. The default is that the response follows a Normal distribution and the mixing parameter is set to 0.5.
+```{r graph_reg, eval=F}
+# Create similarity matrix from GTF (based on shared exons)
+sim_result = similarity_from_gtf(
+  gtf_path = "gencode.v45.annotation.gtf.gz",
+  gene = "BRCA1",
+  method = "jaccard"  # Options: "jaccard", "overlap_coef", "binary"
+)
 
--   If `run_all = TRUE`, then all methods will be run.
+# Use in model training
+isotwas_model = compute_isotwas(
+  X = snp_mat,
+  Y = isoform_mat,
+  Y.rep = isoform_mat_rep,
+  R = 10,
+  id = rownames(isoform_mat_rep),
+  similarity_matrix = sim_result$similarity_matrix,
+  method = c('multi_enet', 'graph_reg', 'univariate'),
+  run_all = FALSE,
+  verbose = TRUE,
+  seed = 1789
+)
+```
 
--   If `return_all = TRUE`, then predicted values for each isoform and predictive performance for all methods and all isoforms will be outputted.
+## Function Parameters
 
-We can convert the model from a list (the output from `compute_isotwas()`) to a tibble or data.frame using `convert_model(isotwas_model)`.
+A few notes on the key options:
+
+-   **`omega_est`**: By selecting `omega_est = 'replicates'`, we use the bootstrapped replicates to estimate the correlation between isoforms. The alternative is `omega_est = 'mean'`, which will use whatever matrix you submit for `Y`.
+
+-   **`omega_nlambda`**: Number of steps between fully dense to fully sparse in the correlation matrix estimation. We recommend 5-10 as the default.
+
+-   **`method`**: Vector of methods to use. By default with `run_all = TRUE`, all 9 methods are run and the best model is selected.
+
+-   **`similarity_matrix`**: Optional matrix for `graph_reg` method. Can be created using `similarity_from_gtf()` or `create_similarity_from_exons()`.
+
+-   **`predict_nlambda`**: Number of penalty variables for `mrce_lasso`. We recommend 10-20.
+
+-   **`alpha`**: Elastic net mixing parameter (0 = ridge, 1 = lasso, 0.5 = elastic net).
+
+-   **`verbose`**: If `TRUE` (default), prints detailed progress including per-method timing and performance.
+
+-   **`run_all`**: If `TRUE`, all methods will be run regardless of `method` parameter.
+
+-   **`return_all`**: If `TRUE`, results from all methods are returned (useful for method comparison).
+
+## Examining Results
+
+The output from `compute_isotwas()` is an `isotwas_result` object with several components:
+
+```{r examine, eval=F}
+# Print summary
+print(isotwas_model)
+
+# Access the comparison table (R² for each method)
+isotwas_model$comparison
+
+# Access the best model
+isotwas_model$best_models
+
+# Access individual transcript results
+isotwas_model$best_models$Isoform1$r2
+isotwas_model$best_models$Isoform1$weights
+
+# Get the full weight matrix
+weight_mat = get_weight_matrix(isotwas_model$best_models)
+```
+
+## Converting the Model
+
+We can convert the model from a list to a tibble or data.frame using `convert_model()`:
 
 Let's take a look at what a sample model looks like:
 
@@ -130,3 +226,17 @@ model_tsv = convert_model(model_isotwas,
                           snp_var = 'marker.ID')
 model_tsv
 ```
+
+## Method Recommendations
+
+Based on simulations and real data analyses:
+
+1. **Default recommendation**: Use `run_all = TRUE` to evaluate all methods and let the function select the best model based on cross-validated R².
+
+2. **For speed**: If computation time is a concern, start with `c('multi_enet', 'sgl', 'univariate')` which provides a good balance of multivariate and univariate approaches.
+
+3. **When isoforms share structure**: Use `graph_reg` with a similarity matrix derived from shared exons. This helps when isoforms have correlated genetic effects due to shared regulatory regions.
+
+4. **For robust predictions**: The `stacking` method combines multiple base methods and often provides stable predictions, especially when different methods perform well for different isoforms.
+
+5. **For joint feature selection**: Use `mtlasso` or `sgl` when you expect SNPs to affect multiple isoforms simultaneously.

@@ -8,13 +8,15 @@ compute_mrce(
   X,
   Y,
   lambda = NULL,
-  nlambda = 50,
+  nlambda = 20,
   Omega,
   nfolds = 5,
   tol.in,
   maxit.in,
   verbose,
-  seed
+  seed,
+  parallel = FALSE,
+  n.cores = NULL
 )
 }
 \arguments{
@@ -37,6 +39,10 @@ compute_mrce(
 \item{verbose}{logical}
 
 \item{seed}{int, random seed}
+
+\item{parallel}{logical, whether to parallelize CV folds}
+
+\item{n.cores}{int, number of cores for parallelization}
 }
 \value{
 CV MRCE fit

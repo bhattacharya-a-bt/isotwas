@@ -26,10 +26,31 @@ Isoform-level analyses can provide further granularity to a gene-trait associati
 
 `isotwas` contains functions for:
 
-1.  training multivariate predictive models for isoform-level expression from a set of genetic variants,
+1.  **Training multivariate predictive models** for isoform-level expression from genetic variants, with 9 different methods including:
+    - MRCE (Multivariate Regression with Covariance Estimation)
+    - Multivariate elastic net
+    - Joinet stacked elastic net
+    - Sparse PLS
+    - Sparse group lasso
+    - Multi-task lasso (L21 regularization)
+    - Super learner stacking
+    - Graph-regularized regression (using isoform similarity)
+    - Univariate methods (elastic net, BLUP, SuSiE)
 
-2.  conducting trait mapping on the isoform-level using stage-wise hypothesis testing, and
+2.  **Conducting trait mapping** on the isoform-level using stage-wise hypothesis testing
 
-3.  probabilistic fine-mapping
+3.  **Probabilistic fine-mapping** to identify causal isoforms
 
 ![](images/scheme-01.png){width="700"}
+
+## Key Features
+
+- **Multiple prediction methods**: The package automatically evaluates multiple multivariate regression methods and selects the best model based on cross-validated R-squared.
+
+- **Graph-regularized learning**: Incorporate prior knowledge about isoform similarity (e.g., shared exon structure) to improve predictions.
+
+- **User-friendly interface**: The main `compute_isotwas()` function provides detailed progress output, data summaries, and results comparison tables.
+
+- **Robust model selection**: Uses cross-validation within each method and compares across methods to find the optimal model for each gene.
+
+See the [Train an isoTWAS model](pipeline.html) vignette for detailed usage instructions.

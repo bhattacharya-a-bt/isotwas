@@ -94,24 +94,33 @@ multivariate_joinet <- function(X,
                           alpha.base = alpha,
                           alpha.meta = alpha)
 
-  modelList = list()
+  # Build output using isotwas_model class
+  transcripts <- list()
   for (i in 1:ncol(Y)){
+    tx_name <- colnames(Y)[i]
+    weights <- tibble::tibble(
+      SNP = colnames(X),
+      Weight = coef(models)$beta[, i]
+    )
+    weights <- subset(weights, Weight != 0)
 
-    mod = tibble::tibble(SNP = colnames(X),
-                         Weight = coef(models)$beta[,i])
-    mod = subset(mod,Weight != 0)
-    best.pred = pred[,i]
-    reg = summary(lm(Y[,i]~best.pred))
-    modelList = rlist::list.append(modelList,
-                                   list(Transcript = colnames(Y)[i],
-                                        Model = mod,
-                                        R2 = r2.vec[i],
-                                        P = P[i],
-                                        Pred = pred[,i]))
-
+    transcripts[[tx_name]] <- create_transcript_model(
+      transcript_id = tx_name,
+      weights = weights,
+      r2 = r2.vec[i],
+      pvalue = P[i],
+      predicted = pred[, i]
+    )
   }
 
-  return(modelList)
+  result <- create_isotwas_model(
+    method = "joinet",
+    transcripts = transcripts,
+    n_samples = nrow(X),
+    n_snps = ncol(X)
+  )
+
+  return(result)
 
 
 }

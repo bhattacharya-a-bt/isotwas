@@ -9,27 +9,27 @@ compute_isotwas(
   Y,
   gene_exp = NULL,
   Y.rep,
-  R,
+  R = NULL,
   id,
   omega_est = "replicates",
   omega_nlambda = 10,
-  method = c("mrce_lasso", "curds_whey", "multi_enet", "joinet", "spls", "finemap",
-    "univariate"),
-  predict_nlambda = 50,
+  method = c("mrce_lasso", "multi_enet", "joinet", "spls", "sgl", "mtlasso", "stacking",
+    "graph_reg", "univariate"),
+  similarity_matrix = NULL,
+  predict_nlambda = 20,
   family = "gaussian",
-  scale = F,
+  scale = FALSE,
   alpha = 0.5,
   nfolds = 5,
-  verbose = F,
-  par = F,
+  verbose = TRUE,
+  par = FALSE,
   n.cores = NULL,
   tx_names = NULL,
   seed = NULL,
-  run_all = T,
-  return_all = F,
+  run_all = TRUE,
+  return_all = FALSE,
   tol.in = 0.001,
-  maxit.in = 1000,
-  coverage = 0.9
+  maxit.in = 1000
 )
 }
 \arguments{
@@ -49,7 +49,22 @@ compute_isotwas(
 
 \item{omega_nlambda}{int, number of omegas to generate}
 
-\item{method}{character, vector of methods to use}
+\item{method}{character, vector of methods to use. Available methods:
+\itemize{
+  \item "mrce_lasso": MRCE with lasso penalty
+  \item "multi_enet": Multivariate elastic net
+  \item "joinet": Joinet stacked elastic net
+  \item "spls": Sparse partial least squares
+  \item "sgl": Sparse group lasso
+  \item "mtlasso": Multi-task lasso (L21 regularization)
+  \item "stacking": Super learner stacking of multiple methods
+  \item "graph_reg": Graph-regularized regression (requires similarity_matrix)
+  \item "univariate": Best of univariate elastic net, BLUP, SuSiE
+}}
+
+\item{similarity_matrix}{matrix, optional similarity matrix for graph_reg method.
+Can be created using \code{\link{similarity_from_gtf}} or
+\code{\link{create_similarity_from_exons}}. If NULL, graph_reg is skipped.}
 
 \item{predict_nlambda}{int, number of lambdas in MRCE}
 
@@ -61,7 +76,7 @@ compute_isotwas(
 
 \item{nfolds}{int, number of CV folds}
 
-\item{verbose}{logical}
+\item{verbose}{logical, print progress messages}
 
 \item{par}{logical, uses mclapply to parallelize model fit}
 
@@ -77,14 +92,12 @@ compute_isotwas(
 
 \item{tol.in}{numeric, tolerance for objective difference}
 
-\item{maxit.in}{int, maximum number of interactions}
-
-\item{coverage}{numeric, coverage of cred set for finemap and regress}
+\item{maxit.in}{int, maximum number of iterations}
 }
 \value{
 optimal isoTWAS model
 }
 \description{
-The function runs MVR models for a set of transcripts and outputs
-the best model
+The function runs multivariate regression models for a set of transcripts
+and outputs the best model based on cross-validated R-squared.
 }

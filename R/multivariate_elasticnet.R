@@ -149,63 +149,50 @@ multivariate_elasticnet <- function(X,
       best_alpha[t] = rownames(r2_mat)[which.max(r2_mat[,t])]
     }
 
-    modelList = list()
+    # Build output using isotwas_model class
+    transcripts <- list()
     for (i in 1:ncol(Y)){
+        tx_name <- colnames(Y)[i]
 
         if (best_alpha[i] == 'alpha = 0'){
-
-          mod = tibble::tibble(SNP = colnames(X),
-                               Weight = coef(models_0,
-                                             s = 'lambda.min')[[i]][-1])
-          mod = subset(mod,Weight != 0)
-          best.pred = models_0$fit.preval[,i,which.min(models_0$cvm)]
-          modelList = rlist::list.append(modelList,
-                                         list(Transcript = colnames(Y)[i],
-                                              Model = mod,
-                                              R2 = r2_best[i],
-                                              P = P[i],
-                                              Pred = pred_0[,i]))
-
+          weights <- tibble::tibble(
+            SNP = colnames(X),
+            Weight = coef(models_0, s = 'lambda.min')[[i]][-1]
+          )
+          best_pred <- pred_0[, i]
+        } else if (best_alpha[i] == 'alpha = 0.5'){
+          weights <- tibble::tibble(
+            SNP = colnames(X),
+            Weight = coef(models_5, s = 'lambda.min')[[i]][-1]
+          )
+          best_pred <- pred_5[, i]
+        } else {
+          weights <- tibble::tibble(
+            SNP = colnames(X),
+            Weight = coef(models_1, s = 'lambda.min')[[i]][-1]
+          )
+          best_pred <- pred_1[, i]
         }
 
-        if (best_alpha[i] == 'alpha = 0.5'){
+        weights <- subset(weights, Weight != 0)
 
-          ccc = coef(models_5,
-                     s = 'lambda.min')[[i]][-1]
-          mod = tibble::tibble(SNP = colnames(X),
-                               Weight = ccc)
-          mod = subset(mod,Weight != 0)
-          best.pred = models_5$fit.preval[,i,which.min(models_5$cvm)]
-          modelList = rlist::list.append(modelList,
-                                         list(Transcript = colnames(Y)[i],
-                                              Model = mod,
-                                              R2 = r2_best[i],
-                                              P = P[i],
-                                              Pred = pred_0[,i]))
-
-        }
-
-        if (best_alpha[i] == 'alpha = 1'){
-
-          ccc = coef(models_1,
-                     s = 'lambda.min')[[i]][-1]
-          mod = tibble::tibble(SNP = colnames(X),
-                               Weight = ccc)
-          mod = subset(mod,Weight != 0)
-          best.pred = models_1$fit.preval[,i,which.min(models_1$cvm)]
-          modelList = rlist::list.append(modelList,
-                                         list(Transcript = colnames(Y)[i],
-                                              Model = mod,
-                                              R2 = r2_best[i],
-                                              P = P[i],
-                                              Pred = pred_0[,i]))
-
-        }
-
-
+        transcripts[[tx_name]] <- create_transcript_model(
+          transcript_id = tx_name,
+          weights = weights,
+          r2 = r2_best[i],
+          pvalue = P[i],
+          predicted = best_pred
+        )
     }
 
-    return(modelList)
+    result <- create_isotwas_model(
+      method = "multivariate_enet",
+      transcripts = transcripts,
+      n_samples = nrow(X),
+      n_snps = ncol(X)
+    )
+
+    return(result)
 
 
 }
