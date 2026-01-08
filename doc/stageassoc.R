@@ -10,8 +10,8 @@ head(model_test)
 
 ## ----lookLD-------------------------------------------------------------------
 LD_test = readRDS(system.file("extdata",
-                                 "ENSG00000070831_LDMatrix.RDS",
-                                 package = "isotwas"))
+                              "ENSG00000070831_LDMatrix.RDS",
+                              package = "isotwas"))
 head(as.matrix(LD_test)[,1:10])
 
 ## ----lookGWAS-----------------------------------------------------------------
@@ -113,19 +113,19 @@ print(subset(isoform_new,Screen.P.Adjusted < alpha1 &
                permute.P < 0.05))
 
 ## ----biomart, eval=F----------------------------------------------------------
-#  suppressPackageStartupMessages(require(biomaRt))
-#  gene_names = unique(isoform_new$Gene)
-#  ensembl <- useEnsembl(biomart = "ensembl",
-#                     dataset = "hsapiens_gene_ensembl",
-#                     mirror = "useast")
-#  bm = getBM(attributes = c('ensembl_gene_id',
-#                            'chromosome_name',
-#                            'start_position',
-#                            'end_position'),
-#        filters = 'ensembl_gene_id',
-#        values = gene_names,
-#        mart = ensembl)
-#  colnames(bm) = c('Gene','Chromosome','Start','End')
+# suppressPackageStartupMessages(require(biomaRt))
+# gene_names = unique(isoform_new$Gene)
+# ensembl <- useEnsembl(biomart = "ensembl",
+#                    dataset = "hsapiens_gene_ensembl",
+#                    mirror = "useast")
+# bm = getBM(attributes = c('ensembl_gene_id',
+#                           'chromosome_name',
+#                           'start_position',
+#                           'end_position'),
+#       filters = 'ensembl_gene_id',
+#       values = gene_names,
+#       mart = ensembl)
+# colnames(bm) = c('Gene','Chromosome','Start','End')
 
 ## ----subsetToOverlap----------------------------------------------------------
 bm = data.frame(Gene = c('ENSG00000070831','ENSG00000162552','ENSG00000230068'),

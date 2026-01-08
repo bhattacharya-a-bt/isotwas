@@ -93,22 +93,32 @@ multivariate_spls <- function(X,
     cor.test(Y[,x], pred[,x])$p.value
   })
 
-  modelList = list()
+  # Build output using isotwas_model class
+  transcripts <- list()
   for (i in 1:ncol(Y)){
+    tx_name <- colnames(Y)[i]
+    weights <- tibble::tibble(
+      SNP = colnames(X),
+      Weight = coef_mat[, i]
+    )
+    weights <- subset(weights, Weight != 0)
 
-    mod = tibble::tibble(SNP = colnames(X),
-                         Weight = coef_mat[,i])
-    mod = subset(mod,Weight != 0)
-    modelList = rlist::list.append(modelList,
-                                   list(Transcript = colnames(Y)[i],
-                                        Model = mod,
-                                        R2 = r2.vec[i],
-                                        P = P[i],
-                                        Pred = pred[,i]))
-
+    transcripts[[tx_name]] <- create_transcript_model(
+      transcript_id = tx_name,
+      weights = weights,
+      r2 = r2.vec[i],
+      pvalue = P[i],
+      predicted = pred[, i]
+    )
   }
 
+  result <- create_isotwas_model(
+    method = "spls",
+    transcripts = transcripts,
+    n_samples = nrow(X),
+    n_snps = ncol(X)
+  )
 
-  return(modelList)
+  return(result)
 
 }

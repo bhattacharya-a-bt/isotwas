@@ -49,7 +49,7 @@ overflow: visible;
 </style>
 <style type="text/css" data-origin="pandoc">
 pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span { line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
@@ -60,7 +60,7 @@ div.sourceCode { overflow: auto; }
 }
 @media print {
 pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
 }
 pre.numberSource code
 { counter-reset: source-line 0; }
@@ -346,6 +346,10 @@ framework. Then, we will run probabilistic fine-mapping to account of
 linkage disequilibrium (LD) in a locus with overlapping isoforms that
 are associated with a trait. Along the way, we’ll be covering some
 practical considerations for computation and feature selection.</p>
+<p><strong>Note</strong>: Before running association tests, you need
+trained isoTWAS models. See the <a href="pipeline.html">Train an isoTWAS
+model</a> vignette for instructions on training models using any of the
+9 available prediction methods.</p>
 <p>For this, you will need:</p>
 <ol style="list-style-type: decimal">
 <li><p>a set of isoTWAS models,</p></li>
@@ -413,8 +417,8 @@ build.</p>
 are simply <code>.RDS</code> files that contain a square matrix with the
 LD between the SNPs in the correspondin row and column.</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>LD_test <span class="ot">=</span> <span class="fu">readRDS</span>(<span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>,</span>
-<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>                                 <span class="st">&quot;ENSG00000070831_LDMatrix.RDS&quot;</span>,</span>
-<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>                                 <span class="at">package =</span> <span class="st">&quot;isotwas&quot;</span>))</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>                              <span class="st">&quot;ENSG00000070831_LDMatrix.RDS&quot;</span>,</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>                              <span class="at">package =</span> <span class="st">&quot;isotwas&quot;</span>))</span>
 <span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="fu">head</span>(<span class="fu">as.matrix</span>(LD_test)[,<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>])</span></code></pre></div>
 <pre><code>##            rs10916927  rs6658526  rs1354792 rs12567861 rs10916930  rs7521711
 ## rs10916927  1.0000000  0.9440432  0.8544395 -0.6393393 -0.6405133  0.8536513

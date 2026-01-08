@@ -14,6 +14,8 @@ knitr::opts_chunk$set(echo = TRUE,warning = FALSE)
 
 This module will cover how to use functions from `isotwas` to map isoform-level trait associations using a two-step testing framework. Then, we will run probabilistic fine-mapping to account of linkage disequilibrium (LD) in a locus with overlapping isoforms that are associated with a trait. Along the way, we'll be covering some practical considerations for computation and feature selection.
 
+**Note**: Before running association tests, you need trained isoTWAS models. See the [Train an isoTWAS model](pipeline.html) vignette for instructions on training models using any of the 9 available prediction methods.
+
 For this, you will need:
 
 1.  a set of isoTWAS models,
@@ -67,8 +69,8 @@ We also include in-sample LD matrices for each isoTWAS model. These are simply `
 
 ```{r lookLD}
 LD_test = readRDS(system.file("extdata",
-                                 "ENSG00000070831_LDMatrix.RDS",
-                                 package = "isotwas"))
+                              "ENSG00000070831_LDMatrix.RDS",
+                              package = "isotwas"))
 head(as.matrix(LD_test)[,1:10])
 ```
 

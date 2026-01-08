@@ -9,8 +9,8 @@ burdenTest(
   ld,
   gene,
   sumStats,
-  chr,
-  pos,
+  chr = NULL,
+  pos = NULL,
   a1,
   a2,
   a1_mod = "ALT",
@@ -23,13 +23,16 @@ burdenTest(
   R2cutoff = 0.01,
   alpha = 2.5e-06,
   nperms = 1000,
-  usePos = F
+  usePos = FALSE
 )
 }
 \arguments{
-\item{mod}{data.frame, model for a given isoform}
+\item{mod}{Model for a given isoform. Can be:
+- A data.frame in legacy format with columns: Feature, SNP, Weight, R2, etc.
+- A single transcript model from isotwas_model$transcripts$<name>
+- An isotwas_model object (will use first transcript)}
 
-\item{ld}{matrix, ld reference matrix}
+\item{ld}{matrix, ld reference matrix with SNP names as row/colnames}
 
 \item{gene}{character, gene name}
 
@@ -66,10 +69,10 @@ burdenTest(
 \item{usePos}{logical, use SNP positions vs. SNP ids}
 }
 \value{
-list of results for burden and permutation tests
+data.frame with results for burden and permutation tests
 }
 \description{
-The function takes in a gene expression model in MOSTWAS form
-and GWAS summary statistics and
-carries out the weighted burden Z-test for a trait
+The function takes in a gene expression model (either legacy format or
+new isotwas_model format) and GWAS summary statistics and carries out
+the weighted burden Z-test for a trait.
 }

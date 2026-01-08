@@ -12,15 +12,20 @@ Description: This package trains isoTWAS models, runs stagewise trait-mapping,
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.2.3
-Suggests: 
+RoxygenNote: 7.3.2
+biocViews:
+Suggests:
+    dplyr,
     knitr,
-    rmarkdown,
-    tidyverse,
     magrittr,
-    dplyr
+    rmarkdown,
+    tidyverse
 VignetteBuilder: knitr
-Imports: 
+Imports:
+    BiocGenerics,
+    GenomicRanges,
+    rtracklayer,
+    S4Vectors,
     ACAT (>= 0.91),
     boot,
     bigsnpr,
@@ -37,9 +42,14 @@ Imports:
     parallel,
     pbapply,
     rlist,
+    RMTL,
     rrBLUP,
     spls,
     susieR,
     tibble
-Remotes: 
-    yaowuliu/ACAT
+Remotes:
+    yaowuliu/ACAT,
+    bioc::BiocGenerics,
+    bioc::GenomicRanges,
+    bioc::rtracklayer,
+    bioc::S4Vectors

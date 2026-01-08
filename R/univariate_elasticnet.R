@@ -87,26 +87,36 @@ univariate_elasticnet <- function(X,
                        alpha = alpha)
     }
 
-    modelList = list()
+    # Build output using isotwas_model class
+    transcripts <- list()
     for (i in 1:length(models)){
+        tx_name <- colnames(Y)[i]
+        weights <- tibble::tibble(
+          SNP = colnames(X),
+          Weight = coef(models[[i]], s = 'lambda.min')[-1]
+        )
+        weights <- subset(weights, Weight != 0)
 
-        mod = tibble::tibble(SNP = colnames(X),
-                             Weight = coef(models[[i]],
-                                           s = 'lambda.min')[-1])
-        mod = subset(mod,Weight != 0)
-        best.pred = models[[i]]$fit.preval[,which.min(models[[i]]$cvm)]
-        reg = lm(as.numeric(Y[,i]) ~ best.pred)
-        modelList = rlist::list.append(modelList,
-                                       list(Transcript = colnames(Y)[i],
-                                            Model = mod,
-                                            R2 = summary(reg)$adj.r.sq,
-                                            P = cor.test(as.numeric(Y[,i]),
-                                                           best.pred)$p.value,
-                                            Pred = best.pred))
+        best.pred <- models[[i]]$fit.preval[, which.min(models[[i]]$cvm)]
+        reg <- lm(as.numeric(Y[, i]) ~ best.pred)
 
+        transcripts[[tx_name]] <- create_transcript_model(
+          transcript_id = tx_name,
+          weights = weights,
+          r2 = summary(reg)$adj.r.sq,
+          pvalue = cor.test(as.numeric(Y[, i]), best.pred)$p.value,
+          predicted = best.pred
+        )
     }
 
-    return(modelList)
+    result <- create_isotwas_model(
+      method = "univariate_enet",
+      transcripts = transcripts,
+      n_samples = nrow(X),
+      n_snps = ncol(X)
+    )
+
+    return(result)
 
 
 }
