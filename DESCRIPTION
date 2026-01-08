@@ -48,8 +48,4 @@ Imports:
     susieR,
     tibble
 Remotes:
-    yaowuliu/ACAT,
-    bioc::BiocGenerics,
-    bioc::GenomicRanges,
-    bioc::rtracklayer,
-    bioc::S4Vectors
+    yaowuliu/ACAT
