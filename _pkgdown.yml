@@ -9,12 +9,6 @@ reference:
       Functions for training multivariate predictive models
     contents:
       - compute_isotwas
-      - curds_whey
-      - compute_curds_whey
-      - finemap_regress
-      - compute_finemap_regress
-      - compute_fixed
-      - compute_fixed_precomputed
       - compute_mrce
       - compute_omega
       - compute_blup
