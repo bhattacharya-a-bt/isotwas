@@ -5,56 +5,48 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<meta name="description" content="isotwas">
 <title>Train an isoTWAS model • isotwas</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="../deps/bootstrap-5.2.2/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.2.2/bootstrap.bundle.min.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
-<!-- bootstrap-toc --><script src="https://cdn.jsdelivr.net/gh/afeld/bootstrap-toc@v1.0.1/dist/bootstrap-toc.min.js" integrity="sha256-4veVQbu7//Lk5TSmc7YV48MxtMy98e26cf5MrgZYnwo=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- search --><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Train an isoTWAS model">
-<meta property="og:description" content="isotwas">
-<!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
-<script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
-<script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-<![endif]-->
+<link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Train an isoTWAS model">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
-    
 
-    <nav class="navbar fixed-top navbar-light navbar-expand-lg bg-light"><div class="container">
-    
+
+    <nav class="navbar navbar-expand-lg fixed-top bg-light" data-bs-theme="light" aria-label="Site navigation"><div class="container">
+
     <a class="navbar-brand me-2" href="../index.html">isotwas</a>
 
     <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
-    
+
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
-<li class="nav-item">
-  <a class="nav-link" href="../reference/index.html">Reference</a>
-</li>
+<li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="active nav-item dropdown">
-  <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
-  <div class="dropdown-menu" aria-labelledby="dropdown-articles">
-    <a class="dropdown-item" href="../articles/motivation.html">Motivation for isotwas</a>
-    <a class="dropdown-item" href="../articles/pipeline.html">Train an isoTWAS model</a>
-    <a class="dropdown-item" href="../articles/stageassoc.html">Run isoTWAS associations</a>
-  </div>
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
+<li><a class="dropdown-item" href="../articles/motivation.html">Motivation for isotwas</a></li>
+    <li><a class="dropdown-item" href="../articles/pipeline.html">Train an isoTWAS model</a></li>
+    <li><a class="dropdown-item" href="../articles/stageassoc.html">Run isoTWAS associations</a></li>
+  </ul>
 </li>
       </ul>
-<form class="form-inline my-2 my-lg-0" role="search">
-        <input type="search" class="form-control me-sm-2" aria-label="Toggle navigation" name="search-input" data-search-index="../search.json" id="search-input" placeholder="Search for" autocomplete="off">
-</form>
-
-      <ul class="navbar-nav"></ul>
+<ul class="navbar-nav">
+<li class="nav-item"><form class="form-inline" role="search">
+ <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json">
+</form></li>
+      </ul>
 </div>
 
-    
+
   </div>
 </nav><div class="container template-article">
 
@@ -63,10 +55,11 @@
 
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
-      <img src="" class="logo" alt=""><h1>Train an isoTWAS model</h1>
+
+      <h1>Train an isoTWAS model</h1>
             
       
-      
+
       <div class="d-none name"><code>pipeline.Rmd</code></div>
     </div>
 
@@ -123,10 +116,12 @@ and transcriptomic data provided.</p>
 <span><span class="va">isoform_mat</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"isoform_exp.RDS"</span>, package <span class="op">=</span> <span class="st">"isotwas"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">isoform_mat</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 300   3</span></span></code></pre></div>
-<p>This reads in a SNP matrix with dimensions <span class="math inline">\(300 \times 4542\)</span>, with samples along the
-rows and SNPs along the columns and a isoform-level expression matrix of
-dimension <span class="math inline">\(300 \times 3\)</span>, with
-isoforms along the columns.</p>
+<p>This reads in a SNP matrix with dimensions
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>300</mn><mo>×</mo><mn>4542</mn></mrow><annotation encoding="application/x-tex">300 \times 4542</annotation></semantics></math>,
+with samples along the rows and SNPs along the columns and a
+isoform-level expression matrix of dimension
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>300</mn><mo>×</mo><mn>3</mn></mrow><annotation encoding="application/x-tex">300 \times 3</annotation></semantics></math>,
+with isoforms along the columns.</p>
 <p><u><strong>Practical consideration</strong></u>: Though this is not a
 requirement for the isotwas pipeline, we recommend a feature selection
 step based on cis-heritability of isoform-level expression. Prior of
@@ -134,7 +129,10 @@ model training for isoforms of a given gene, we recommend that users
 compute the heritability of all expressed isoforms of a gene using <a href="https://yanglab.westlake.edu.cn/software/gcta/#Overview" class="external-link"><code>GCTA</code></a>
 (ideally the <a href="http://gusevlab.org/projects/fusion/" class="external-link"><code>gcta-nr-robust</code>
 executable in <code>FUSION</code></a>). We recommend users only train
-models for isoforms that have positive heritability at nominal <span class="math inline">\(P &lt; 0.05\)</span> or <span class="math inline">\(0.01\)</span>.</p>
+models for isoforms that have positive heritability at nominal
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi><mo>&lt;</mo><mn>0.05</mn></mrow><annotation encoding="application/x-tex">P &lt; 0.05</annotation></semantics></math>
+or
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>0.01</mn><annotation encoding="application/x-tex">0.01</annotation></semantics></math>.</p>
 <p><u><strong>Practical consideration</strong></u>: Prior to
 heritability analysis and model training, it is imperative that your
 expression data is residualized by relevant covariates (i.e. principal
@@ -148,73 +146,224 @@ replicates, theoretically, should not affect the effect size estimates
 but will help in seeding the estimation process of the correlation
 between isoforms/error in the multivariate model.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">boot_list</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">10</span>,<span class="kw">function</span><span class="op">(</span><span class="va">i</span><span class="op">)</span><span class="op">{</span><span class="fu"><a href="https://rdrr.io/r/base/jitter.html" class="external-link">jitter</a></span><span class="op">(</span><span class="va">isoform_mat</span><span class="op">)</span><span class="op">}</span><span class="op">)</span> </span>
-<span><span class="va">isoform_mat_rep</span> <span class="op">=</span> <span class="fu">rlist</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/rlist/man/list.rbind.html" class="external-link">list.rbind</a></span><span class="op">(</span><span class="va">boot_list</span><span class="op">)</span> </span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">isoform_mat_rep</span><span class="op">)</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">'Sample'</span>,<span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">snps</span><span class="op">$</span><span class="va">fam</span><span class="op">)</span><span class="op">)</span>,<span class="fl">10</span><span class="op">)</span> </span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">isoform_mat_rep</span><span class="op">)</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">'Isoform'</span>,<span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">isoform_mat_rep</span><span class="op">)</span><span class="op">)</span> </span>
+<code class="sourceCode R"><span><span class="va">boot_list</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">10</span>,<span class="kw">function</span><span class="op">(</span><span class="va">i</span><span class="op">)</span><span class="op">{</span><span class="fu"><a href="https://rdrr.io/r/base/jitter.html" class="external-link">jitter</a></span><span class="op">(</span><span class="va">isoform_mat</span><span class="op">)</span><span class="op">}</span><span class="op">)</span></span>
+<span><span class="va">isoform_mat_rep</span> <span class="op">=</span> <span class="fu">rlist</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/rlist/man/list.rbind.html" class="external-link">list.rbind</a></span><span class="op">(</span><span class="va">boot_list</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">isoform_mat_rep</span><span class="op">)</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">'Sample'</span>,<span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">snps</span><span class="op">$</span><span class="va">fam</span><span class="op">)</span><span class="op">)</span>,<span class="fl">10</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">isoform_mat_rep</span><span class="op">)</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">'Isoform'</span>,<span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">isoform_mat_rep</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">isoform_mat_rep</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 3000    3</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="available-prediction-methods">Available Prediction Methods<a class="anchor" aria-label="anchor" href="#available-prediction-methods"></a>
+</h2>
+<p>The <code><a href="../reference/compute_isotwas.html">compute_isotwas()</a></code> function supports 9 multivariate
+prediction methods:</p>
+<table class="table">
+<colgroup>
+<col width="38%">
+<col width="61%">
+</colgroup>
+<thead><tr class="header">
+<th>Method</th>
+<th>Description</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td><code>mrce_lasso</code></td>
+<td>Multivariate Regression with Covariance Estimation (MRCE) - jointly
+estimates regression coefficients and error covariance</td>
+</tr>
+<tr class="even">
+<td><code>multi_enet</code></td>
+<td>Multivariate elastic net - fits elastic net for each isoform with
+shared penalty</td>
+</tr>
+<tr class="odd">
+<td><code>joinet</code></td>
+<td>Joinet stacked elastic net - uses cross-predictions to improve
+multivariate prediction</td>
+</tr>
+<tr class="even">
+<td><code>spls</code></td>
+<td>Sparse partial least squares - finds latent components that predict
+all isoforms</td>
+</tr>
+<tr class="odd">
+<td><code>sgl</code></td>
+<td>Sparse group lasso - encourages both within-group and across-group
+sparsity</td>
+</tr>
+<tr class="even">
+<td><code>mtlasso</code></td>
+<td>Multi-task lasso (L21) - joint feature selection across all
+isoforms</td>
+</tr>
+<tr class="odd">
+<td><code>stacking</code></td>
+<td>Super learner stacking - combines predictions from multiple base
+methods</td>
+</tr>
+<tr class="even">
+<td><code>graph_reg</code></td>
+<td>Graph-regularized regression - incorporates isoform similarity
+structure</td>
+</tr>
+<tr class="odd">
+<td><code>univariate</code></td>
+<td>Best of univariate methods (elastic net, BLUP, SuSiE) per
+isoform</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section level2">
+<h2 id="training-a-model">Training a Model<a class="anchor" aria-label="anchor" href="#training-a-model"></a>
+</h2>
 <p>Now, we can train the model using the <code><a href="../reference/compute_isotwas.html">compute_isotwas()</a></code>
 function. Make sure the SNP matrix has clear labels for the SNP
-identifiers that are relevant to your study. This is a large SNP matrix
-which will take a few minutes to run on your local machine.</p>
+identifiers that are relevant to your study.</p>
+<p>The function now provides detailed progress output by default
+(<code>verbose = TRUE</code>), showing:</p>
+<ul>
+<li>Data summary (samples, SNPs, transcripts)</li>
+<li>Method-by-method progress with timing</li>
+<li>Per-method R² performance</li>
+<li>Final results comparison table</li>
+</ul>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">snp_mat</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">snps</span><span class="op">$</span><span class="va">genotypes</span><span class="op">[</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">snp_mat</span><span class="op">)</span> <span class="op">=</span> <span class="va">snps</span><span class="op">$</span><span class="va">map</span><span class="op">$</span><span class="va">marker.ID</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">snp_mat</span><span class="op">)</span> <span class="op">=</span> <span class="va">snps</span><span class="op">$</span><span class="va">fam</span><span class="op">$</span><span class="va">sample.ID</span></span>
-<span><span class="va">isotwas_model</span> <span class="op">=</span> <span class="fu"><a href="../reference/compute_isotwas.html">compute_isotwas</a></span><span class="op">(</span>X <span class="op">=</span> <span class="va">snp_mat</span>, </span>
-<span>                                Y <span class="op">=</span> <span class="va">isoform_mat</span>, </span>
-<span>                                Y.rep <span class="op">=</span> <span class="va">isoform_mat_rep</span>,</span>
-<span>                                R <span class="op">=</span> <span class="fl">10</span>, </span>
-<span>                                id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">isoform_mat_rep</span><span class="op">)</span>, </span>
-<span>                                omega_est <span class="op">=</span> <span class="st">'replicates'</span>, </span>
-<span>                                omega_nlambda <span class="op">=</span> <span class="fl">5</span>, </span>
-<span>                                method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">'mrce_lasso'</span>, </span>
-<span>                                           <span class="st">'multi_enet'</span>, </span>
-<span>                                           <span class="st">'univariate'</span>,</span>
-<span>                                           <span class="st">'joinet'</span>,</span>
-<span>                                           <span class="st">'spls'</span><span class="op">)</span>,</span>
-<span>                                predict_nlambda <span class="op">=</span> <span class="fl">10</span>, </span>
-<span>                                family <span class="op">=</span> <span class="st">'gaussian'</span>, </span>
-<span>                                scale <span class="op">=</span> <span class="cn">FALSE</span>, </span>
-<span>                                alpha <span class="op">=</span> <span class="fl">0.5</span>, </span>
-<span>                                nfolds <span class="op">=</span> <span class="fl">5</span>, </span>
-<span>                                verbose <span class="op">=</span> <span class="cn">TRUE</span>, </span>
-<span>                                tx_names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">'Isoform'</span>,<span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">)</span>, </span>
-<span>                                seed <span class="op">=</span> <span class="fl">1789</span>, </span>
-<span>                                run_all <span class="op">=</span> <span class="cn">FALSE</span>, </span>
-<span>                                return_all <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p>A few notes on the options in the function:</p>
-<ul>
-<li><p>By selecting <code>omega_est = 'replicates'</code> , we are used
-the bootstrapped replicates to estimate the correlation between isoforms
-to seed any methods that require this matrix. The alternative is
-<code>omega_est = 'mean'</code> , which will use whatever matrix you
-submit for <code>Y</code>.</p></li>
-<li><p><code>omega_nlambda</code> selects the number of steps between
-fully dense to fully sparse in the correlation matrix estimation. We
-recommend 5-10 as the default here.</p></li>
-<li><p>There are multiple methods to predict expression. However,
-through simulations and real data examples, we recommend the five shown
-here as the default in the <code>method</code> option.</p></li>
-<li><p><code>predict_nlambda</code> is the number of penalty variables
-that are considered from the <code>mrce_lasso</code> method. We
-recommend 10-20 for this variable.</p></li>
-<li><p><code>family</code> and <code>alpha</code> are for
-<code>multi_enet</code> and <code>univariate</code> to determine how
-elastic net regression is run. The default is that the response follows
-a Normal distribution and the mixing parameter is set to 0.5.</p></li>
-<li><p>If <code>run_all = TRUE</code>, then all methods will be
-run.</p></li>
-<li><p>If <code>return_all = TRUE</code>, then predicted values for each
-isoform and predictive performance for all methods and all isoforms will
-be outputted.</p></li>
-</ul>
-<p>We can convert the model from a list (the output from
-<code><a href="../reference/compute_isotwas.html">compute_isotwas()</a></code>) to a tibble or data.frame using
-<code>convert_model(isotwas_model)</code>.</p>
-<p>Let’s take a look at what a sample model looks like:</p>
+<span></span>
+<span><span class="co"># Train with all methods (recommended for best model selection)</span></span>
+<span><span class="va">isotwas_model</span> <span class="op">=</span> <span class="fu"><a href="../reference/compute_isotwas.html">compute_isotwas</a></span><span class="op">(</span></span>
+<span>  X <span class="op">=</span> <span class="va">snp_mat</span>,</span>
+<span>  Y <span class="op">=</span> <span class="va">isoform_mat</span>,</span>
+<span>  Y.rep <span class="op">=</span> <span class="va">isoform_mat_rep</span>,</span>
+<span>  R <span class="op">=</span> <span class="fl">10</span>,</span>
+<span>  id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">isoform_mat_rep</span><span class="op">)</span>,</span>
+<span>  omega_est <span class="op">=</span> <span class="st">'replicates'</span>,</span>
+<span>  omega_nlambda <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>  nfolds <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  seed <span class="op">=</span> <span class="fl">1789</span>,</span>
+<span>  run_all <span class="op">=</span> <span class="cn">TRUE</span>,        <span class="co"># Run all 9 methods</span></span>
+<span>  return_all <span class="op">=</span> <span class="cn">TRUE</span>      <span class="co"># Return results from all methods</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<div class="section level3">
+<h3 id="running-specific-methods">Running Specific Methods<a class="anchor" aria-label="anchor" href="#running-specific-methods"></a>
+</h3>
+<p>If you want to run only specific methods (e.g., for faster
+computation), set <code>run_all = FALSE</code> and specify the
+methods:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Run only a subset of methods</span></span>
+<span><span class="va">isotwas_model</span> <span class="op">=</span> <span class="fu"><a href="../reference/compute_isotwas.html">compute_isotwas</a></span><span class="op">(</span></span>
+<span>  X <span class="op">=</span> <span class="va">snp_mat</span>,</span>
+<span>  Y <span class="op">=</span> <span class="va">isoform_mat</span>,</span>
+<span>  Y.rep <span class="op">=</span> <span class="va">isoform_mat_rep</span>,</span>
+<span>  R <span class="op">=</span> <span class="fl">10</span>,</span>
+<span>  id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">isoform_mat_rep</span><span class="op">)</span>,</span>
+<span>  method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">'mrce_lasso'</span>, <span class="st">'multi_enet'</span>, <span class="st">'sgl'</span>, <span class="st">'univariate'</span><span class="op">)</span>,</span>
+<span>  nfolds <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  seed <span class="op">=</span> <span class="fl">1789</span>,</span>
+<span>  run_all <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="using-graph-regularized-regression">Using Graph-Regularized Regression<a class="anchor" aria-label="anchor" href="#using-graph-regularized-regression"></a>
+</h3>
+<p>The <code>graph_reg</code> method can incorporate prior knowledge
+about isoform similarity (e.g., shared exon structure). You can create a
+similarity matrix from a GTF annotation file:</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Create similarity matrix from GTF (based on shared exons)</span></span>
+<span><span class="va">sim_result</span> <span class="op">=</span> <span class="fu"><a href="../reference/similarity_from_gtf.html">similarity_from_gtf</a></span><span class="op">(</span></span>
+<span>  gtf_path <span class="op">=</span> <span class="st">"gencode.v45.annotation.gtf.gz"</span>,</span>
+<span>  gene <span class="op">=</span> <span class="st">"BRCA1"</span>,</span>
+<span>  method <span class="op">=</span> <span class="st">"jaccard"</span>  <span class="co"># Options: "jaccard", "overlap_coef", "binary"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Use in model training</span></span>
+<span><span class="va">isotwas_model</span> <span class="op">=</span> <span class="fu"><a href="../reference/compute_isotwas.html">compute_isotwas</a></span><span class="op">(</span></span>
+<span>  X <span class="op">=</span> <span class="va">snp_mat</span>,</span>
+<span>  Y <span class="op">=</span> <span class="va">isoform_mat</span>,</span>
+<span>  Y.rep <span class="op">=</span> <span class="va">isoform_mat_rep</span>,</span>
+<span>  R <span class="op">=</span> <span class="fl">10</span>,</span>
+<span>  id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">isoform_mat_rep</span><span class="op">)</span>,</span>
+<span>  similarity_matrix <span class="op">=</span> <span class="va">sim_result</span><span class="op">$</span><span class="va">similarity_matrix</span>,</span>
+<span>  method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">'multi_enet'</span>, <span class="st">'graph_reg'</span>, <span class="st">'univariate'</span><span class="op">)</span>,</span>
+<span>  run_all <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  seed <span class="op">=</span> <span class="fl">1789</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+</div>
+<div class="section level2">
+<h2 id="function-parameters">Function Parameters<a class="anchor" aria-label="anchor" href="#function-parameters"></a>
+</h2>
+<p>A few notes on the key options:</p>
+<ul>
+<li><p><strong><code>omega_est</code></strong>: By selecting
+<code>omega_est = 'replicates'</code>, we use the bootstrapped
+replicates to estimate the correlation between isoforms. The alternative
+is <code>omega_est = 'mean'</code>, which will use whatever matrix you
+submit for <code>Y</code>.</p></li>
+<li><p><strong><code>omega_nlambda</code></strong>: Number of steps
+between fully dense to fully sparse in the correlation matrix
+estimation. We recommend 5-10 as the default.</p></li>
+<li><p><strong><code>method</code></strong>: Vector of methods to use.
+By default with <code>run_all = TRUE</code>, all 9 methods are run and
+the best model is selected.</p></li>
+<li><p><strong><code>similarity_matrix</code></strong>: Optional matrix
+for <code>graph_reg</code> method. Can be created using
+<code><a href="../reference/similarity_from_gtf.html">similarity_from_gtf()</a></code> or
+<code><a href="../reference/create_similarity_from_exons.html">create_similarity_from_exons()</a></code>.</p></li>
+<li><p><strong><code>predict_nlambda</code></strong>: Number of penalty
+variables for <code>mrce_lasso</code>. We recommend 10-20.</p></li>
+<li><p><strong><code>alpha</code></strong>: Elastic net mixing parameter
+(0 = ridge, 1 = lasso, 0.5 = elastic net).</p></li>
+<li><p><strong><code>verbose</code></strong>: If <code>TRUE</code>
+(default), prints detailed progress including per-method timing and
+performance.</p></li>
+<li><p><strong><code>run_all</code></strong>: If <code>TRUE</code>, all
+methods will be run regardless of <code>method</code>
+parameter.</p></li>
+<li><p><strong><code>return_all</code></strong>: If <code>TRUE</code>,
+results from all methods are returned (useful for method
+comparison).</p></li>
+</ul>
+</div>
+<div class="section level2">
+<h2 id="examining-results">Examining Results<a class="anchor" aria-label="anchor" href="#examining-results"></a>
+</h2>
+<p>The output from <code><a href="../reference/compute_isotwas.html">compute_isotwas()</a></code> is an
+<code>isotwas_result</code> object with several components:</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Print summary</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">isotwas_model</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Access the comparison table (R² for each method)</span></span>
+<span><span class="va">isotwas_model</span><span class="op">$</span><span class="va">comparison</span></span>
+<span></span>
+<span><span class="co"># Access the best model</span></span>
+<span><span class="va">isotwas_model</span><span class="op">$</span><span class="va">best_models</span></span>
+<span></span>
+<span><span class="co"># Access individual transcript results</span></span>
+<span><span class="va">isotwas_model</span><span class="op">$</span><span class="va">best_models</span><span class="op">$</span><span class="va">Isoform1</span><span class="op">$</span><span class="va">r2</span></span>
+<span><span class="va">isotwas_model</span><span class="op">$</span><span class="va">best_models</span><span class="op">$</span><span class="va">Isoform1</span><span class="op">$</span><span class="va">weights</span></span>
+<span></span>
+<span><span class="co"># Get the full weight matrix</span></span>
+<span><span class="va">weight_mat</span> <span class="op">=</span> <span class="fu"><a href="../reference/get_weight_matrix.html">get_weight_matrix</a></span><span class="op">(</span><span class="va">isotwas_model</span><span class="op">$</span><span class="va">best_models</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="converting-the-model">Converting the Model<a class="anchor" aria-label="anchor" href="#converting-the-model"></a>
+</h2>
+<p>We can convert the model from a list to a tibble or data.frame using
+<code><a href="../reference/convert_model.html">convert_model()</a></code>:</p>
+<p>Let’s take a look at what a sample model looks like:</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model_isotwas</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"model_example.RDS"</span>, package <span class="op">=</span> <span class="st">"isotwas"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/class.html" class="external-link">class</a></span><span class="op">(</span><span class="va">model_isotwas</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "list"</span></span>
@@ -356,7 +505,7 @@ models for each isoform.</p>
 <p>We can convert this model from a list to a <code>tibble</code> using
 the <code><a href="../reference/convert_model.html">convert_model()</a></code> function. Make sure you have an
 annotation object to have position and REF/ALT allele information.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model_tsv</span> <span class="op">=</span> <span class="fu"><a href="../reference/convert_model.html">convert_model</a></span><span class="op">(</span><span class="va">model_isotwas</span>,</span>
 <span>                          snp_annot <span class="op">=</span> <span class="va">snps</span><span class="op">$</span><span class="va">map</span>,</span>
 <span>                          snp_var <span class="op">=</span> <span class="st">'marker.ID'</span><span class="op">)</span></span>
@@ -377,28 +526,51 @@ annotation object to have position and REF/ALT allele information.</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 690 more rows</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 2 more variables: allele1 &lt;chr&gt;, allele2 &lt;chr&gt;</span></span></span></code></pre></div>
 </div>
-  </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
+<div class="section level2">
+<h2 id="method-recommendations">Method Recommendations<a class="anchor" aria-label="anchor" href="#method-recommendations"></a>
+</h2>
+<p>Based on simulations and real data analyses:</p>
+<ol style="list-style-type: decimal">
+<li><p><strong>Default recommendation</strong>: Use
+<code>run_all = TRUE</code> to evaluate all methods and let the function
+select the best model based on cross-validated R².</p></li>
+<li><p><strong>For speed</strong>: If computation time is a concern,
+start with <code>c('multi_enet', 'sgl', 'univariate')</code> which
+provides a good balance of multivariate and univariate
+approaches.</p></li>
+<li><p><strong>When isoforms share structure</strong>: Use
+<code>graph_reg</code> with a similarity matrix derived from shared
+exons. This helps when isoforms have correlated genetic effects due to
+shared regulatory regions.</p></li>
+<li><p><strong>For robust predictions</strong>: The
+<code>stacking</code> method combines multiple base methods and often
+provides stable predictions, especially when different methods perform
+well for different isoforms.</p></li>
+<li><p><strong>For joint feature selection</strong>: Use
+<code>mtlasso</code> or <code>sgl</code> when you expect SNPs to affect
+multiple isoforms simultaneously.</p></li>
+</ol>
+</div>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
 </div>
 
 
 
     <footer><div class="pkgdown-footer-left">
-  <p></p>
-<p>Developed by Arjun Bhattacharya.</p>
+  <p>Developed by Arjun Bhattacharya.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
     </footer>
 </div>
 
-  
 
-  
+
+
 
   </body>
 </html>
