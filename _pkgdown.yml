@@ -67,3 +67,11 @@ reference:
       - bayes_factor
       - conditional_test_focus
       - conditional_test
+  - title: internal
+    contents:
+      - compute_curds_whey
+      - compute_finemap_regress
+      - compute_fixed
+      - compute_fixed_precomputed
+      - curds_whey
+      - finemap_regress

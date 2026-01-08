@@ -17,6 +17,7 @@
 #' @importFrom susieR susie
 #' @importFrom estimatr lm_robust
 #'
+#' @keywords internal
 #' @export
 finemap_regress <- function(X,
                             Y,

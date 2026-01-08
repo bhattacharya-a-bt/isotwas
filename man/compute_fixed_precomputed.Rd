@@ -57,3 +57,4 @@ list of MRCE estimates
 Optimized version that accepts precomputed XtX and XtY*Omega matrices
 to avoid redundant computation in cross-validation loops.
 }
+\keyword{internal}

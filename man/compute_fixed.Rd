@@ -27,3 +27,4 @@ list of MRCE estimates
 \description{
 The function trains multivariate lasso with a given covariance estimate
 }
+\keyword{internal}

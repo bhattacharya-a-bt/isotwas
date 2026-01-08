@@ -12,6 +12,7 @@
 #'
 #' @return list of MRCE estimates
 #'
+#' @keywords internal
 #' @export
 compute_fixed = function(X,
                          Y,
@@ -71,6 +72,7 @@ compute_fixed = function(X,
 #'
 #' @return list of MRCE estimates
 #'
+#' @keywords internal
 #' @export
 compute_fixed_precomputed = function(xtx,
                                      xtyom,

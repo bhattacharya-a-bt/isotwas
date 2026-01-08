@@ -41,3 +41,4 @@ data frame of elastic net, lasso, and LMM based predictions
 \description{
 The function trains the curds and whey multivariate regression
 }
+\keyword{internal}

@@ -21,6 +21,7 @@
 #' @importFrom tibble tibble
 #' @importFrom rlist list.append
 #'
+#' @keywords internal
 #' @export
 compute_finemap_regress <- function(X,
                                     Y,

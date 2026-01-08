@@ -22,6 +22,7 @@
 #' @importFrom stats cancor
 #' @importFrom stats runif
 #'
+#' @keywords internal
 #' @export
 curds_whey <- function(X,
                        Y,

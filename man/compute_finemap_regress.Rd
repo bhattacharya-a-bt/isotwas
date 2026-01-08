@@ -45,3 +45,4 @@ isoTWAS model list
 The function feature selects with SuSiE and runs SUR with cluster-robust
 SEs
 }
+\keyword{internal}

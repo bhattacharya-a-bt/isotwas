@@ -39,3 +39,4 @@ data frame of elastic net, lasso, and LMM based predictions
 The function feature selects with SuSiE and runs SUR with cluster-robust
 SEs
 }
+\keyword{internal}

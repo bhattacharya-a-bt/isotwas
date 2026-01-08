@@ -21,6 +21,7 @@
 #' @importFrom rlist list.append
 #' @importFrom caret createFolds
 #'
+#' @keywords internal
 #' @export
 compute_curds_whey <- function(X,
                                Y,
