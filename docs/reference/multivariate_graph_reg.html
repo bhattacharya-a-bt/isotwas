@@ -63,7 +63,9 @@ similar prediction weight vectors.</p>
 <span>  nfolds <span class="op">=</span> <span class="fl">5</span>,</span>
 <span>  standardize <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  seed <span class="op">=</span> <span class="fl">123</span></span>
+<span>  seed <span class="op">=</span> <span class="fl">123</span>,</span>
+<span>  par <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  n.cores <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -129,6 +131,14 @@ If NULL, auto-generated.</p></dd>
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
 <dd><p>int, random seed</p></dd>
 
+
+<dt id="arg-par">par<a class="anchor" aria-label="anchor" href="#arg-par"></a></dt>
+<dd><p>logical, use parallel processing. Default FALSE.</p></dd>
+
+
+<dt id="arg-n-cores">n.cores<a class="anchor" aria-label="anchor" href="#arg-n-cores"></a></dt>
+<dd><p>int, number of cores for parallel processing. Default NULL (auto-detect).</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -151,6 +161,8 @@ coefficient vectors across SNPs.</p>
 For isoform-level TWAS, this is typically derived from shared exon structure:
 isoforms sharing more exons are expected to have more similar cis-regulatory
 effects, as they share more of the same genetic signal.</p>
+<p>When par=TRUE, cross-validation is parallelized over all (lambda_graph, fold)
+combinations, providing up to nlambda_graph * nfolds parallel tasks.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

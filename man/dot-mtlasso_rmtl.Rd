@@ -12,7 +12,9 @@
   Lam2 = 0,
   nfolds = 5,
   verbose = FALSE,
-  seed = 123
+  seed = 123,
+  par = FALSE,
+  n.cores = 1
 )
 }
 \description{

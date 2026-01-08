@@ -13,7 +13,9 @@ multivariate_sgl(
   nfolds = 5,
   standardize = FALSE,
   verbose = FALSE,
-  seed = 123
+  seed = 123,
+  par = FALSE,
+  n.cores = 1
 )
 }
 \arguments{
@@ -35,6 +37,10 @@ alpha=1 is pure LASSO, alpha=0 is pure group LASSO}
 \item{verbose}{logical}
 
 \item{seed}{int, random seed}
+
+\item{par}{logical, use parallel processing for CV folds}
+
+\item{n.cores}{int, number of cores for parallel processing}
 }
 \value{
 isotwas_model object

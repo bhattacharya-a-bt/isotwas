@@ -18,7 +18,9 @@ multivariate_graph_reg(
   nfolds = 5,
   standardize = FALSE,
   verbose = FALSE,
-  seed = 123
+  seed = 123,
+  par = FALSE,
+  n.cores = NULL
 )
 }
 \arguments{
@@ -52,6 +54,10 @@ If NULL, auto-generated.}
 \item{verbose}{logical, print progress}
 
 \item{seed}{int, random seed}
+
+\item{par}{logical, use parallel processing. Default FALSE.}
+
+\item{n.cores}{int, number of cores for parallel processing. Default NULL (auto-detect).}
 }
 \value{
 isotwas_model object containing:
@@ -83,4 +89,7 @@ The similarity matrix encodes prior knowledge about isoform relationships.
 For isoform-level TWAS, this is typically derived from shared exon structure:
 isoforms sharing more exons are expected to have more similar cis-regulatory
 effects, as they share more of the same genetic signal.
+
+When par=TRUE, cross-validation is parallelized over all (lambda_graph, fold)
+combinations, providing up to nlambda_graph * nfolds parallel tasks.
 }

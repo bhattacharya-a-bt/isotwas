@@ -17,6 +17,8 @@ multivariate_mtlasso(
   standardize = FALSE,
   verbose = FALSE,
   seed = 123,
+  par = FALSE,
+  n.cores = 1,
   backend = c("fast", "rmtl")
 )
 }
@@ -50,6 +52,10 @@ If NULL, automatically generates a sequence.}
 \item{verbose}{logical, print progress}
 
 \item{seed}{int, random seed}
+
+\item{par}{logical, use parallel processing for CV folds}
+
+\item{n.cores}{int, number of cores for parallel processing}
 
 \item{backend}{character, implementation to use:
 \itemize{

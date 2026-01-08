@@ -10,7 +10,9 @@ multivariate_mtlasso_cv(
   regularizations = c("L21", "Trace", "Lasso"),
   nfolds = 5,
   verbose = FALSE,
-  seed = 123
+  seed = 123,
+  par = FALSE,
+  n.cores = 1
 )
 }
 \arguments{
@@ -25,6 +27,10 @@ multivariate_mtlasso_cv(
 \item{verbose}{logical, print progress}
 
 \item{seed}{int, random seed}
+
+\item{par}{logical, use parallel processing for CV folds}
+
+\item{n.cores}{int, number of cores for parallel processing}
 }
 \value{
 isotwas_model object with best regularization

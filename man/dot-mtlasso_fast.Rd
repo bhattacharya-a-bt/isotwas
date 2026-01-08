@@ -14,7 +14,9 @@
   nfolds = 5,
   standardize = FALSE,
   verbose = FALSE,
-  seed = 123
+  seed = 123,
+  par = FALSE,
+  n.cores = 1
 )
 }
 \description{
