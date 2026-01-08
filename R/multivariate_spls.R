@@ -70,10 +70,12 @@ multivariate_spls <- function(X,
                          scale.y=F)
   coef_mat = coef(model_out)
 
-  for (tr in 1:nfolds){
+  # Define fold worker function
+  run_fold <- function(tr) {
     Y.tr = Y[train.folds[[tr]],]
     X.tr = X[train.folds[[tr]],]
-    X.test = X[-train.folds[[tr]],]
+    test_idx = setdiff(1:nrow(Y), train.folds[[tr]])
+    X.test = X[test_idx,]
     www = which(apply(X.tr,2,sd) != 0 &
                   apply(X.test,2,sd) != 0)
     X.tr = X.tr[,www]
@@ -86,7 +88,19 @@ multivariate_spls <- function(X,
                       scale.x=F,
                       scale.y=F)
 
-    pred[-train.folds[[tr]],] <- predict(fit,X.test)
+    list(test_idx = test_idx, preds = predict(fit, X.test))
+  }
+
+  # Run CV folds (parallel or sequential)
+  if (par && !is.null(n.cores) && n.cores > 1) {
+    fold_results <- parallel::mclapply(1:nfolds, run_fold, mc.cores = min(n.cores, nfolds))
+  } else {
+    fold_results <- lapply(1:nfolds, run_fold)
+  }
+
+  # Aggregate predictions
+  for (fr in fold_results) {
+    pred[fr$test_idx,] <- fr$preds
   }
   r2.vec = unlist(sapply(1:ncol(Y),calc.r2,Y,pred)[1,])
   P = sapply(1:ncol(Y),function(x){

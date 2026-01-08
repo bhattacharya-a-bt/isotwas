@@ -18,6 +18,8 @@
 #' @param standardize logical, standardize X before fitting
 #' @param verbose logical
 #' @param seed int, random seed
+#' @param par logical, use parallel processing for CV folds
+#' @param n.cores int, number of cores for parallel processing
 #'
 #' @return isotwas_model object
 #'
@@ -30,7 +32,9 @@ multivariate_sgl <- function(X,
                               nfolds = 5,
                               standardize = FALSE,
                               verbose = FALSE,
-                              seed = 123) {
+                              seed = 123,
+                              par = FALSE,
+                              n.cores = 1) {
 
   set.seed(seed)
   n <- nrow(X)
@@ -74,13 +78,10 @@ multivariate_sgl <- function(X,
   cv_folds <- caret::createFolds(1:n, k = nfolds, returnTrain = TRUE)
 
   # CV to find best lambda
-  cv_mse <- matrix(0, nrow = nlambda, ncol = q)
-
   if (verbose) cat("Running cross-validation for lambda selection...\n")
 
-  for (fold_idx in 1:nfolds) {
-    if (verbose) cat(sprintf("  Fold %d/%d\n", fold_idx, nfolds))
-
+  # Define fold worker function
+  run_fold <- function(fold_idx) {
     train_idx <- cv_folds[[fold_idx]]
     test_idx <- setdiff(1:n, train_idx)
 
@@ -91,6 +92,7 @@ multivariate_sgl <- function(X,
 
     # Warm start: use previous lambda solution
     B_warm <- matrix(0, nrow = p, ncol = q)
+    fold_mse <- matrix(0, nrow = nlambda, ncol = q)
 
     for (lam_idx in 1:nlambda) {
       B_warm <- .fit_sgl(X_train, Y_train, lambda_seq[lam_idx], alpha,
@@ -98,11 +100,23 @@ multivariate_sgl <- function(X,
 
       # Predictions
       pred <- X_test %*% B_warm
-      cv_mse[lam_idx, ] <- cv_mse[lam_idx, ] + colMeans((Y_test - pred)^2)
+      fold_mse[lam_idx, ] <- colMeans((Y_test - pred)^2)
     }
+    fold_mse
   }
 
-  cv_mse <- cv_mse / nfolds
+  # Run CV folds (parallel or sequential)
+  if (par && n.cores > 1) {
+    fold_results <- parallel::mclapply(1:nfolds, run_fold, mc.cores = min(n.cores, nfolds))
+  } else {
+    fold_results <- lapply(1:nfolds, function(fold_idx) {
+      if (verbose) cat(sprintf("  Fold %d/%d\n", fold_idx, nfolds))
+      run_fold(fold_idx)
+    })
+  }
+
+  # Aggregate MSE across folds
+  cv_mse <- Reduce(`+`, fold_results) / nfolds
 
   # Select best lambda (minimize mean MSE across transcripts)
   mean_mse <- rowMeans(cv_mse)
@@ -307,6 +321,8 @@ multivariate_sgl <- function(X,
 #' @param nfolds int, number of CV folds
 #' @param verbose logical
 #' @param seed int, random seed
+#' @param par logical, use parallel processing for CV folds
+#' @param n.cores int, number of cores for parallel processing
 #'
 #' @return isotwas_model object with best alpha and lambda
 #'
@@ -317,7 +333,9 @@ multivariate_sgl_cv <- function(X,
                                  nlambda = 15,
                                  nfolds = 5,
                                  verbose = FALSE,
-                                 seed = 123) {
+                                 seed = 123,
+                                 par = FALSE,
+                                 n.cores = 1) {
 
   best_mse <- Inf
  best_model <- NULL
@@ -331,7 +349,9 @@ multivariate_sgl_cv <- function(X,
       nlambda = nlambda,
       nfolds = nfolds,
       verbose = FALSE,
-      seed = seed
+      seed = seed,
+      par = par,
+      n.cores = n.cores
     )
 
     # Compute mean MSE from CV predictions

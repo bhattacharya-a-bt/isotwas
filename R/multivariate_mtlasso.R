@@ -26,6 +26,8 @@
 #' @param standardize logical, standardize X before fitting. Default FALSE.
 #' @param verbose logical, print progress
 #' @param seed int, random seed
+#' @param par logical, use parallel processing for CV folds
+#' @param n.cores int, number of cores for parallel processing
 #' @param backend character, implementation to use:
 #'   \itemize{
 #'     \item "fast": Custom fast implementation optimized for shared X (default)
@@ -62,6 +64,8 @@ multivariate_mtlasso <- function(X,
                                   standardize = FALSE,
                                   verbose = FALSE,
                                   seed = 123,
+                                  par = FALSE,
+                                  n.cores = 1,
                                   backend = c("fast", "rmtl")) {
 
   regularization <- match.arg(regularization)
@@ -78,12 +82,13 @@ multivariate_mtlasso <- function(X,
     return(.mtlasso_fast(X, Y, lambda = lambda, lambda_seq = lambda_seq,
                          nlambda = nlambda, lambda_min_ratio = lambda_min_ratio,
                          nfolds = nfolds, standardize = standardize,
-                         verbose = verbose, seed = seed))
+                         verbose = verbose, seed = seed,
+                         par = par, n.cores = n.cores))
   } else {
     return(.mtlasso_rmtl(X, Y, regularization = regularization,
                          Lam1_seq = lambda_seq, Lam2 = Lam2,
                          nfolds = nfolds, verbose = verbose,
-                         seed = seed))
+                         seed = seed, par = par, n.cores = n.cores))
   }
 }
 
@@ -97,7 +102,8 @@ multivariate_mtlasso <- function(X,
 .mtlasso_fast <- function(X, Y, lambda = NULL, lambda_seq = NULL,
                           nlambda = 20, lambda_min_ratio = 0.01,
                           nfolds = 5, standardize = FALSE,
-                          verbose = FALSE, seed = 123) {
+                          verbose = FALSE, seed = 123,
+                          par = FALSE, n.cores = 1) {
 
   set.seed(seed)
   n <- nrow(X)
@@ -152,13 +158,11 @@ multivariate_mtlasso <- function(X,
   } else {
     # Cross-validation
     cv_folds <- caret::createFolds(1:n, k = nfolds, returnTrain = TRUE)
-    cv_mse <- rep(0, length(lambda_seq))
 
     if (verbose) cat("Running cross-validation...\n")
 
-    for (fold_idx in 1:nfolds) {
-      if (verbose) cat(sprintf("  Fold %d/%d\n", fold_idx, nfolds))
-
+    # Define fold worker function
+    run_fold <- function(fold_idx) {
       train_idx <- cv_folds[[fold_idx]]
       test_idx <- setdiff(1:n, train_idx)
 
@@ -173,6 +177,7 @@ multivariate_mtlasso <- function(X,
 
       # Warm start path
       W <- matrix(0, p, q)
+      fold_mse <- rep(0, length(lambda_seq))
 
       for (lam_idx in seq_along(lambda_seq)) {
         W <- .fit_mtl_l21(X_train, Y_train, lambda_seq[lam_idx],
@@ -180,11 +185,23 @@ multivariate_mtlasso <- function(X,
                           W_init = W, max_iter = 200, tol = 1e-4)
 
         pred <- X_test %*% W
-        cv_mse[lam_idx] <- cv_mse[lam_idx] + mean((Y_test - pred)^2)
+        fold_mse[lam_idx] <- mean((Y_test - pred)^2)
       }
+      fold_mse
     }
 
-    cv_mse <- cv_mse / nfolds
+    # Run CV folds (parallel or sequential)
+    if (par && n.cores > 1) {
+      fold_results <- parallel::mclapply(1:nfolds, run_fold, mc.cores = min(n.cores, nfolds))
+    } else {
+      fold_results <- lapply(1:nfolds, function(fold_idx) {
+        if (verbose) cat(sprintf("  Fold %d/%d\n", fold_idx, nfolds))
+        run_fold(fold_idx)
+      })
+    }
+
+    # Aggregate MSE across folds
+    cv_mse <- Reduce(`+`, fold_results) / nfolds
     best_idx <- which.min(cv_mse)
     best_lambda <- lambda_seq[best_idx]
 
@@ -367,7 +384,8 @@ multivariate_mtlasso <- function(X,
 #' @keywords internal
 .mtlasso_rmtl <- function(X, Y, regularization = "L21",
                           Lam1_seq = NULL, Lam2 = 0,
-                          nfolds = 5, verbose = FALSE, seed = 123) {
+                          nfolds = 5, verbose = FALSE, seed = 123,
+                          par = FALSE, n.cores = 1) {
 
   set.seed(seed)
   n <- nrow(X)
@@ -405,7 +423,8 @@ multivariate_mtlasso <- function(X,
       opts = list(init = 0, tol = 1e-4, maxIter = 500),
       nfolds = nfolds,
       stratify = FALSE,
-      parallel = FALSE
+      parallel = par,
+      ncores = n.cores
     )
   }, error = function(e) {
     stop("RMTL failed: ", e$message)
@@ -532,6 +551,8 @@ multivariate_mtlasso <- function(X,
 #' @param nfolds int, number of CV folds
 #' @param verbose logical, print progress
 #' @param seed int, random seed
+#' @param par logical, use parallel processing for CV folds
+#' @param n.cores int, number of cores for parallel processing
 #'
 #' @return isotwas_model object with best regularization
 #'
@@ -541,7 +562,9 @@ multivariate_mtlasso_cv <- function(X,
                                      regularizations = c("L21", "Trace", "Lasso"),
                                      nfolds = 5,
                                      verbose = FALSE,
-                                     seed = 123) {
+                                     seed = 123,
+                                     par = FALSE,
+                                     n.cores = 1) {
 
   best_mse <- Inf
   best_model <- NULL
@@ -559,6 +582,8 @@ multivariate_mtlasso_cv <- function(X,
         nfolds = nfolds,
         verbose = FALSE,
         seed = seed,
+        par = par,
+        n.cores = n.cores,
         backend = backend
       )
     }, error = function(e) {

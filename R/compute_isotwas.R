@@ -434,7 +434,9 @@ compute_isotwas <- function(X,
                        alpha = alpha,
                        nfolds = nfolds,
                        verbose = FALSE,
-                       seed = seed)
+                       seed = seed,
+                       par = par,
+                       n.cores = n.cores)
     })
     if (!is.null(sgl_mod)) {
       all_models <- rlist::list.append(all_models, sgl_mod)
@@ -450,7 +452,9 @@ compute_isotwas <- function(X,
                            regularization = "L21",
                            nfolds = nfolds,
                            verbose = FALSE,
-                           seed = seed)
+                           seed = seed,
+                           par = par,
+                           n.cores = n.cores)
     })
     if (!is.null(mtlasso_mod)) {
       all_models <- rlist::list.append(all_models, mtlasso_mod)
