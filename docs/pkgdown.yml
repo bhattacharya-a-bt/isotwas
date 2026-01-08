@@ -1,12 +1,11 @@
-pandoc: 3.1.1
-pkgdown: 2.0.7
+pandoc: '3.2'
+pkgdown: 2.1.1
 pkgdown_sha: ~
 articles:
   motivation: motivation.html
   pipeline: pipeline.html
   stageassoc: stageassoc.html
-last_built: 2023-08-03T13:04Z
+last_built: 2026-01-08T17:51Z
 urls:
   reference: https://bhattacharya-a-bt.github.io/isotwas/reference
   article: https://bhattacharya-a-bt.github.io/isotwas/articles
-

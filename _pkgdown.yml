@@ -14,16 +14,47 @@ reference:
       - finemap_regress
       - compute_finemap_regress
       - compute_fixed
+      - compute_fixed_precomputed
       - compute_mrce
       - compute_omega
       - compute_blup
       - multivariate_elasticnet
       - multivariate_joinet
       - multivariate_spls
+      - multivariate_graph_reg
+      - multivariate_mtlasso
+      - multivariate_mtlasso_cv
+      - multivariate_sgl
+      - multivariate_sgl_cv
+      - multivariate_stacking
       - univariate_blup
       - univariate_elasticnet
       - univariate_susie
       - convert_model
+      - convert_legacy_model
+  - title: "Model objects"
+    desc: >
+      Functions for creating and working with isotwas model objects
+    contents:
+      - create_isotwas_model
+      - create_isotwas_result
+      - create_transcript_model
+      - get_best_isotwas
+      - get_prediction_matrix
+      - get_weight_matrix
+      - print.isotwas_model
+      - print.isotwas_result
+      - summary.isotwas_model
+      - summary.isotwas_result
+      - "`$.isotwas_model`"
+      - "`[.isotwas_model`"
+  - title: "Similarity from GTF"
+    desc: >
+      Functions for computing transcript similarity from GTF annotations
+    contents:
+      - similarity_from_gtf
+      - create_similarity_from_exons
+      - subset_similarity
   - title: "Trait mapping"
     desc: >
       Stage-wise trait mapping
@@ -31,6 +62,7 @@ reference:
       - p_screen
       - p_confirm
       - burdenTest
+      - burdenTest_all
   - title: "Probabilistic fine-mapping"
     desc: >
       Functions for FOCUS-like probabilistic fine-mapping
