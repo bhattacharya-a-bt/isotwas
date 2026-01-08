@@ -31,6 +31,8 @@
 #' @param standardize logical, standardize X before fitting
 #' @param verbose logical, print progress
 #' @param seed int, random seed
+#' @param par logical, use parallel processing. Default FALSE.
+#' @param n.cores int, number of cores for parallel processing. Default NULL (auto-detect).
 #'
 #' @return isotwas_model object containing:
 #'   \itemize{
@@ -46,6 +48,9 @@
 #' isoforms sharing more exons are expected to have more similar cis-regulatory
 #' effects, as they share more of the same genetic signal.
 #'
+#' When par=TRUE, cross-validation is parallelized over all (lambda_graph, fold)
+#' combinations, providing up to nlambda_graph * nfolds parallel tasks.
+#'
 #' @export
 multivariate_graph_reg <- function(X,
                                     Y,
@@ -60,7 +65,9 @@ multivariate_graph_reg <- function(X,
                                     nfolds = 5,
                                     standardize = FALSE,
                                     verbose = FALSE,
-                                    seed = 123) {
+                                    seed = 123,
+                                    par = FALSE,
+                                    n.cores = NULL) {
 
   set.seed(seed)
   n <- nrow(X)
@@ -155,36 +162,62 @@ multivariate_graph_reg <- function(X,
     # Cross-validation over lambda1 and lambda_graph grid
     if (verbose) cat("Running cross-validation for parameter selection...\n")
 
-    cv_results <- matrix(Inf, nrow = length(lambda1_seq), ncol = length(lambda_graph_seq))
+    # Create all (lambda_graph_idx, fold_idx) combinations for parallel execution
+    cv_tasks <- expand.grid(lg_idx = seq_along(lambda_graph_seq),
+                            fold_idx = 1:nfolds)
+    n_tasks <- nrow(cv_tasks)
 
-    for (lg_idx in seq_along(lambda_graph_seq)) {
+    if (verbose) {
+      cat(sprintf("  %d lambda_graph values x %d folds = %d parallel tasks\n",
+                  length(lambda_graph_seq), nfolds, n_tasks))
+    }
+
+    # Worker function for a single (lambda_graph, fold) combination
+    run_cv_task <- function(task_idx) {
+      lg_idx <- cv_tasks$lg_idx[task_idx]
+      fold_idx <- cv_tasks$fold_idx[task_idx]
       lg <- lambda_graph_seq[lg_idx]
-      if (verbose) cat(sprintf("  lambda_graph = %.4f (%d/%d)\n",
-                               lg, lg_idx, length(lambda_graph_seq)))
 
-      for (fold_idx in 1:nfolds) {
-        train_idx <- cv_folds[[fold_idx]]
-        test_idx <- setdiff(1:n, train_idx)
+      train_idx <- cv_folds[[fold_idx]]
+      test_idx <- setdiff(1:n, train_idx)
 
-        X_train <- X_scaled[train_idx, , drop = FALSE]
-        Y_train <- Y_centered[train_idx, , drop = FALSE]
-        X_test <- X_scaled[test_idx, , drop = FALSE]
-        Y_test <- Y_centered[test_idx, , drop = FALSE]
+      X_train <- X_scaled[train_idx, , drop = FALSE]
+      Y_train <- Y_centered[train_idx, , drop = FALSE]
+      X_test <- X_scaled[test_idx, , drop = FALSE]
+      Y_test <- Y_centered[test_idx, , drop = FALSE]
 
-        # Warm start path
-        B_warm <- matrix(0, p, q)
+      # Warm start path over lambda1 (must be sequential)
+      B_warm <- matrix(0, p, q)
+      mse_vec <- numeric(length(lambda1_seq))
 
-        for (l1_idx in seq_along(lambda1_seq)) {
-          l1 <- lambda1_seq[l1_idx]
+      for (l1_idx in seq_along(lambda1_seq)) {
+        l1 <- lambda1_seq[l1_idx]
 
-          B_warm <- .fit_graph_reg(X_train, Y_train, L, l1, lg, alpha,
-                                   B_init = B_warm, max_iter = 200, tol = 1e-4)
+        B_warm <- .fit_graph_reg(X_train, Y_train, L, l1, lg, alpha,
+                                 B_init = B_warm, max_iter = 200, tol = 1e-4)
 
-          pred <- X_test %*% B_warm
-          mse <- mean((Y_test - pred)^2)
-          cv_results[l1_idx, lg_idx] <- cv_results[l1_idx, lg_idx] + mse / nfolds
-        }
+        pred <- X_test %*% B_warm
+        mse_vec[l1_idx] <- mean((Y_test - pred)^2)
       }
+
+      list(lg_idx = lg_idx, fold_idx = fold_idx, mse_vec = mse_vec)
+    }
+
+    # Run CV tasks (parallel or sequential)
+    if (par && !is.null(n.cores) && n.cores > 1) {
+      if (verbose) cat(sprintf("  Running in parallel with %d cores...\n", n.cores))
+      cv_task_results <- parallel::mclapply(1:n_tasks, run_cv_task,
+                                             mc.cores = min(n.cores, n_tasks))
+    } else {
+      if (verbose) cat("  Running sequentially...\n")
+      cv_task_results <- lapply(1:n_tasks, run_cv_task)
+    }
+
+    # Aggregate results into cv_results matrix
+    cv_results <- matrix(0, nrow = length(lambda1_seq), ncol = length(lambda_graph_seq))
+
+    for (res in cv_task_results) {
+      cv_results[, res$lg_idx] <- cv_results[, res$lg_idx] + res$mse_vec / nfolds
     }
 
     # Find best parameters
@@ -209,8 +242,7 @@ multivariate_graph_reg <- function(X,
   }
 
   # Get CV predictions for R² calculation
-  cv_preds <- matrix(0, nrow = n, ncol = q)
-  for (fold_idx in 1:nfolds) {
+  run_final_fold <- function(fold_idx) {
     train_idx <- cv_folds[[fold_idx]]
     test_idx <- setdiff(1:n, train_idx)
 
@@ -220,7 +252,19 @@ multivariate_graph_reg <- function(X,
 
     B_fold <- .fit_graph_reg(X_train, Y_train, L, best_lambda1, best_lambda_graph,
                              alpha, B_init = NULL, max_iter = 500, tol = 1e-4)
-    cv_preds[test_idx, ] <- X_test %*% B_fold
+    list(test_idx = test_idx, preds = X_test %*% B_fold)
+  }
+
+  if (par && !is.null(n.cores) && n.cores > 1) {
+    fold_results <- parallel::mclapply(1:nfolds, run_final_fold,
+                                        mc.cores = min(n.cores, nfolds))
+  } else {
+    fold_results <- lapply(1:nfolds, run_final_fold)
+  }
+
+  cv_preds <- matrix(0, nrow = n, ncol = q)
+  for (fr in fold_results) {
+    cv_preds[fr$test_idx, ] <- fr$preds
   }
 
   # Add back means

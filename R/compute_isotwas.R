@@ -473,7 +473,9 @@ compute_isotwas <- function(X,
                             Omega = omega_list$icov[[omega_nlambda]],
                             nfolds_stack = nfolds,
                             verbose = FALSE,
-                            seed = seed)
+                            seed = seed,
+                            parallel = par,
+                            n.cores = n.cores)
     })
     if (!is.null(stacking_mod)) {
       all_models <- rlist::list.append(all_models, stacking_mod)
@@ -490,7 +492,9 @@ compute_isotwas <- function(X,
                              alpha = alpha,
                              nfolds = nfolds,
                              verbose = FALSE,
-                             seed = seed)
+                             seed = seed,
+                             par = par,
+                             n.cores = n.cores)
     })
     if (!is.null(graph_mod)) {
       all_models <- rlist::list.append(all_models, graph_mod)
@@ -509,8 +513,8 @@ compute_isotwas <- function(X,
                                         alpha = alpha,
                                         nfolds = nfolds,
                                         verbose = FALSE,
-                                        par = FALSE,
-                                        n.cores = 1,
+                                        par = par,
+                                        n.cores = n.cores,
                                         tx_names = tx_names,
                                         seed = seed)
 
@@ -520,8 +524,8 @@ compute_isotwas <- function(X,
                                   scale = scale,
                                   nfolds = nfolds,
                                   verbose = FALSE,
-                                  par = FALSE,
-                                  n.cores = 1,
+                                  par = par,
+                                  n.cores = n.cores,
                                   tx_names = tx_names,
                                   seed = seed)
 
@@ -532,8 +536,8 @@ compute_isotwas <- function(X,
                                     alpha = alpha,
                                     nfolds = nfolds,
                                     verbose = FALSE,
-                                    par = FALSE,
-                                    n.cores = 1,
+                                    par = par,
+                                    n.cores = n.cores,
                                     tx_names = tx_names,
                                     seed = seed)
 
