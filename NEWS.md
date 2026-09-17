@@ -98,6 +98,34 @@
   `univariate_enet`, `univariate_blup` or `univariate_susie`. Which model wins
   is unchanged -- only what it is called.
 
+## Reproducibility
+
+* `univariate_elasticnet(par = TRUE)` is now reproducible, and independent of
+  `n.cores`. Once its parallel branch runs (see the fix under Bug fixes), each
+  forked `mclapply()` child draws its CV folds from a different RNG state, so
+  repeated runs at the same seed gave different answers. Setting
+  `RNGkind("L'Ecuyer-CMRG")` would fix the repeatability but not the dependence
+  on core count -- with the default `mc.preschedule = TRUE` the stream advances
+  per child rather than per job. Each job is now given its own seed, derived
+  from the caller's `seed`, which removes both problems.
+
+  The other parallel paths draw their folds before forking, so they were
+  already reproducible: `multivariate_mtlasso()`, `multivariate_stacking()` and
+  `multivariate_graph_reg()` give the same results as before, in parallel and
+  serially. The per-job seeding is applied at all nine `mclapply()` sites so
+  that any random draw inside a worker is covered.
+
+  Serial results are unchanged. For `univariate_elasticnet()`, a parallel run
+  still differs from a serial one at the same seed: the serial path draws its
+  folds from one stream in order, the parallel path gives each job an
+  independent seed. Both are reproducible; they are not the same partition.
+
+* `compute_isotwas()` no longer draws a defaulted `seed` with `sample()`, which
+  both consumed the caller's RNG stream and made the drawn seed depend on it.
+  The function now restores the caller's RNG state on exit, and the seed the
+  run actually used is recorded in the result as `$seed` -- without which a run
+  left to the default could not be reproduced at all.
+
 ## Performance
 
 * `compute_omega()` no longer forms the `(R*N) x (R*N)` hat matrix. Because the

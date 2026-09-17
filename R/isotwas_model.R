@@ -210,6 +210,7 @@ get_prediction_matrix <- function(model) {
 #' @param tx2gene Transcript to gene coefficients
 #' @param failed_methods Data frame of methods that errored, with the message
 #'   each one failed with; NULL or a zero-row frame when all methods succeeded
+#' @param seed int, the random seed the run actually used
 #'
 #' @return An isotwas_result object
 #'
@@ -218,7 +219,8 @@ create_isotwas_result <- function(best_models,
                                    method_results = NULL,
                                    comparison_df = NULL,
                                    tx2gene = NULL,
-                                   failed_methods = NULL) {
+                                   failed_methods = NULL,
+                                   seed = NULL) {
 
   structure(
     list(
@@ -227,6 +229,7 @@ create_isotwas_result <- function(best_models,
       comparison = comparison_df,
       tx2gene = tx2gene,
       failed_methods = failed_methods,
+      seed = seed,
       n_transcripts = length(best_models$transcripts)
     ),
     class = "isotwas_result"

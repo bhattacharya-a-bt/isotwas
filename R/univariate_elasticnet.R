@@ -52,16 +52,17 @@ univariate_elasticnet <- function(X,
         }
 
     if (par){
-        set.seed(seed)
-        models = parallel::mclapply(lapply(seq_len(ncol(Y)), function(i) Y[,i]),
-                                   FUN = glmnet::cv.glmnet,
-                                   x = X,
-                                   nfolds = nfolds,
-                                   keep = T,
-                                   intercept = F,
-                                   family = family,
-                                   alpha = alpha,
-                                   mc.cores = n.cores)
+        models = .mclapply_seeded(lapply(seq_len(ncol(Y)), function(i) Y[,i]),
+                                  FUN = function(y) glmnet::cv.glmnet(
+                                      x = X,
+                                      y = y,
+                                      nfolds = nfolds,
+                                      keep = T,
+                                      intercept = F,
+                                      family = family,
+                                      alpha = alpha),
+                                  mc.cores = n.cores,
+                                  seed = seed)
         } else if (verbose){
             set.seed(seed)
             models = pbapply::pbapply(Y,

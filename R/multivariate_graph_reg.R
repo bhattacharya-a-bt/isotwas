@@ -216,8 +216,9 @@ multivariate_graph_reg <- function(X,
     # Run CV tasks (parallel or sequential)
     if (par && !is.null(n.cores) && n.cores > 1) {
       if (verbose) cat(sprintf("  Running in parallel with %d cores...\n", n.cores))
-      cv_task_results <- parallel::mclapply(1:n_tasks, run_cv_task,
-                                             mc.cores = min(n.cores, n_tasks))
+      cv_task_results <- .mclapply_seeded(1:n_tasks, run_cv_task,
+                                          mc.cores = min(n.cores, n_tasks),
+                                          seed = seed)
     } else {
       if (verbose) cat("  Running sequentially...\n")
       cv_task_results <- lapply(1:n_tasks, run_cv_task)
@@ -266,8 +267,9 @@ multivariate_graph_reg <- function(X,
   }
 
   if (par && !is.null(n.cores) && n.cores > 1) {
-    fold_results <- parallel::mclapply(1:nfolds, run_final_fold,
-                                        mc.cores = min(n.cores, nfolds))
+    fold_results <- .mclapply_seeded(1:nfolds, run_final_fold,
+                                     mc.cores = min(n.cores, nfolds),
+                                     seed = seed)
   } else {
     fold_results <- lapply(1:nfolds, run_final_fold)
   }

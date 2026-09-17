@@ -9,7 +9,8 @@ create_isotwas_result(
   method_results = NULL,
   comparison_df = NULL,
   tx2gene = NULL,
-  failed_methods = NULL
+  failed_methods = NULL,
+  seed = NULL
 )
 }
 \arguments{
@@ -23,6 +24,8 @@ create_isotwas_result(
 
 \item{failed_methods}{Data frame of methods that errored, with the message
 each one failed with; NULL or a zero-row frame when all methods succeeded}
+
+\item{seed}{int, the random seed the run actually used}
 }
 \value{
 An isotwas_result object

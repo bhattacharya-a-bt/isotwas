@@ -147,10 +147,11 @@ compute_mrce = function(X,
 
   # Run CV - either parallel or sequential
   if (parallel && !is.null(n.cores) && n.cores > 1) {
-    fold_results = parallel::mclapply(
+    fold_results = .mclapply_seeded(
       1:nfolds,
       function(tr) run_fold_cv(tr, fold_data, lambda, Omega, tol.in, maxit.in),
-      mc.cores = min(n.cores, nfolds)
+      mc.cores = min(n.cores, nfolds),
+      seed = seed
     )
   } else {
     fold_results = lapply(

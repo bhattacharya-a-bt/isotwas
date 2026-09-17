@@ -39,15 +39,12 @@ test_that("the parallel branch returns the same shape as the serial one", {
                      names(ser$transcripts[[1]]$weights))
 })
 
-test_that("CHARACTERIZATION: parallel and serial disagree at the same seed", {
+test_that("parallel and serial differ at the same seed, by design", {
 
-    # Not a consequence of the fix above: mclapply() forks, and the package
-    # never sets RNGkind("L'Ecuyer-CMRG"), so each child continues from the
-    # same RNG state rather than a distinct stream. cv.glmnet therefore draws
-    # different folds under par = TRUE than under the sequential draws of
-    # apply(), and repeated parallel runs are not reproducible either.
-    #
-    # Recorded here so that making parallel reproducible is a visible edit.
+    # Not a defect. The serial path draws its CV folds from one stream in
+    # column order; the parallel path gives each column its own seed, derived
+    # from `seed`, so that a run does not depend on how many cores it got.
+    # Both are reproducible; they are not the same partition.
     skip_if_not_installed("glmnet")
     skip_on_os("windows")
 

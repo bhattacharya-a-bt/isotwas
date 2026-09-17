@@ -16,6 +16,38 @@ isotwas_methods <- function() {
       'sgl', 'mtlasso', 'stacking', 'graph_reg', 'univariate')
 }
 
+#' mclapply with reproducible, core-count-independent per-job seeds
+#'
+#' Each job gets its own seed drawn from \code{seed}, so results do not depend
+#' on mc.cores (RNGkind("L'Ecuyer-CMRG") alone would). The caller's RNG state
+#' is restored on exit.
+#'
+#' @param X vector or list to iterate over
+#' @param FUN function applied to each element
+#' @param ... further arguments to FUN
+#' @param mc.cores int, passed to parallel::mclapply
+#' @param seed int, the seed the per-job seeds are derived from
+#'
+#' @return list, as parallel::mclapply
+#'
+#' @noRd
+.mclapply_seeded <- function(X, FUN, ..., mc.cores = 1L, seed) {
+
+    if (exists(".Random.seed", envir = globalenv(), inherits = FALSE)) {
+        old_seed <- get(".Random.seed", envir = globalenv())
+        on.exit(assign(".Random.seed", old_seed, envir = globalenv()),
+                add = TRUE)
+    }
+
+    set.seed(seed)
+    job_seeds <- sample.int(.Machine$integer.max, length(X))
+
+    parallel::mclapply(seq_along(X), function(k) {
+        set.seed(job_seeds[k])
+        FUN(X[[k]], ...)
+    }, mc.cores = mc.cores)
+}
+
 calc.mse <- function(obs, pred){
     if(is.vector(obs)) obs <- as.matrix(obs)
     if(is.vector(pred)) pred <- as.matrix(pred)

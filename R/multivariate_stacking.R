@@ -99,10 +99,10 @@ multivariate_stacking <- function(X,
 
     # Fit all base methods (optionally in parallel)
     if (parallel && n.cores > 1 && length(base_methods) > 1) {
-      fold_preds <- parallel::mclapply(base_methods, function(method) {
+      fold_preds <- .mclapply_seeded(base_methods, function(method) {
         .fit_base_method_fast(method, X_train, Y_train, X_test,
                               param_cache[[method]], seed + fold_idx)
-      }, mc.cores = min(n.cores, length(base_methods)))
+      }, mc.cores = min(n.cores, length(base_methods)), seed = seed + fold_idx)
       names(fold_preds) <- base_methods
     } else {
       fold_preds <- lapply(base_methods, function(method) {

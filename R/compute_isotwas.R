@@ -168,9 +168,16 @@ compute_isotwas <- function(X,
   floor_r2 <- identical(r2_scale, 'legacy')
   empty_r2 <- if (identical(r2_scale, 'legacy')) 0 else -Inf
 
+  # Restore the caller's RNG state on exit
+  if (exists(".Random.seed", envir = globalenv(), inherits = FALSE)) {
+    caller_seed <- get(".Random.seed", envir = globalenv())
+    on.exit(assign(".Random.seed", caller_seed, envir = globalenv()),
+            add = TRUE)
+  }
+
   # Set seed
   if (is.null(seed)) {
-    seed <- sample(1:100000, 1)
+    seed <- as.integer(Sys.time()) %% 100000L
   }
   set.seed(seed)
 
@@ -393,10 +400,11 @@ compute_isotwas <- function(X,
       }
 
       if (par && !is.null(n.cores) && n.cores > 1) {
-        mrce_lasso_list <- parallel::mclapply(
+        mrce_lasso_list <- .mclapply_seeded(
           1:omega_nlambda,
           run_mrce_omega,
-          mc.cores = min(n.cores, omega_nlambda)
+          mc.cores = min(n.cores, omega_nlambda),
+          seed = seed
         )
       } else {
         mrce_lasso_list <- lapply(1:omega_nlambda, run_mrce_omega)
@@ -679,7 +687,8 @@ compute_isotwas <- function(X,
     tx2gene = tx2gene_coef,
     failed_methods = data.frame(method = failed_methods,
                                 message = failed_messages,
-                                stringsAsFactors = FALSE)
+                                stringsAsFactors = FALSE),
+    seed = seed
   )
 
   # ============================================================================
