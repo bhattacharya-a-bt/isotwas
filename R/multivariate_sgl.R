@@ -199,7 +199,7 @@ multivariate_sgl <- function(X,
   }
 
   result <- create_isotwas_model(
-    method = "sparse_group_lasso",
+    method = "sgl",
     transcripts = transcripts,
     n_samples = n,
     n_snps = p

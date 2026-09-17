@@ -66,7 +66,8 @@ If NULL, automatically generates a sequence.}
 \value{
 isotwas_model object containing:
   \itemize{
-    \item transcripts: list of transcript_model objects with weights, R2, pvalues
+    \item transcripts: list of transcript_model objects with weights, R2,
+      pvalues and the regularization each was fitted with
     \item best_lambda: optimal lambda from CV
     \item regularization: type of regularization used
   }

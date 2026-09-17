@@ -215,8 +215,7 @@ compute_isotwas <- function(X,
   # DETERMINE METHODS TO RUN
   # ============================================================================
 
-  all_methods <- c('mrce_lasso', 'multi_enet', 'joinet', 'spls',
-                   'sgl', 'mtlasso', 'stacking', 'graph_reg', 'univariate')
+  all_methods <- isotwas_methods()
 
   if (run_all) {
     method <- all_methods

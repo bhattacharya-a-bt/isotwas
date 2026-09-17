@@ -316,7 +316,7 @@ multivariate_graph_reg <- function(X,
   }
 
   result <- create_isotwas_model(
-    method = "graph_regularized",
+    method = "graph_reg",
     transcripts = transcripts,
     n_samples = n,
     n_snps = p

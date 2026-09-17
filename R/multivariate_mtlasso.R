@@ -36,7 +36,8 @@
 #'
 #' @return isotwas_model object containing:
 #'   \itemize{
-#'     \item transcripts: list of transcript_model objects with weights, R2, pvalues
+#'     \item transcripts: list of transcript_model objects with weights, R2,
+#'       pvalues and the regularization each was fitted with
 #'     \item best_lambda: optimal lambda from CV
 #'     \item regularization: type of regularization used
 #'   }
@@ -287,10 +288,11 @@ multivariate_mtlasso <- function(X,
       pvalue = p_vec[j],
       predicted = final_preds[, j]
     )
+    transcripts[[tx_name]]$regularization <- "L21"
   }
 
   result <- create_isotwas_model(
-    method = "mtlasso_l21",
+    method = "mtlasso",
     transcripts = transcripts,
     n_samples = n,
     n_snps = p
@@ -521,10 +523,11 @@ multivariate_mtlasso <- function(X,
       pvalue = p_vec[j],
       predicted = cv_preds[, j]
     )
+    transcripts[[tx_name]]$regularization <- regularization
   }
 
   result <- create_isotwas_model(
-    method = paste0("mtlasso_", tolower(regularization)),
+    method = "mtlasso",
     transcripts = transcripts,
     n_samples = n,
     n_snps = p

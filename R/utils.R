@@ -4,6 +4,18 @@
 
 .onUnload <- function (libpath) { library.dynam.unload("isotwas", libpath)}
 
+#' Methods compute_isotwas can run, in comparison-column order
+#'
+#' Each fitting function labels its output $method with its name here.
+#'
+#' @return character vector of method names
+#'
+#' @noRd
+isotwas_methods <- function() {
+    c('mrce_lasso', 'multi_enet', 'joinet', 'spls',
+      'sgl', 'mtlasso', 'stacking', 'graph_reg', 'univariate')
+}
+
 calc.mse <- function(obs, pred){
     if(is.vector(obs)) obs <- as.matrix(obs)
     if(is.vector(pred)) pred <- as.matrix(pred)

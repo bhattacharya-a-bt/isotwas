@@ -34,9 +34,36 @@
   isoform covariance is estimated for a single transcript, so `Omega` is `NULL`
   and scaling reached `eigen(NULL)`.
 
+## Breaking changes
+
+* Four fitting functions now label their output with the name the method
+  appears under in the comparison table, so `model$method` can be matched
+  against `colnames(result$comparison)` directly:
+
+  | was | now |
+  |---|---|
+  | `multivariate_enet` | `multi_enet` |
+  | `sparse_group_lasso` | `sgl` |
+  | `mtlasso_l21` | `mtlasso` |
+  | `graph_regularized` | `graph_reg` |
+
+  The RMTL backend of `multivariate_mtlasso()` built its label as
+  `paste0("mtlasso_", tolower(regularization))`, so it also emitted
+  `mtlasso_trace` and `mtlasso_lasso`; all three are now `mtlasso`. The variant
+  is recorded in `result$regularization` and on each transcript model as
+  `$regularization`, so it survives into the selected model.
+
+  Code that matches on the old strings needs updating. The univariate leaf
+  labels (`univariate_enet`, `univariate_blup`, `univariate_susie`) are
+  unchanged: they name members of the `univariate` ensemble rather than
+  comparison columns.
+
 ## Improvements
 
 * `compute_isotwas()` records failed methods in its result. `isotwas_result`
   gains a `failed_methods` data frame of the method name and the message it
   failed with, and `print()` reports it. Failures were previously visible only
   as a `verbose` console message.
+
+* `isotwas_methods()` is the single source of truth for the method names, used
+  both to build the comparison columns and to check each model's label.
