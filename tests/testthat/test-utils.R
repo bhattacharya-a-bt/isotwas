@@ -122,12 +122,11 @@ test_that("an NA R2 is treated as 0", {
     expect_equal(got$r2_comparison["t1", "A"], 0)
 })
 
-test_that("CHARACTERIZATION: a model selecting no SNPs is scored 0, not -Inf", {
+test_that("empty_r2 = 0 keeps the historical scoring of an empty model", {
 
-    # Current behaviour (utils.R:69). Because calc.r2 passes negative adjusted
-    # R2 through, an EMPTY model scored 0 outranks a real model scoring below
-    # zero, and is then emitted as that transcript's weights. Scoring an empty
-    # model -Inf would make the real model win instead.
+    # An empty model scored 0 outranks a real model whose adjusted R2 is
+    # negative, and is then emitted as that transcript's weights. This is the
+    # default, so existing results reproduce.
     empty <- mk_model("A", c(0.40), n_snps = 0L)
     real <- mk_model("B", c(-0.01), n_snps = 30L)
 
@@ -138,18 +137,133 @@ test_that("CHARACTERIZATION: a model selecting no SNPs is scored 0, not -Inf", {
     expect_identical(nrow(got$transcripts[["t1"]]$weights), 0L)
 })
 
-test_that("CHARACTERIZATION: a nested ensemble's leaf label is overwritten", {
+test_that("empty_r2 = -Inf lets a real model beat an empty one", {
 
-    # Current behaviour (utils.R:88). compute_isotwas builds its `univariate`
-    # entry by calling get_best() a second time, so that entry's own $method is
-    # the literal "best". At the outer level every transcript won by the
-    # ensemble is relabelled "best", destroying which of enet/BLUP/SuSiE won.
+    empty <- mk_model("A", c(0.40), n_snps = 0L)
+    real <- mk_model("B", c(-0.01), n_snps = 30L)
+
+    got <- get_best_isotwas(list(empty, real), G = 1, empty_r2 = -Inf)
+
+    expect_identical(got$best_methods$best_method, "B")
+    expect_identical(nrow(got$transcripts[["t1"]]$weights), 30L)
+})
+
+test_that("a transcript no model could fit is labelled NA, not given a winner", {
+
+    # With every candidate empty, which.max would otherwise return the first
+    # model and emit its empty weights as though they had been selected.
+    a <- mk_model("A", c(0.40), n_snps = 0L)
+    b <- mk_model("B", c(0.20), n_snps = 0L)
+
+    got <- get_best_isotwas(list(a, b), G = 1, empty_r2 = -Inf)
+
+    expect_true(is.na(got$best_methods$best_method))
+    expect_true(is.na(got$transcripts[["t1"]]$method))
+})
+
+test_that("a nested ensemble's leaf label survives selection", {
+
+    # compute_isotwas builds its `univariate` entry by calling get_best() a
+    # second time, so that entry's own $method is the literal "best". Stamping
+    # the parent's $method destroyed which of enet/BLUP/SuSiE won -- making
+    # the reported best method a constant for every transcript the ensemble
+    # took.
     flat <- mk_model("spls", c(0.10, 0.90))
     ens <- mk_ensemble(c(0.50, 0.40),
                        leaves = c("univariate_blup", "univariate_susie"))
 
     got <- get_best_isotwas(list(flat, ens), G = 2)
 
-    expect_identical(got$best_methods$best_method, c("best", "spls"))
-    expect_identical(got$transcripts[["t1"]]$method, "best")
+    expect_identical(got$best_methods$best_method,
+                     c("univariate_blup", "spls"))
+    expect_identical(got$transcripts[["t1"]]$method, "univariate_blup")
+    expect_false(any(got$best_methods$best_method == "best"))
+})
+
+test_that("resolving the label does not change which model wins", {
+
+    flat <- mk_model("spls", c(0.10, 0.90))
+    ens <- mk_ensemble(c(0.50, 0.40),
+                       leaves = c("univariate_blup", "univariate_susie"))
+
+    got <- get_best_isotwas(list(flat, ens), G = 2)
+
+    # t1 from the ensemble, t2 from spls -- the weights, not just the names.
+    expect_equal(got$transcripts[["t1"]]$r2, 0.50)
+    expect_equal(got$transcripts[["t2"]]$r2, 0.90)
+    expect_identical(colnames(got$r2_comparison), c("spls", "best"))
+})
+
+test_that(".leaf_method falls back for a flat model or unknown transcript", {
+
+    flat <- mk_model("spls", c(0.1, 0.2))
+    expect_identical(.leaf_method(flat, "t1", "spls"), "spls")
+
+    ens <- mk_ensemble(c(0.5, 0.4), leaves = c("univariate_blup", "univariate_susie"))
+    expect_identical(.leaf_method(ens, "t1", "best"), "univariate_blup")
+    expect_identical(.leaf_method(ens, "nope", "best"), "best")
+})
+
+test_that(".score_r2 reproduces both scales in use", {
+
+    set.seed(61)
+    obs <- stats::rnorm(60)
+    pred <- obs * 0.5 + stats::rnorm(60, sd = 0.4)
+    n <- length(obs)
+
+    # "refit" is calc.r2()
+    expect_equal(.score_r2(obs, pred, "refit")$R2,
+                 summary(stats::lm(obs ~ pred))$adj.r.sq)
+
+    # "oos" is the formula compute_mrce() and multivariate_sgl() inline
+    ss_res <- sum((obs - pred)^2)
+    ss_tot <- sum((obs - mean(obs))^2)
+    expect_equal(.score_r2(obs, pred, "oos")$R2,
+                 1 - (1 - (1 - ss_res / ss_tot)) * (n - 1) / (n - 2))
+})
+
+test_that("the two R2 scales are not interchangeable", {
+
+    # This is the incompatibility, stated as an executable fact: "refit"
+    # regresses obs on pred, so it cannot see a miscalibrated prediction,
+    # while "oos" is penalised for one. Mixing them in a single which.max
+    # compares different quantities.
+    set.seed(62)
+    obs <- stats::rnorm(60)
+    pred <- obs * 0.5 + stats::rnorm(60, sd = 0.4)
+
+    expect_equal(.score_r2(obs, pred, "refit")$R2,
+                 .score_r2(obs, pred * 3 + 10, "refit")$R2)
+    expect_false(isTRUE(all.equal(.score_r2(obs, pred, "oos")$R2,
+                                  .score_r2(obs, pred * 3 + 10, "oos")$R2)))
+})
+
+test_that("an unpredictable transcript scores negative under 'oos', not 0", {
+
+    # Flooring this at 0 is what made a floored method outrank every
+    # calc.r2()-scored rival on transcripts nothing can predict.
+    set.seed(63)
+    obs <- stats::rnorm(80)
+    noise <- stats::rnorm(80)
+
+    expect_lt(.score_r2(obs, noise, "oos")$R2, 0)
+    expect_equal(max(0, .score_r2(obs, noise, "oos")$R2), 0)
+})
+
+test_that("flooring one method's score biases selection toward it", {
+
+    # End to end over a transcript no method can predict: the floored method
+    # reports 0, the calc.r2-scored method reports a negative number, and
+    # which.max takes the floored one despite it selecting nothing useful.
+    floored <- mk_model("mrce_lasso", c(0), n_snps = 5L)
+    honest <- mk_model("spls", c(-0.02), n_snps = 12L)
+
+    got <- get_best_isotwas(list(floored, honest), G = 1)
+    expect_identical(got$best_methods$best_method, "mrce_lasso")
+
+    # With both scored on the same scale the comparison is between two
+    # negatives and the better one wins.
+    floored_unclamped <- mk_model("mrce_lasso", c(-0.15), n_snps = 5L)
+    got2 <- get_best_isotwas(list(floored_unclamped, honest), G = 1)
+    expect_identical(got2$best_methods$best_method, "spls")
 })

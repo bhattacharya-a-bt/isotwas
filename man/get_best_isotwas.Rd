@@ -4,12 +4,16 @@
 \alias{get_best_isotwas}
 \title{Select best model per transcript from multiple isotwas_model objects}
 \usage{
-get_best_isotwas(model_list, G)
+get_best_isotwas(model_list, G, empty_r2 = 0)
 }
 \arguments{
 \item{model_list}{List of isotwas_model objects}
 
 \item{G}{Number of transcripts}
+
+\item{empty_r2}{numeric, the score given to a model that selected no SNPs,
+or to a transcript absent from a model. 0 is the historical value; with
+-Inf, a transcript for which every model is empty is labelled NA.}
 }
 \value{
 An isotwas_model with the best model per transcript

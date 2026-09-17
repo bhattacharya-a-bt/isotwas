@@ -8,7 +8,10 @@
 #' @param Y.rep matrix, matrix of G isoform expression with replicates
 #' @param R int, number of replicates
 #' @param id vector, vector of sample ids showing rep to id
-#' @param omega_est character, 'replicates' or 'mean' to use Y.rep or Y
+#' @param omega_est character, passed to compute_omega() as its \code{method}:
+#'   'replicates', 'residuals' or 'mean'
+#' @param r2_scale character, how methods are scored for comparison:
+#'   'legacy' (the default) or 'coherent'. See Details.
 #' @param omega_nlambda int, number of omegas to generate
 #' @param method character, vector of methods to use. Available methods:
 #'   \itemize{
@@ -48,6 +51,16 @@
 #' @importFrom stats lm
 #' @importFrom stats coef
 #'
+#' @details
+#' The best model per transcript is the which.max of cross-validated R-squared
+#' across methods. Under \code{r2_scale = 'legacy'}, mrce_lasso, sgl, mtlasso,
+#' stacking and graph_reg clamp their R-squared at 0 while the other methods
+#' can score below 0, and a model that selected no SNPs scores 0. On a
+#' transcript no method predicts, a clamped or empty model therefore wins.
+#'
+#' \code{r2_scale = 'coherent'} removes the clamp and scores an empty model
+#' -Inf. A transcript for which every model is empty is labelled NA.
+#'
 #' @return optimal isoTWAS model
 #'
 #'
@@ -59,6 +72,7 @@ compute_isotwas <- function(X,
                             R = NULL,
                             id,
                             omega_est = 'replicates',
+                            r2_scale = c('legacy', 'coherent'),
                             omega_nlambda = 10,
                             method = c('mrce_lasso',
                                        'multi_enet',
@@ -149,6 +163,10 @@ compute_isotwas <- function(X,
     warning("nfolds (", nfolds, ") > N (", N, "). Setting nfolds = N for leave-one-out CV.")
     nfolds <- N
   }
+
+  r2_scale <- match.arg(r2_scale)
+  floor_r2 <- identical(r2_scale, 'legacy')
+  empty_r2 <- if (identical(r2_scale, 'legacy')) 0 else -Inf
 
   # Set seed
   if (is.null(seed)) {
@@ -370,7 +388,8 @@ compute_isotwas <- function(X,
                      verbose = FALSE,
                      seed = seed,
                      parallel = FALSE,
-                     n.cores = 1)
+                     n.cores = 1,
+                     floor_r2 = floor_r2)
       }
 
       if (par && !is.null(n.cores) && n.cores > 1) {
@@ -383,7 +402,7 @@ compute_isotwas <- function(X,
         mrce_lasso_list <- lapply(1:omega_nlambda, run_mrce_omega)
       }
 
-      get_best(mrce_lasso_list, G = G)
+      get_best(mrce_lasso_list, G = G, empty_r2 = empty_r2)
     })
     if (!is.null(mrce_mod)) {
       all_models <- rlist::list.append(all_models, mrce_mod)
@@ -443,7 +462,8 @@ compute_isotwas <- function(X,
                        verbose = FALSE,
                        seed = seed,
                        par = par,
-                       n.cores = n.cores)
+                       n.cores = n.cores,
+                       floor_r2 = floor_r2)
     })
     if (!is.null(sgl_mod)) {
       all_models <- rlist::list.append(all_models, sgl_mod)
@@ -461,7 +481,8 @@ compute_isotwas <- function(X,
                            verbose = FALSE,
                            seed = seed,
                            par = par,
-                           n.cores = n.cores)
+                           n.cores = n.cores,
+                           floor_r2 = floor_r2)
     })
     if (!is.null(mtlasso_mod)) {
       all_models <- rlist::list.append(all_models, mtlasso_mod)
@@ -482,7 +503,8 @@ compute_isotwas <- function(X,
                             verbose = FALSE,
                             seed = seed,
                             parallel = par,
-                            n.cores = n.cores)
+                            n.cores = n.cores,
+                            floor_r2 = floor_r2)
     })
     if (!is.null(stacking_mod)) {
       all_models <- rlist::list.append(all_models, stacking_mod)
@@ -501,7 +523,8 @@ compute_isotwas <- function(X,
                              verbose = FALSE,
                              seed = seed,
                              par = par,
-                             n.cores = n.cores)
+                             n.cores = n.cores,
+                             floor_r2 = floor_r2)
     })
     if (!is.null(graph_mod)) {
       all_models <- rlist::list.append(all_models, graph_mod)
@@ -548,7 +571,8 @@ compute_isotwas <- function(X,
                                     tx_names = tx_names,
                                     seed = seed)
 
-      get_best(list(uni_enet, uni_blup, uni_susie), G = G)
+      get_best(list(uni_enet, uni_blup, uni_susie), G = G,
+               empty_r2 = empty_r2)
     })
     if (!is.null(uni_mod)) {
       all_models <- rlist::list.append(all_models, uni_mod)
@@ -574,7 +598,7 @@ compute_isotwas <- function(X,
     message(paste(rep("-", 60), collapse = ""))
   }
 
-  isotwas_mod <- get_best(all_models, G = G)
+  isotwas_mod <- get_best(all_models, G = G, empty_r2 = empty_r2)
   colnames(Y) <- tx_names
 
   # ============================================================================

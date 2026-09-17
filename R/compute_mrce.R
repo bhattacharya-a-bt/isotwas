@@ -14,6 +14,12 @@
 #' @param nlambda int, number of lambda value for parameter selection
 #' @param parallel logical, whether to parallelize CV folds
 #' @param n.cores int, number of cores for parallelization
+#' @param r2_method character, "oos" for the direct out-of-sample R-squared
+#'   this method has always used, or "refit" for the lm(obs ~ pred) adjusted
+#'   R-squared that calc.r2() applies to the other methods
+#' @param floor_r2 logical, clamp a negative R-squared to 0. TRUE reproduces
+#'   historical behaviour; FALSE makes the score comparable with the methods
+#'   scored through calc.r2()
 #'
 #' @return CV MRCE fit
 #'
@@ -29,7 +35,11 @@ compute_mrce = function(X,
                         verbose,
                         seed,
                         parallel = FALSE,
-                        n.cores = NULL){
+                        n.cores = NULL,
+                        r2_method = c("oos", "refit"),
+                        floor_r2 = TRUE){
+
+  r2_method = match.arg(r2_method)
 
   n = nrow(X)
   p = ncol(X)
@@ -170,27 +180,9 @@ compute_mrce = function(X,
       y_obs = Y[, tx]
       y_pred = pred[, tx]
 
-      # Fast R² calculation
-      ss_res = sum((y_obs - y_pred)^2)
-      ss_tot = sum((y_obs - mean(y_obs))^2)
-
-      if (ss_tot > 0) {
-        r2_raw = 1 - ss_res / ss_tot
-        # Adjusted R²
-        r2_adj = 1 - (1 - r2_raw) * (n - 1) / (n - 2)
-        r2Mat[tx, lam_idx] = max(0, r2_adj)
-      } else {
-        r2Mat[tx, lam_idx] = 0
-      }
-
-      # Fast p-value from correlation
-      if (sd(y_pred) > 0) {
-        r = cor(y_obs, y_pred)
-        t_stat = r * sqrt((n - 2) / (1 - r^2))
-        pMat[tx, lam_idx] = 2 * pt(-abs(t_stat), df = n - 2)
-      } else {
-        pMat[tx, lam_idx] = 1
-      }
+      scored = .score_r2(y_obs, y_pred, method = r2_method)
+      r2Mat[tx, lam_idx] = if (floor_r2) max(0, scored$R2) else scored$R2
+      pMat[tx, lam_idx] = scored$P
     }
   }
 

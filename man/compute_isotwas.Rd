@@ -12,6 +12,7 @@ compute_isotwas(
   R = NULL,
   id,
   omega_est = "replicates",
+  r2_scale = c("legacy", "coherent"),
   omega_nlambda = 10,
   method = c("mrce_lasso", "multi_enet", "joinet", "spls", "sgl", "mtlasso", "stacking",
     "graph_reg", "univariate"),
@@ -45,7 +46,11 @@ compute_isotwas(
 
 \item{id}{vector, vector of sample ids showing rep to id}
 
-\item{omega_est}{character, 'replicates' or 'mean' to use Y.rep or Y}
+\item{omega_est}{character, passed to compute_omega() as its \code{method}:
+'replicates', 'residuals' or 'mean'}
+
+\item{r2_scale}{character, how methods are scored for comparison:
+'legacy' (the default) or 'coherent'. See Details.}
 
 \item{omega_nlambda}{int, number of omegas to generate}
 
@@ -100,4 +105,14 @@ optimal isoTWAS model
 \description{
 The function runs multivariate regression models for a set of transcripts
 and outputs the best model based on cross-validated R-squared.
+}
+\details{
+The best model per transcript is the which.max of cross-validated R-squared
+across methods. Under \code{r2_scale = 'legacy'}, mrce_lasso, sgl, mtlasso,
+stacking and graph_reg clamp their R-squared at 0 while the other methods
+can score below 0, and a model that selected no SNPs scores 0. On a
+transcript no method predicts, a clamped or empty model therefore wins.
+
+\code{r2_scale = 'coherent'} removes the clamp and scores an empty model
+-Inf. A transcript for which every model is empty is labelled NA.
 }

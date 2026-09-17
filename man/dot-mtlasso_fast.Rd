@@ -16,7 +16,9 @@
   verbose = FALSE,
   seed = 123,
   par = FALSE,
-  n.cores = 1
+  n.cores = 1,
+  r2_method = c("oos", "refit"),
+  floor_r2 = TRUE
 )
 }
 \description{

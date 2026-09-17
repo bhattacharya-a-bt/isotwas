@@ -20,7 +20,9 @@ multivariate_graph_reg(
   verbose = FALSE,
   seed = 123,
   par = FALSE,
-  n.cores = NULL
+  n.cores = NULL,
+  r2_method = c("oos", "refit"),
+  floor_r2 = TRUE
 )
 }
 \arguments{
@@ -58,6 +60,14 @@ If NULL, auto-generated.}
 \item{par}{logical, use parallel processing. Default FALSE.}
 
 \item{n.cores}{int, number of cores for parallel processing. Default NULL (auto-detect).}
+
+\item{r2_method}{character, "oos" for the direct out-of-sample R-squared
+this method has always used, or "refit" for the lm(obs ~ pred) adjusted
+R-squared that calc.r2() applies to the other methods}
+
+\item{floor_r2}{logical, clamp a negative R-squared to 0. TRUE reproduces
+historical behaviour; FALSE makes the score comparable with the methods
+scored through calc.r2()}
 }
 \value{
 isotwas_model object containing:

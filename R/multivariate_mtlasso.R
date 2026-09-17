@@ -34,6 +34,12 @@
 #'     \item "rmtl": Use RMTL package (slower, but supports Trace/Lasso regularization)
 #'   }
 #'
+#' @param r2_method character, "oos" for the direct out-of-sample R-squared
+#'   this method has always used, or "refit" for the lm(obs ~ pred) adjusted
+#'   R-squared that calc.r2() applies to the other methods
+#' @param floor_r2 logical, clamp a negative R-squared to 0. TRUE reproduces
+#'   historical behaviour; FALSE makes the score comparable with the methods
+#'   scored through calc.r2()
 #' @return isotwas_model object containing:
 #'   \itemize{
 #'     \item transcripts: list of transcript_model objects with weights, R2,
@@ -67,8 +73,11 @@ multivariate_mtlasso <- function(X,
                                   seed = 123,
                                   par = FALSE,
                                   n.cores = 1,
-                                  backend = c("fast", "rmtl")) {
+                                  backend = c("fast", "rmtl"),
+                                  r2_method = c("oos", "refit"),
+                                  floor_r2 = TRUE) {
 
+  r2_method <- match.arg(r2_method)
   regularization <- match.arg(regularization)
   backend <- match.arg(backend)
 
@@ -84,12 +93,14 @@ multivariate_mtlasso <- function(X,
                          nlambda = nlambda, lambda_min_ratio = lambda_min_ratio,
                          nfolds = nfolds, standardize = standardize,
                          verbose = verbose, seed = seed,
-                         par = par, n.cores = n.cores))
+                         par = par, n.cores = n.cores,
+                         r2_method = r2_method, floor_r2 = floor_r2))
   } else {
     return(.mtlasso_rmtl(X, Y, regularization = regularization,
                          Lam1_seq = lambda_seq, Lam2 = Lam2,
                          nfolds = nfolds, verbose = verbose,
-                         seed = seed, par = par, n.cores = n.cores))
+                         seed = seed, par = par, n.cores = n.cores,
+                         r2_method = r2_method, floor_r2 = floor_r2))
   }
 }
 
@@ -104,8 +115,11 @@ multivariate_mtlasso <- function(X,
                           nlambda = 20, lambda_min_ratio = 0.01,
                           nfolds = 5, standardize = FALSE,
                           verbose = FALSE, seed = 123,
-                          par = FALSE, n.cores = 1) {
+                          par = FALSE, n.cores = 1,
+                          r2_method = c("oos", "refit"),
+                          floor_r2 = TRUE) {
 
+  r2_method <- match.arg(r2_method)
   set.seed(seed)
   n <- nrow(X)
   p <- ncol(X)
@@ -253,22 +267,9 @@ multivariate_mtlasso <- function(X,
     y <- Y[, j]
     pred <- final_preds[, j]
 
-    ss_res <- sum((y - pred)^2)
-    ss_tot <- sum((y - mean(y))^2)
-
-    if (ss_tot > 0) {
-      r2 <- 1 - ss_res / ss_tot
-      r2_adj <- 1 - (1 - r2) * (n - 1) / (n - 2)
-      r2_vec[j] <- max(0, r2_adj)
-    }
-
-    if (sd(pred) > 0) {
-      r <- cor(y, pred)
-      t_stat <- r * sqrt((n - 2) / (1 - r^2))
-      p_vec[j] <- 2 * pt(-abs(t_stat), df = n - 2)
-    } else {
-      p_vec[j] <- 1
-    }
+    scored <- .score_r2(y, pred, method = r2_method)
+    r2_vec[j] <- if (floor_r2) max(0, scored$R2) else scored$R2
+    p_vec[j] <- scored$P
   }
 
   # Build output
@@ -387,8 +388,11 @@ multivariate_mtlasso <- function(X,
 .mtlasso_rmtl <- function(X, Y, regularization = "L21",
                           Lam1_seq = NULL, Lam2 = 0,
                           nfolds = 5, verbose = FALSE, seed = 123,
-                          par = FALSE, n.cores = 1) {
+                          par = FALSE, n.cores = 1,
+                          r2_method = c("oos", "refit"),
+                          floor_r2 = TRUE) {
 
+  r2_method <- match.arg(r2_method)
   set.seed(seed)
   n <- nrow(X)
   p <- ncol(X)
@@ -488,22 +492,9 @@ multivariate_mtlasso <- function(X,
     y <- Y[, j]
     pred <- cv_preds[, j]
 
-    ss_res <- sum((y - pred)^2)
-    ss_tot <- sum((y - mean(y))^2)
-
-    if (ss_tot > 0) {
-      r2 <- 1 - ss_res / ss_tot
-      r2_adj <- 1 - (1 - r2) * (n - 1) / (n - 2)
-      r2_vec[j] <- max(0, r2_adj)
-    }
-
-    if (sd(pred) > 0) {
-      r <- cor(y, pred)
-      t_stat <- r * sqrt((n - 2) / (1 - r^2))
-      p_vec[j] <- 2 * pt(-abs(t_stat), df = n - 2)
-    } else {
-      p_vec[j] <- 1
-    }
+    scored <- .score_r2(y, pred, method = r2_method)
+    r2_vec[j] <- if (floor_r2) max(0, scored$R2) else scored$R2
+    p_vec[j] <- scored$P
   }
 
   # Build output

@@ -73,7 +73,7 @@ test_that("method = 'mean' returns a huge object with nlambda precision matrices
     expect_identical(dim(om$icov[[1]]), c(4L, 4L))
 })
 
-test_that("CHARACTERIZATION: at R = 1, 'replicates' is identical to 'mean'", {
+test_that("at R = 1, 'replicates' is identical to 'mean'", {
 
     # The consequence of H = I above, at the level of the returned object. The
     # isoTWAS manuscript ran method = 'replicates' with Y.rep = Y and R = 1, so
@@ -140,4 +140,90 @@ test_that("an error inside the function does not leak the sink", {
         silent = TRUE)
 
     expect_identical(sink.number(), before)
+})
+
+# ---- the 'residuals' mode ----------------------------------------------
+
+test_that(".group_project matches the explicit hat matrix, balanced and not", {
+
+    # The whole justification for not forming H: group-mean subtraction is
+    # the exact projection for the one-way design ~id, for equal and unequal
+    # group sizes alike, at O(nrow * ncol) instead of O(nrow^2).
+    set.seed(71)
+    d <- mk_reps(N = 12, G = 4, R = 5)
+    mm <- stats::model.matrix(~ d$id)
+    H <- mm %*% solve(t(mm) %*% mm) %*% t(mm)
+
+    expect_equal(unname(.group_project(d$Y.rep, d$id, "fitted")),
+                 unname(H %*% d$Y.rep))
+    expect_equal(unname(.group_project(d$Y.rep, d$id, "residual")),
+                 unname(d$Y.rep - H %*% d$Y.rep))
+    expect_equal(unname(.group_project(d$Y.rep, d$id, "residual")),
+                 unname(resid_qr(d$Y.rep, d$id)))
+
+    u <- mk_reps(unbalanced = TRUE)
+    expect_equal(unname(.group_project(u$Y.rep, u$id, "residual")),
+                 unname(resid_hat(u$Y.rep, u$id)))
+})
+
+test_that(".group_project rejects a mismatched id", {
+
+    set.seed(72)
+    d <- mk_reps(N = 6, G = 3, R = 3)
+
+    expect_error(.group_project(d$Y.rep, d$id[-1], "residual"),
+                 "must equal length")
+})
+
+test_that("anything constant within a sample cancels in the residual", {
+
+    # Batch correction and covariate residualisation are applied per sample,
+    # so they leave the within-sample deviations untouched.
+    set.seed(73)
+    d <- mk_reps(N = 10, G = 4, R = 6)
+    offset <- matrix(stats::rnorm(10 * 4, sd = 5), 10, 4)
+    grp <- match(d$id, unique(d$id))
+    shifted <- d$Y.rep + offset[grp, , drop = FALSE]
+
+    expect_equal(.group_project(shifted, d$id, "residual"),
+                 .group_project(d$Y.rep, d$id, "residual"))
+})
+
+test_that("'residuals' differs from 'replicates' when replicates vary", {
+
+    skip_if_not_installed("huge")
+
+    set.seed(74)
+    d <- mk_reps(N = 30, G = 4, R = 4, sd = 0.5)
+
+    reps <- compute_omega(Y = d$Y, Y.rep = d$Y.rep, R = 4, id = d$id,
+                          method = "replicates", nlambda = 4)
+    resid <- compute_omega(Y = d$Y, Y.rep = d$Y.rep, R = 4, id = d$id,
+                           method = "residuals", nlambda = 4)
+
+    expect_false(isTRUE(all.equal(reps$icov, resid$icov)))
+})
+
+test_that("'residuals' refuses a design with one replicate per sample", {
+
+    # The residual is identically zero there, so the within-sample covariance
+    # is unidentifiable. Silently degrading to 'mean' would hide that.
+    skip_if_not_installed("huge")
+
+    set.seed(75)
+    Y <- matrix(stats::rnorm(20 * 3), 20, 3)
+
+    expect_error(
+        compute_omega(Y = Y, Y.rep = Y, R = 1, id = paste0("S", seq_len(20)),
+                      method = "residuals", nlambda = 3),
+        ">= 2 replicates")
+})
+
+test_that("at R = 1 the residual is identically zero", {
+
+    set.seed(76)
+    Y <- matrix(stats::rnorm(15 * 3), 15, 3)
+
+    expect_equal(unname(.group_project(Y, paste0("S", seq_len(15)), "residual")),
+                 matrix(0, 15, 3))
 })

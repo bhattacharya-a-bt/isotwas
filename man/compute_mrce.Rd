@@ -16,7 +16,9 @@ compute_mrce(
   verbose,
   seed,
   parallel = FALSE,
-  n.cores = NULL
+  n.cores = NULL,
+  r2_method = c("oos", "refit"),
+  floor_r2 = TRUE
 )
 }
 \arguments{
@@ -43,6 +45,14 @@ compute_mrce(
 \item{parallel}{logical, whether to parallelize CV folds}
 
 \item{n.cores}{int, number of cores for parallelization}
+
+\item{r2_method}{character, "oos" for the direct out-of-sample R-squared
+this method has always used, or "refit" for the lm(obs ~ pred) adjusted
+R-squared that calc.r2() applies to the other methods}
+
+\item{floor_r2}{logical, clamp a negative R-squared to 0. TRUE reproduces
+historical behaviour; FALSE makes the score comparable with the methods
+scored through calc.r2()}
 }
 \value{
 CV MRCE fit

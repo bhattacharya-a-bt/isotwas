@@ -58,6 +58,54 @@
   unchanged: they name members of the `univariate` ensemble rather than
   comparison columns.
 
+## New features
+
+* `compute_omega()` gains `method = 'residuals'`, which runs the graphical
+  lasso on the within-sample deviations of `Y.rep` rather than on the fitted
+  values of a fixed-effect fit on `id`. The existing `'replicates'` computes
+  `H %*% Y.rep`, which replaces every replicate with its sample's mean, so the
+  within-sample quantification noise is removed rather than extracted. At
+  `R = 1` the design is square, the hat matrix is the identity, and
+  `'replicates'` is identical to `'mean'`.
+
+  `'replicates'` remains the default, so existing results reproduce.
+  `'residuals'` requires at least two replicates per sample and errors
+  otherwise, since the within-sample covariance is unidentifiable at `R = 1`.
+
+* `compute_isotwas()` gains `r2_scale`. Methods are compared by a `which.max`
+  over a transcripts-by-methods matrix of cross-validated R-squared, but two
+  scales are in use: `mrce_lasso`, `sgl`, `mtlasso`, `graph_reg` and
+  `stacking` compute a direct out-of-sample R-squared and clamp it at 0, while
+  every other method is scored by `calc.r2()`, the adjusted R-squared of
+  `lm(obs ~ pred)`, which passes negatives through. A model that selected no
+  SNPs is scored 0 as well.
+
+  On a transcript no method can predict, a clamped method's 0 therefore beats
+  every rival's negative score, and an empty model beats a real one.
+  `r2_scale = 'coherent'` removes the clamp and scores an empty model `-Inf`,
+  leaving a transcript no model could fit labelled `NA` rather than assigned
+  an empty winner. `'legacy'` is the default and reproduces current selection.
+
+  The underlying `r2_method` and `floor_r2` arguments are also available on
+  the individual fitting functions.
+
+## Bug fixes (selection labels)
+
+* `get_best_isotwas()` keeps a nested ensemble's leaf label. `compute_isotwas()`
+  builds its `univariate` entry by calling `get_best()` a second time, and that
+  entry's own `$method` is the literal `"best"`; stamping it over the inner
+  label meant every transcript won by the ensemble reported `"best"` instead of
+  `univariate_enet`, `univariate_blup` or `univariate_susie`. Which model wins
+  is unchanged -- only what it is called.
+
+## Performance
+
+* `compute_omega()` no longer forms the `(R*N) x (R*N)` hat matrix. Because the
+  design is one-way on sample id, the projection and its residual are exactly
+  "replace by, or subtract, each sample's mean", for balanced and unbalanced
+  designs alike. This is O(nrow * ncol) rather than O(nrow^2): at N = 1000 and
+  R = 50 the explicit matrix is 18.6 GB. Results are unchanged.
+
 ## Improvements
 
 * `compute_isotwas()` records failed methods in its result. `isotwas_result`
