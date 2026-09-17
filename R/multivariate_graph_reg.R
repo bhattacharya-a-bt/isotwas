@@ -467,6 +467,14 @@ multivariate_graph_reg <- function(X,
 #'   \item "count": Raw count of shared exons
 #' }
 #'
+#' @note Similarity here is over exon IDENTIFIERS, so two isoforms score as
+#'   dissimilar whenever they share sequence through exons that carry different
+#'   IDs -- which is what happens at an alternative 5' or 3' end, where the
+#'   exons overlap heavily but are not the same exon. For a measure based on
+#'   shared exonic base pairs, use \code{\link{similarity_from_gtf}}.
+#'
+#' @seealso \code{\link{similarity_from_gtf}}
+#'
 #' @export
 create_similarity_from_exons <- function(exon_list, method = c("jaccard", "overlap", "count")) {
   method <- match.arg(method)

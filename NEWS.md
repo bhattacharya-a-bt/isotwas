@@ -126,7 +126,40 @@
   run actually used is recorded in the result as `$seed` -- without which a run
   left to the default could not be reproduced at all.
 
-## Performance
+## Performance and tuning
+
+* The MRCE coordinate-descent kernel in `src/mrce-solveb.c` now calls
+  `R_CheckUserInterrupt()` once per outer sweep. It is a `.C()` call, so
+  without it neither Ctrl-C nor `setTimeLimit()` could stop it: one sweep is
+  O((p*q)^2) and `maxit` defaults to 1000, so a single gene could hold a core
+  for tens of minutes with no way to bound it from R. Checked per sweep rather
+  than in the inner loops, where the call overhead would be material; safe
+  because every buffer in the kernel is caller-owned.
+
+* `multivariate_joinet()` exposes `nfolds.int`, previously hardcoded to 10 in
+  both its branches, and `compute_isotwas()` plumbs it through as
+  `joinet_nfolds_int`. joinet is the most expensive method at moderate
+  transcript counts and most of that time is this inner CV.
+
+* `compute_isotwas()` plumbs `sgl_nlambda` through to `multivariate_sgl()`,
+  which could not be tuned without editing the package.
+
+* `similarity_from_gtf()` accepts an already-imported `GRanges` in place of a
+  path, and restricts its own import to `feature.type = "exon"`. It imported
+  the entire annotation on every call, so building matrices for many genes
+  re-read the whole file each time. It also now splits exons by transcript
+  once rather than rebuilding the same subsets inside the O(K^2) pair loop.
+
+  Defaults are unchanged in all four cases.
+
+## Documentation
+
+* `create_similarity_from_exons()` notes that it compares exon IDENTIFIERS, so
+  two isoforms score as dissimilar whenever they share sequence through exons
+  with different IDs -- which is what happens at an alternative 5' or 3' end.
+  `similarity_from_gtf()` is the base-pair measure, and is now cross-referenced.
+
+### Also
 
 * `compute_omega()` no longer forms the `(R*N) x (R*N)` hat matrix. Because the
   design is one-way on sample id, the projection and its residual are exactly

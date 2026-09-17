@@ -30,7 +30,9 @@ compute_isotwas(
   run_all = TRUE,
   return_all = FALSE,
   tol.in = 0.001,
-  maxit.in = 1000
+  maxit.in = 1000,
+  joinet_nfolds_int = 10,
+  sgl_nlambda = 20
 )
 }
 \arguments{
@@ -98,6 +100,10 @@ Can be created using \code{\link{similarity_from_gtf}} or
 \item{tol.in}{numeric, tolerance for objective difference}
 
 \item{maxit.in}{int, maximum number of iterations}
+
+\item{joinet_nfolds_int}{int, folds for joinet's inner cross-validation.}
+
+\item{sgl_nlambda}{int, lambda path length for multivariate_sgl}
 }
 \value{
 optimal isoTWAS model
@@ -115,4 +121,8 @@ transcript no method predicts, a clamped or empty model therefore wins.
 
 \code{r2_scale = 'coherent'} removes the clamp and scores an empty model
 -Inf. A transcript for which every model is empty is labelled NA.
+
+joinet is the most expensive method at moderate transcript counts, and most
+of that time is its inner cross-validation. Lowering
+\code{joinet_nfolds_int} is the first way to make the method set cheaper.
 }

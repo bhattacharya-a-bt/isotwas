@@ -14,7 +14,8 @@ similarity_from_gtf(
 )
 }
 \arguments{
-\item{gtf_path}{character, path to GTF file (can be gzipped)}
+\item{gtf_path}{character, path to GTF file (can be gzipped), or a GRanges
+already imported from one; see Details.}
 
 \item{gene}{character, gene name (HGNC symbol) or Ensembl gene ID}
 
@@ -57,6 +58,11 @@ The Jaccard similarity is computed as:
 \deqn{J(i,j) = \frac{|overlap(exons_i, exons_j)|}{|union(exons_i, exons_j)|}}
 
 where overlap and union are computed in terms of genomic base pairs.
+
+A path is re-imported on every call. When building matrices for many genes,
+import the annotation once with
+\code{rtracklayer::import(path, feature.type = "exon")} and pass the
+resulting GRanges as \code{gtf_path}.
 }
 \examples{
 \dontrun{

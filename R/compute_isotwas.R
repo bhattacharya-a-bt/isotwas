@@ -41,6 +41,8 @@
 #' @param return_all logical, return R2 for all models?
 #' @param tol.in numeric, tolerance for objective difference
 #' @param maxit.in int, maximum number of iterations
+#' @param joinet_nfolds_int int, folds for joinet's inner cross-validation.
+#' @param sgl_nlambda int, lambda path length for multivariate_sgl
 #' @param gene_exp vector, vector of total gene expression
 #' @param run_all logical, run all methods
 #'
@@ -60,6 +62,10 @@
 #'
 #' \code{r2_scale = 'coherent'} removes the clamp and scores an empty model
 #' -Inf. A transcript for which every model is empty is labelled NA.
+#'
+#' joinet is the most expensive method at moderate transcript counts, and most
+#' of that time is its inner cross-validation. Lowering
+#' \code{joinet_nfolds_int} is the first way to make the method set cheaper.
 #'
 #' @return optimal isoTWAS model
 #'
@@ -97,7 +103,9 @@ compute_isotwas <- function(X,
                             run_all = TRUE,
                             return_all = FALSE,
                             tol.in = 1e-3,
-                            maxit.in = 1e3) {
+                            maxit.in = 1e3,
+                            joinet_nfolds_int = 10,
+                            sgl_nlambda = 20) {
 
   # Start timing
   start_time <- Sys.time()
@@ -452,7 +460,8 @@ compute_isotwas <- function(X,
                           par = par,
                           n.cores = n.cores,
                           tx_names = tx_names,
-                          seed = seed)
+                          seed = seed,
+                          nfolds.int = joinet_nfolds_int)
     })
     if (!is.null(joinet_mod)) {
       all_models <- rlist::list.append(all_models, joinet_mod)
@@ -466,6 +475,7 @@ compute_isotwas <- function(X,
       multivariate_sgl(X = X,
                        Y = Y,
                        alpha = alpha,
+                       nlambda = sgl_nlambda,
                        nfolds = nfolds,
                        verbose = FALSE,
                        seed = seed,
