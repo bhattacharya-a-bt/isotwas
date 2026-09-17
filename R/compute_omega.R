@@ -25,8 +25,11 @@ compute_omega <- function(Y,
                           nlambda = 15,
                           verbose = F){
 
+    method = match.arg(method)
+
     if (!verbose){
         sink(file = tempfile())
+        on.exit(sink(), add = TRUE)
     }
     G = ncol(Y)
     N = nrow(Y)
@@ -46,10 +49,6 @@ compute_omega <- function(Y,
         Omega_list = huge::huge(Y.resid,
                                 method = 'glasso',
                                 nlambda=nlambda)
-    }
-
-    if (!verbose){
-        sink()
     }
 
     return(Omega_list)

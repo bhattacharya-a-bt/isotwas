@@ -92,40 +92,52 @@ test_that("CHARACTERIZATION: at R = 1, 'replicates' is identical to 'mean'", {
     expect_equal(reps$icov, mean$icov)
 })
 
-test_that("CHARACTERIZATION: the documented default for `method` errors", {
+test_that("the documented default for `method` is usable", {
 
-    # The signature is method = c('replicates','mean') but there is no
-    # match.arg(), so the branch test `if (method == 'mean')` receives a
-    # length-2 condition. That has been an error since R 4.2, which makes the
-    # exported function unusable at its own default.
+    # The signature is method = c('replicates','mean'). Without match.arg(),
+    # the branch test `if (method == 'mean')` received a length-2 condition,
+    # which has been an error since R 4.2 -- so the exported function could not
+    # be called at its own default.
     skip_if_not_installed("huge")
 
     set.seed(26)
     Y <- matrix(stats::rnorm(20 * 3), 20, 3)
 
-    # The call leaks a sink on the way out (see below), so release it here.
-    on.exit(while (sink.number() > 0) sink(), add = TRUE)
-
-    expect_error(
-        compute_omega(Y = Y, Y.rep = Y, R = 1, id = paste0("S", seq_len(20))),
-        "condition has length")
+    expect_no_error(
+        compute_omega(Y = Y, Y.rep = Y, R = 1, id = paste0("S", seq_len(20)),
+                      nlambda = 3))
 })
 
-test_that("CHARACTERIZATION: an error inside the function leaks the sink", {
+test_that("an unrecognised `method` is rejected by name", {
 
-    # Output is suppressed with sink(tempfile()) and released by a bare sink()
-    # at the end of the body. Any error in between skips the release, leaving
-    # the caller's console redirected for the rest of the session.
     skip_if_not_installed("huge")
 
-    set.seed(27)
+    set.seed(26)
     Y <- matrix(stats::rnorm(20 * 3), 20, 3)
+
+    expect_error(
+        compute_omega(Y = Y, Y.rep = Y, R = 1, id = paste0("S", seq_len(20)),
+                      method = "nonsense", nlambda = 3),
+        "should be one of")
+})
+
+test_that("an error inside the function does not leak the sink", {
+
+    # Output is suppressed with sink(tempfile()). Released by a bare sink() at
+    # the end of the body, any error in between skipped the release and left
+    # the caller's console redirected for the rest of the session.
+    skip_if_not_installed("huge")
 
     before <- sink.number()
     on.exit(while (sink.number() > before) sink(), add = TRUE)
 
-    try(compute_omega(Y = Y, Y.rep = Y, R = 1, id = paste0("S", seq_len(20))),
+    # Y.rep with the wrong number of rows for `id` makes model.matrix and the
+    # matrix product disagree, so the failure happens inside the sunk region.
+    set.seed(27)
+    Y <- matrix(stats::rnorm(20 * 3), 20, 3)
+    try(compute_omega(Y = Y, Y.rep = Y, R = 1, id = paste0("S", seq_len(19)),
+                      method = "replicates", nlambda = 3),
         silent = TRUE)
 
-    expect_gt(sink.number(), before)
+    expect_identical(sink.number(), before)
 })

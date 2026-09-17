@@ -8,7 +8,8 @@ create_isotwas_result(
   best_models,
   method_results = NULL,
   comparison_df = NULL,
-  tx2gene = NULL
+  tx2gene = NULL,
+  failed_methods = NULL
 )
 }
 \arguments{
@@ -19,6 +20,9 @@ create_isotwas_result(
 \item{comparison_df}{Data frame comparing methods}
 
 \item{tx2gene}{Transcript to gene coefficients}
+
+\item{failed_methods}{Data frame of methods that errored, with the message
+each one failed with; NULL or a zero-row frame when all methods succeeded}
 }
 \value{
 An isotwas_result object

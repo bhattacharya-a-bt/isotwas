@@ -53,9 +53,8 @@ univariate_elasticnet <- function(X,
 
     if (par){
         set.seed(seed)
-        models = parallel::mclapply(lapply(seq_len(ncol(Y)), function(i) x[,i]),
+        models = parallel::mclapply(lapply(seq_len(ncol(Y)), function(i) Y[,i]),
                                    FUN = glmnet::cv.glmnet,
-                                   MARGIN = 2,
                                    x = X,
                                    nfolds = nfolds,
                                    keep = T,

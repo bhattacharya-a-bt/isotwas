@@ -208,6 +208,8 @@ get_prediction_matrix <- function(model) {
 #' @param method_results List of isotwas_model objects (one per method)
 #' @param comparison_df Data frame comparing methods
 #' @param tx2gene Transcript to gene coefficients
+#' @param failed_methods Data frame of methods that errored, with the message
+#'   each one failed with; NULL or a zero-row frame when all methods succeeded
 #'
 #' @return An isotwas_result object
 #'
@@ -215,7 +217,8 @@ get_prediction_matrix <- function(model) {
 create_isotwas_result <- function(best_models,
                                    method_results = NULL,
                                    comparison_df = NULL,
-                                   tx2gene = NULL) {
+                                   tx2gene = NULL,
+                                   failed_methods = NULL) {
 
   structure(
     list(
@@ -223,6 +226,7 @@ create_isotwas_result <- function(best_models,
       method_results = method_results,
       comparison = comparison_df,
       tx2gene = tx2gene,
+      failed_methods = failed_methods,
       n_transcripts = length(best_models$transcripts)
     ),
     class = "isotwas_result"
@@ -258,6 +262,14 @@ print.isotwas_result <- function(x, ...) {
 
   if (!is.null(x$tx2gene) && is.data.frame(x$tx2gene)) {
     cat(sprintf("\nTranscript-to-gene model R2: %.4f\n", x$tx2gene$R2[1]))
+  }
+
+  if (!is.null(x$failed_methods) && nrow(x$failed_methods) > 0) {
+    cat(sprintf("\nMethods that failed (%d):\n", nrow(x$failed_methods)))
+    for (i in seq_len(nrow(x$failed_methods))) {
+      cat(sprintf("  %s: %s\n",
+                  x$failed_methods$method[i], x$failed_methods$message[i]))
+    }
   }
 
   invisible(x)

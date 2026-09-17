@@ -203,6 +203,12 @@ compute_isotwas <- function(X,
     }
     method <- c('univariate')
     run_all <- FALSE
+
+    if (scale) {
+      warning("scale = TRUE is ignored for a single transcript: ",
+              "no isoform covariance is estimated when G = 1.")
+      scale <- FALSE
+    }
   }
 
   # ============================================================================
@@ -287,6 +293,7 @@ compute_isotwas <- function(X,
   all_models <- list()
   method_counter <- 0
   failed_methods <- character(0)
+  failed_messages <- character(0)
 
   # ============================================================================
   # RUN PREDICTION METHODS
@@ -315,6 +322,7 @@ compute_isotwas <- function(X,
         message("      [ERROR] ", conditionMessage(e))
       }
       failed_methods <<- c(failed_methods, method_name)
+      failed_messages <<- c(failed_messages, conditionMessage(e))
       return(NULL)
     })
 
@@ -507,7 +515,7 @@ compute_isotwas <- function(X,
     uni_mod <- run_method("Univariate ensemble (univariate)", function() {
       uni_enet <- univariate_elasticnet(X = X,
                                         Y = Y,
-                                        Omega = omega_list[[omega_nlambda]],
+                                        Omega = omega_list$icov[[omega_nlambda]],
                                         family = family,
                                         scale = scale,
                                         alpha = alpha,
@@ -520,7 +528,7 @@ compute_isotwas <- function(X,
 
       uni_blup <- univariate_blup(X = X,
                                   Y = Y,
-                                  Omega = omega_list[[omega_nlambda]],
+                                  Omega = omega_list$icov[[omega_nlambda]],
                                   scale = scale,
                                   nfolds = nfolds,
                                   verbose = FALSE,
@@ -531,7 +539,7 @@ compute_isotwas <- function(X,
 
       uni_susie <- univariate_susie(X = X,
                                     Y = Y,
-                                    Omega = omega_list[[omega_nlambda]],
+                                    Omega = omega_list$icov[[omega_nlambda]],
                                     scale = scale,
                                     alpha = alpha,
                                     nfolds = nfolds,
@@ -555,7 +563,7 @@ compute_isotwas <- function(X,
   }
 
   # Remove all-NA columns from r2_mat
-  r2_mat <- r2_mat[, apply(r2_mat, 2, function(x) !all(is.na(x)))]
+  r2_mat <- r2_mat[, apply(r2_mat, 2, function(x) !all(is.na(x))), drop = FALSE]
 
   # ============================================================================
   # SELECT BEST MODEL
@@ -645,7 +653,10 @@ compute_isotwas <- function(X,
     best_models = isotwas_mod,
     method_results = if (return_all) all_models else NULL,
     comparison_df = r2_mat,
-    tx2gene = tx2gene_coef
+    tx2gene = tx2gene_coef,
+    failed_methods = data.frame(method = failed_methods,
+                                message = failed_messages,
+                                stringsAsFactors = FALSE)
   )
 
   # ============================================================================
