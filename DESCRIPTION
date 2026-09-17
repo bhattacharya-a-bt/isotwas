@@ -19,8 +19,11 @@ Suggests:
     knitr,
     magrittr,
     rmarkdown,
-    tidyverse
+    testthat (>= 3.0.0),
+    tidyverse,
+    withr
 VignetteBuilder: knitr
+Config/testthat/edition: 3
 Imports:
     BiocGenerics,
     GenomicRanges,
