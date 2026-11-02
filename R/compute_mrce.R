@@ -17,9 +17,8 @@
 #' @param r2_method character, "oos" for the direct out-of-sample R-squared
 #'   this method has always used, or "refit" for the lm(obs ~ pred) adjusted
 #'   R-squared that calc.r2() applies to the other methods
-#' @param floor_r2 logical, clamp a negative R-squared to 0. TRUE reproduces
-#'   historical behaviour; FALSE makes the score comparable with the methods
-#'   scored through calc.r2()
+#' @param floor_r2 logical, clamp a negative R-squared to 0, as earlier
+#'   versions did. Default FALSE.
 #'
 #' @return CV MRCE fit
 #'
@@ -37,7 +36,7 @@ compute_mrce = function(X,
                         parallel = FALSE,
                         n.cores = NULL,
                         r2_method = c("oos", "refit"),
-                        floor_r2 = TRUE){
+                        floor_r2 = FALSE){
 
   r2_method = match.arg(r2_method)
 

@@ -100,7 +100,7 @@ test_that("the assembled model is labelled 'best' and carries the R2 matrix", {
     expect_identical(rownames(got$r2_comparison), c("t1", "t2"))
 })
 
-test_that("a transcript missing from a model scores 0 for that model", {
+test_that("a transcript missing from a model scores empty_r2 for that model", {
 
     a <- mk_model("A", c(0.5, 0.1))
     b <- mk_model("B", c(0.2, 0.8))
@@ -108,41 +108,46 @@ test_that("a transcript missing from a model scores 0 for that model", {
 
     got <- get_best_isotwas(list(a, b), G = 2)
 
-    expect_equal(got$r2_comparison["t2", "B"], 0)
+    expect_equal(got$r2_comparison["t2", "B"], -Inf)
     expect_identical(got$best_methods$best_method[2], "A")
+
+    legacy <- get_best_isotwas(list(a, b), G = 2, empty_r2 = 0)
+    expect_equal(legacy$r2_comparison["t2", "B"], 0)
 })
 
-test_that("an NA R2 is treated as 0", {
+test_that("an NA R2 is scored as empty_r2", {
 
     a <- mk_model("A", c(NA_real_, 0.1))
     b <- mk_model("B", c(0.2, 0.8))
 
     got <- get_best_isotwas(list(a, b), G = 2)
+    expect_equal(got$r2_comparison["t1", "A"], -Inf)
 
-    expect_equal(got$r2_comparison["t1", "A"], 0)
+    legacy <- get_best_isotwas(list(a, b), G = 2, empty_r2 = 0)
+    expect_equal(legacy$r2_comparison["t1", "A"], 0)
 })
 
 test_that("empty_r2 = 0 keeps the historical scoring of an empty model", {
 
     # An empty model scored 0 outranks a real model whose adjusted R2 is
-    # negative, and is then emitted as that transcript's weights. This is the
-    # default, so existing results reproduce.
+    # negative, and is then emitted as that transcript's weights. This is what
+    # r2_scale = 'legacy' uses.
     empty <- mk_model("A", c(0.40), n_snps = 0L)
     real <- mk_model("B", c(-0.01), n_snps = 30L)
 
-    got <- get_best_isotwas(list(empty, real), G = 1)
+    got <- get_best_isotwas(list(empty, real), G = 1, empty_r2 = 0)
 
     expect_equal(got$r2_comparison["t1", "A"], 0)
     expect_identical(got$best_methods$best_method, "A")
     expect_identical(nrow(got$transcripts[["t1"]]$weights), 0L)
 })
 
-test_that("empty_r2 = -Inf lets a real model beat an empty one", {
+test_that("by default a real model beats an empty one", {
 
     empty <- mk_model("A", c(0.40), n_snps = 0L)
     real <- mk_model("B", c(-0.01), n_snps = 30L)
 
-    got <- get_best_isotwas(list(empty, real), G = 1, empty_r2 = -Inf)
+    got <- get_best_isotwas(list(empty, real), G = 1)
 
     expect_identical(got$best_methods$best_method, "B")
     expect_identical(nrow(got$transcripts[["t1"]]$weights), 30L)
@@ -258,7 +263,7 @@ test_that("flooring one method's score biases selection toward it", {
     floored <- mk_model("mrce_lasso", c(0), n_snps = 5L)
     honest <- mk_model("spls", c(-0.02), n_snps = 12L)
 
-    got <- get_best_isotwas(list(floored, honest), G = 1)
+    got <- get_best_isotwas(list(floored, honest), G = 1, empty_r2 = 0)
     expect_identical(got$best_methods$best_method, "mrce_lasso")
 
     # With both scored on the same scale the comparison is between two

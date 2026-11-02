@@ -158,7 +158,7 @@ calc.r2 <- function(i,obs,pred){
 }
 
 
-get_best <- function(list_mods, G = G, empty_r2 = 0){
+get_best <- function(list_mods, G = G, empty_r2 = -Inf){
     # Handle new isotwas_model objects
     if (length(list_mods) > 0 && inherits(list_mods[[1]], "isotwas_model")) {
         return(get_best_isotwas(list_mods, G, empty_r2 = empty_r2))
@@ -203,11 +203,12 @@ get_best <- function(list_mods, G = G, empty_r2 = 0){
 #' @param model_list List of isotwas_model objects
 #' @param G Number of transcripts
 #' @param empty_r2 numeric, the score given to a model that selected no SNPs,
-#'   or to a transcript absent from a model. 0 is the historical value; with
-#'   -Inf, a transcript for which every model is empty is labelled NA.
+#'   or to a transcript absent from a model. With the default -Inf, a
+#'   transcript for which every model is empty is labelled NA; earlier versions
+#'   used 0.
 #'
 #' @return An isotwas_model with the best model per transcript
-get_best_isotwas <- function(model_list, G, empty_r2 = 0) {
+get_best_isotwas <- function(model_list, G, empty_r2 = -Inf) {
     # Get transcript names from first model
     tx_names <- names(model_list[[1]]$transcripts)
 

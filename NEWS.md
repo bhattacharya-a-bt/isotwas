@@ -21,6 +21,14 @@
   are now also treated as empty. multi_enet's choice of `alpha` uses the same
   score, so it changes too.
 
+* `compute_isotwas()` now defaults to `r2_scale = 'coherent'` (see New
+  features). Clamped methods no longer win transcripts that no method
+  predicts, and a transcript for which every model is empty is
+  labelled `NA` instead of being assigned an empty model. The fitting
+  functions' `floor_r2` now defaults to `FALSE` and `get_best_isotwas()`'s
+  `empty_r2` to `-Inf`, to match. `r2_scale = 'legacy'` reproduces earlier
+  selection.
+
 ## Bug fixes
 
 * `compute_omega()` now calls `match.arg()` on `method`. Its documented default
@@ -105,7 +113,8 @@
   every rival's negative score, and an empty model beats a real one.
   `r2_scale = 'coherent'` removes the clamp and scores an empty model `-Inf`,
   leaving a transcript no model could fit labelled `NA` rather than assigned
-  an empty winner. `'legacy'` is the default and reproduces current selection.
+  an empty winner. `'coherent'` is the default; `'legacy'` reproduces earlier
+  selection.
 
   The underlying `r2_method` and `floor_r2` arguments are also available on
   the individual fitting functions.

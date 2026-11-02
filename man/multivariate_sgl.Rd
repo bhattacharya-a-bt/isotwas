@@ -17,7 +17,7 @@ multivariate_sgl(
   par = FALSE,
   n.cores = 1,
   r2_method = c("oos", "refit"),
-  floor_r2 = TRUE
+  floor_r2 = FALSE
 )
 }
 \arguments{
@@ -49,9 +49,8 @@ R-squared this method has always used, or "refit" for the
 lm(obs ~ pred) adjusted R-squared that calc.r2() applies to the
 other methods}
 
-\item{floor_r2}{logical, clamp a negative R-squared to 0. TRUE
-reproduces historical behaviour; FALSE makes the score comparable
-with the methods scored through calc.r2()}
+\item{floor_r2}{logical, clamp a negative R-squared to 0, as earlier
+versions did. Default FALSE.}
 }
 \value{
 isotwas_model object

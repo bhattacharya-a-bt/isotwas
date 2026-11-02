@@ -37,9 +37,8 @@
 #' @param r2_method character, "oos" for the direct out-of-sample R-squared
 #'   this method has always used, or "refit" for the lm(obs ~ pred) adjusted
 #'   R-squared that calc.r2() applies to the other methods
-#' @param floor_r2 logical, clamp a negative R-squared to 0. TRUE reproduces
-#'   historical behaviour; FALSE makes the score comparable with the methods
-#'   scored through calc.r2()
+#' @param floor_r2 logical, clamp a negative R-squared to 0, as earlier
+#'   versions did. Default FALSE.
 #' @return isotwas_model object containing:
 #'   \itemize{
 #'     \item transcripts: list of transcript_model objects with weights, R2,
@@ -75,7 +74,7 @@ multivariate_mtlasso <- function(X,
                                   n.cores = 1,
                                   backend = c("fast", "rmtl"),
                                   r2_method = c("oos", "refit"),
-                                  floor_r2 = TRUE) {
+                                  floor_r2 = FALSE) {
 
   r2_method <- match.arg(r2_method)
   regularization <- match.arg(regularization)
@@ -117,7 +116,7 @@ multivariate_mtlasso <- function(X,
                           verbose = FALSE, seed = 123,
                           par = FALSE, n.cores = 1,
                           r2_method = c("oos", "refit"),
-                          floor_r2 = TRUE) {
+                          floor_r2 = FALSE) {
 
   r2_method <- match.arg(r2_method)
   set.seed(seed)
@@ -394,7 +393,7 @@ multivariate_mtlasso <- function(X,
                           nfolds = 5, verbose = FALSE, seed = 123,
                           par = FALSE, n.cores = 1,
                           r2_method = c("oos", "refit"),
-                          floor_r2 = TRUE) {
+                          floor_r2 = FALSE) {
 
   r2_method <- match.arg(r2_method)
   set.seed(seed)

@@ -12,7 +12,7 @@ compute_isotwas(
   R = NULL,
   id,
   omega_est = "replicates",
-  r2_scale = c("legacy", "coherent"),
+  r2_scale = c("coherent", "legacy"),
   omega_nlambda = 10,
   method = c("mrce_lasso", "multi_enet", "joinet", "spls", "sgl", "mtlasso", "stacking",
     "graph_reg", "univariate"),
@@ -52,7 +52,7 @@ compute_isotwas(
 'replicates', 'residuals' or 'mean'}
 
 \item{r2_scale}{character, how methods are scored for comparison:
-'legacy' (the default) or 'coherent'. See Details.}
+'coherent' (the default) or 'legacy'. See Details.}
 
 \item{omega_nlambda}{int, number of omegas to generate}
 
@@ -114,13 +114,14 @@ and outputs the best model based on cross-validated R-squared.
 }
 \details{
 The best model per transcript is the which.max of cross-validated R-squared
-across methods. Under \code{r2_scale = 'legacy'}, mrce_lasso, sgl, mtlasso,
-stacking and graph_reg clamp their R-squared at 0 while the other methods
-can score below 0, and a model that selected no SNPs scores 0. On a
-transcript no method predicts, a clamped or empty model therefore wins.
+across methods. Under the default \code{r2_scale = 'coherent'}, a model
+that selected no SNPs scores -Inf, and a transcript for which every model
+is empty is labelled NA.
 
-\code{r2_scale = 'coherent'} removes the clamp and scores an empty model
--Inf. A transcript for which every model is empty is labelled NA.
+\code{r2_scale = 'legacy'} reproduces the scoring of earlier versions:
+mrce_lasso, sgl, mtlasso, stacking and graph_reg clamp their R-squared at 0
+while the other methods can score below 0, and an empty model scores 0. On
+a transcript no method predicts, a clamped or empty model therefore wins.
 
 joinet is the most expensive method at moderate transcript counts, and most
 of that time is its inner cross-validation. Lowering
