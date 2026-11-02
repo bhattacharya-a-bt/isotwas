@@ -1,5 +1,15 @@
 # isotwas 2.0.0.9000
 
+## Changes to fitted models
+
+* `univariate_elasticnet()` and the final fit of `univariate_susie()` now fit
+  an intercept. Both used `intercept = FALSE` on expression that still carries
+  each feature's mean, so the weights largely reproduced the expression level
+  rather than cis-genetic effects: dense, almost all one sign, with a sum that
+  tracked the feature mean. Weights are now unchanged by adding a constant to
+  expression. SuSiE's cross-validation folds already fitted an intercept, so
+  its reported R-squared did not describe the weights it returned.
+
 ## Bug fixes
 
 * `compute_omega()` now calls `match.arg()` on `method`. Its documented default

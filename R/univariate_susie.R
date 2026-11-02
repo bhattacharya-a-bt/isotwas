@@ -102,7 +102,7 @@ univariate_susie <- function(X,
                                                  FALSE,
                                              scaled_prior_variance = 0.1,
                                              verbose = verbose,
-                                             intercept = F))
+                                             intercept = T))
 
     }
 
