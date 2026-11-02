@@ -68,7 +68,10 @@
 #' of that time is its inner cross-validation. Lowering
 #' \code{joinet_nfolds_int} is the first way to make the method set cheaper.
 #'
-#' @return optimal isoTWAS model
+#' @return an isotwas_result. Its \code{comparison} table holds each method's
+#'   cross-validated R-squared as the method reported it. Selection scores a
+#'   model that selected no SNPs as described in Details, so a method can show
+#'   the highest R-squared in \code{comparison} without being selected.
 #'
 #'
 #' @export

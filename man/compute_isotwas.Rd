@@ -106,7 +106,10 @@ Can be created using \code{\link{similarity_from_gtf}} or
 \item{sgl_nlambda}{int, lambda path length for multivariate_sgl}
 }
 \value{
-optimal isoTWAS model
+an isotwas_result. Its \code{comparison} table holds each method's
+  cross-validated R-squared as the method reported it. Selection scores a
+  model that selected no SNPs as described in Details, so a method can show
+  the highest R-squared in \code{comparison} without being selected.
 }
 \description{
 The function runs multivariate regression models for a set of transcripts
