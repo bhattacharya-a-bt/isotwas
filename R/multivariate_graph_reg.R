@@ -333,6 +333,8 @@ multivariate_graph_reg <- function(X,
     result$lambda_graph_seq <- lambda_graph_seq
   }
 
+  result <- .drop_null_fits(result, Y)
+
   return(result)
 }
 

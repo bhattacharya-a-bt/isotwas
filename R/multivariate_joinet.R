@@ -127,6 +127,8 @@ multivariate_joinet <- function(X,
     n_snps = ncol(X)
   )
 
+  result <- .drop_null_fits(result, Y)
+
   return(result)
 
 

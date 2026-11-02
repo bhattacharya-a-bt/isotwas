@@ -10,6 +10,17 @@
   expression. SuSiE's cross-validation folds already fitted an intercept, so
   its reported R-squared did not describe the weights it returned.
 
+* A cross-validated prediction that is constant or not positively correlated
+  with expression now scores an R-squared of 0, and its model is emptied, as
+  for a model that selected no SNPs. `calc.r2()` and the univariate methods
+  score by the adjusted R-squared of `lm(obs ~ pred)`, which refits the slope,
+  so an anti-correlated prediction used to score a positive R-squared. This
+  happened mostly where cross-validation chose the null end of the lambda
+  path: multi_enet at `alpha = 0` then returns weights of about 1e-38, which
+  were kept and could win selection. Weights all below 1e-8 in absolute value
+  are now also treated as empty. multi_enet's choice of `alpha` uses the same
+  score, so it changes too.
+
 ## Bug fixes
 
 * `compute_omega()` now calls `match.arg()` on `method`. Its documented default

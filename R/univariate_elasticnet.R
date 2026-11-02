@@ -98,12 +98,10 @@ univariate_elasticnet <- function(X,
         weights <- subset(weights, Weight != 0)
 
         best.pred <- models[[i]]$fit.preval[, which.min(models[[i]]$cvm)]
-        reg <- lm(as.numeric(Y[, i]) ~ best.pred)
-
         transcripts[[tx_name]] <- create_transcript_model(
           transcript_id = tx_name,
           weights = weights,
-          r2 = summary(reg)$adj.r.sq,
+          r2 = .score_r2(as.numeric(Y[, i]), best.pred)$R2,
           pvalue = cor.test(as.numeric(Y[, i]), best.pred)$p.value,
           predicted = best.pred
         )
@@ -115,6 +113,8 @@ univariate_elasticnet <- function(X,
       n_samples = nrow(X),
       n_snps = ncol(X)
     )
+
+    result <- .drop_null_fits(result, Y)
 
     return(result)
 

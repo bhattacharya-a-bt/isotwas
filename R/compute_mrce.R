@@ -249,5 +249,7 @@ compute_mrce = function(X,
     n_snps = p
   )
 
+  result <- .drop_null_fits(result, Y)
+
   return(result)
 }

@@ -307,6 +307,8 @@ multivariate_mtlasso <- function(X,
   result$backend <- "fast"
   if (exists("cv_mse")) result$cv_mse <- cv_mse
 
+  result <- .drop_null_fits(result, Y)
+
   return(result)
 }
 
@@ -531,6 +533,8 @@ multivariate_mtlasso <- function(X,
   result$Lam2 <- Lam2
   result$intercepts <- intercepts
   result$backend <- "rmtl"
+
+  result <- .drop_null_fits(result, Y)
 
   return(result)
 }

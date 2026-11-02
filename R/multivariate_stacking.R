@@ -192,6 +192,8 @@ multivariate_stacking <- function(X,
   result$base_methods <- base_methods
   result$stack_weights_matrix <- stack_weights
 
+  result <- .drop_null_fits(result, Y)
+
   return(result)
 }
 

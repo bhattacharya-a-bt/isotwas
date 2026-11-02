@@ -61,11 +61,57 @@ calc.r2 <- function(i,obs,pred){
 
     r2 = summary(stats::lm(obs[,i]~pred[,i]))$adj.r.sq
     ct = stats::cor.test(obs[,i],pred[,i])
-    if (is.na(r2)){r2 = 0}
+    if (is.na(r2) || .no_signal(obs[,i], pred[,i])){r2 = 0}
     p = ct$p.value
     return(list(R2 = r2,
                 P = p))
 
+}
+
+#' Does a prediction carry no signal?
+#'
+#' TRUE when the prediction is constant or not positively correlated with the
+#' observation. lm(obs ~ pred) refits the slope, so without this an
+#' anti-correlated prediction scores a positive R-squared.
+#'
+#' @noRd
+.no_signal <- function(obs, pred) {
+    ok <- is.finite(obs) & is.finite(pred)
+    if (sum(ok) < 3 || !(stats::sd(pred[ok]) > 0) || !(stats::sd(obs[ok]) > 0)) {
+        return(TRUE)
+    }
+    stats::cor(obs[ok], pred[ok]) <= 0
+}
+
+#' Empty the transcript models of a fit that carry no signal
+#'
+#' A transcript whose cross-validated prediction has no signal (see
+#' .no_signal()), or whose weights are all below \code{tol} in absolute value,
+#' is given no weights and an R-squared of 0, as for a model that selected no
+#' SNPs.
+#'
+#' @param model an isotwas_model
+#' @param Y matrix, the expression the model was fitted to, one column per
+#'   transcript in the order of model$transcripts
+#' @param tol numeric, weights below this are treated as zero
+#'
+#' @return the isotwas_model, with its summary updated
+#'
+#' @noRd
+.drop_null_fits <- function(model, Y, tol = 1e-8) {
+    Y <- as.matrix(Y)
+    for (i in seq_along(model$transcripts)) {
+        tm <- model$transcripts[[i]]
+        w <- tm$weights
+        if (is.null(w) || nrow(w) == 0) next
+        if (max(abs(w$Weight)) >= tol && !is.null(tm$predicted) &&
+            !.no_signal(Y[, i], tm$predicted)) next
+        model$transcripts[[i]]$weights <- w[0, , drop = FALSE]
+        model$transcripts[[i]]$r2 <- 0
+        model$summary$r2[i] <- 0
+        model$summary$n_snps_selected[i] <- 0L
+    }
+    model
 }
 
 
@@ -90,7 +136,7 @@ calc.r2 <- function(i,obs,pred){
 
     if (method == "refit") {
         r2 <- summary(stats::lm(obs ~ pred))$adj.r.sq
-        if (is.na(r2)) r2 <- 0
+        if (is.na(r2) || .no_signal(obs, pred)) r2 <- 0
     } else {
         ss_res <- sum((obs - pred)^2)
         ss_tot <- sum((obs - mean(obs))^2)

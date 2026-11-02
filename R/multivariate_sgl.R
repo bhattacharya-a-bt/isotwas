@@ -210,6 +210,8 @@ multivariate_sgl <- function(X,
   result$cv_mse <- cv_mse
   result$lambda_seq <- lambda_seq
 
+  result <- .drop_null_fits(result, Y)
+
   return(result)
 }
 
