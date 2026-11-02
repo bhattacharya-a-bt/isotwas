@@ -219,9 +219,9 @@ ttt = merge(out_df,
   
 isoform_new = ttt %>%
   group_by(Gene) %>%
-  summarise(Feature = Feature,
-            Confirmation.P = isotwas::p_confirm(P,alpha = alpha2))
-isoform_new = merge(isoform_new,ttt,by=c('Gene','Feature'))
+  mutate(Confirmation.P = isotwas::p_confirm(P,alpha = alpha2)) %>%
+  ungroup() %>%
+  as.data.frame()
 isoform_new$Confirmation.P = ifelse(isoform_new$Screen.P.Adjusted < 0.05,
                                     isoform_new$Confirmation.P,
                                     1)
