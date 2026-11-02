@@ -56,7 +56,7 @@ compute_fixed = function(X,
 #' to avoid redundant computation in cross-validation loops.
 #'
 #' @param xtx matrix, precomputed crossprod(X) after centering
-#' @param xtyom matrix, precomputed crossprod(X,Y) %*% Omega after centering
+#' @param xtyom matrix, precomputed crossprod(X,Y) \%*\% Omega after centering
 #' @param tolmult numeric, precomputed sum(crossprod(Y)*Omega) for tolerance scaling
 #' @param n int, number of samples
 #' @param p int, number of SNPs

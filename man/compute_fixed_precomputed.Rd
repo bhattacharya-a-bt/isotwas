@@ -24,7 +24,7 @@ compute_fixed_precomputed(
 \arguments{
 \item{xtx}{matrix, precomputed crossprod(X) after centering}
 
-\item{xtyom}{matrix, precomputed crossprod(X,Y) %*% Omega after centering}
+\item{xtyom}{matrix, precomputed crossprod(X,Y) \%*\% Omega after centering}
 
 \item{tolmult}{numeric, precomputed sum(crossprod(Y)*Omega) for tolerance scaling}
 
