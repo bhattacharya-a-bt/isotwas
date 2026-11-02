@@ -34,6 +34,11 @@
 #' @param par logical, use parallel processing. Default FALSE.
 #' @param n.cores int, number of cores for parallel processing. Default NULL (auto-detect).
 #'
+#' @param r2_method character, "oos" for the direct out-of-sample R-squared
+#'   this method has always used, or "refit" for the lm(obs ~ pred) adjusted
+#'   R-squared that calc.r2() applies to the other methods
+#' @param floor_r2 logical, clamp a negative R-squared to 0, as earlier
+#'   versions did. Default FALSE.
 #' @return isotwas_model object containing:
 #'   \itemize{
 #'     \item transcripts: list of transcript_model objects
@@ -67,7 +72,11 @@ multivariate_graph_reg <- function(X,
                                     verbose = FALSE,
                                     seed = 123,
                                     par = FALSE,
-                                    n.cores = NULL) {
+                                    n.cores = NULL,
+                                    r2_method = c("oos", "refit"),
+                                    floor_r2 = FALSE) {
+
+  r2_method <- match.arg(r2_method)
 
   set.seed(seed)
   n <- nrow(X)
@@ -206,8 +215,9 @@ multivariate_graph_reg <- function(X,
     # Run CV tasks (parallel or sequential)
     if (par && !is.null(n.cores) && n.cores > 1) {
       if (verbose) cat(sprintf("  Running in parallel with %d cores...\n", n.cores))
-      cv_task_results <- parallel::mclapply(1:n_tasks, run_cv_task,
-                                             mc.cores = min(n.cores, n_tasks))
+      cv_task_results <- .mclapply_seeded(1:n_tasks, run_cv_task,
+                                          mc.cores = min(n.cores, n_tasks),
+                                          seed = seed)
     } else {
       if (verbose) cat("  Running sequentially...\n")
       cv_task_results <- lapply(1:n_tasks, run_cv_task)
@@ -256,8 +266,9 @@ multivariate_graph_reg <- function(X,
   }
 
   if (par && !is.null(n.cores) && n.cores > 1) {
-    fold_results <- parallel::mclapply(1:nfolds, run_final_fold,
-                                        mc.cores = min(n.cores, nfolds))
+    fold_results <- .mclapply_seeded(1:nfolds, run_final_fold,
+                                     mc.cores = min(n.cores, nfolds),
+                                     seed = seed)
   } else {
     fold_results <- lapply(1:nfolds, run_final_fold)
   }
@@ -278,22 +289,9 @@ multivariate_graph_reg <- function(X,
     y <- Y[, j]
     pred <- final_preds[, j]
 
-    ss_res <- sum((y - pred)^2)
-    ss_tot <- sum((y - mean(y))^2)
-
-    if (ss_tot > 0) {
-      r2 <- 1 - ss_res / ss_tot
-      r2_adj <- 1 - (1 - r2) * (n - 1) / (n - 2)
-      r2_vec[j] <- max(0, r2_adj)
-    }
-
-    if (sd(pred) > 0) {
-      r <- cor(y, pred)
-      t_stat <- r * sqrt((n - 2) / (1 - r^2))
-      p_vec[j] <- 2 * pt(-abs(t_stat), df = n - 2)
-    } else {
-      p_vec[j] <- 1
-    }
+    scored <- .score_r2(y, pred, method = r2_method)
+    r2_vec[j] <- if (floor_r2) max(0, scored$R2) else scored$R2
+    p_vec[j] <- scored$P
   }
 
   # Build output
@@ -316,7 +314,7 @@ multivariate_graph_reg <- function(X,
   }
 
   result <- create_isotwas_model(
-    method = "graph_regularized",
+    method = "graph_reg",
     transcripts = transcripts,
     n_samples = n,
     n_snps = p
@@ -333,6 +331,8 @@ multivariate_graph_reg <- function(X,
     result$lambda1_seq <- lambda1_seq
     result$lambda_graph_seq <- lambda_graph_seq
   }
+
+  result <- .drop_null_fits(result, Y)
 
   return(result)
 }
@@ -467,6 +467,14 @@ multivariate_graph_reg <- function(X,
 #'   \item "overlap": Overlap coefficient = |shared| / min(|A|, |B|)
 #'   \item "count": Raw count of shared exons
 #' }
+#'
+#' @note Similarity here is over exon IDENTIFIERS, so two isoforms score as
+#'   dissimilar whenever they share sequence through exons that carry different
+#'   IDs -- which is what happens at an alternative 5' or 3' end, where the
+#'   exons overlap heavily but are not the same exon. For a measure based on
+#'   shared exonic base pairs, use \code{\link{similarity_from_gtf}}.
+#'
+#' @seealso \code{\link{similarity_from_gtf}}
 #'
 #' @export
 create_similarity_from_exons <- function(exon_list, method = c("jaccard", "overlap", "count")) {

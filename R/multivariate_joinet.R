@@ -14,6 +14,12 @@
 #' @param n.cores int, number of parallel cores
 #' @param tx_names vector, character vector of tx names in order of columns of Y
 #' @param seed int, random seed
+#' @param nfolds.int int, folds for joinet's inner cross-validation.
+#'
+#' @details
+#' joinet is the most expensive method at moderate transcript counts, and most
+#' of that time is its inner cross-validation. Lowering \code{nfolds.int} is
+#' the first way to make it cheaper.
 #'
 #' @return data frame of elastic net, lasso, and LMM based predictions
 #'
@@ -35,7 +41,8 @@ multivariate_joinet <- function(X,
                                 par = F,
                                 n.cores = NULL,
                                 tx_names = NULL,
-                                seed){
+                                seed,
+                                nfolds.int = 10){
 
   if (!is.null(colnames(Y))){
     tx_names = colnames(Y)
@@ -57,7 +64,7 @@ multivariate_joinet <- function(X,
                                X = X,
                                family="gaussian",
                                nfolds.ext=nfolds,
-                               nfolds.int=10,
+                               nfolds.int=nfolds.int,
                                alpha.base=alpha,
                                alpha.meta=alpha,
                                parallel = T,
@@ -70,7 +77,7 @@ multivariate_joinet <- function(X,
                                X = X,
                                family="gaussian",
                                nfolds.ext=nfolds,
-                               nfolds.int=10,
+                               nfolds.int=nfolds.int,
                                alpha.base=alpha,
                                alpha.meta=alpha,
                                parallel = F,
@@ -119,6 +126,8 @@ multivariate_joinet <- function(X,
     n_samples = nrow(X),
     n_snps = ncol(X)
   )
+
+  result <- .drop_null_fits(result, Y)
 
   return(result)
 

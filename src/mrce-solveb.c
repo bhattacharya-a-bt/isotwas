@@ -1,5 +1,6 @@
 #include <R.h>
 #include <Rinternals.h>
+#include <R_ext/Utils.h>
 #include <math.h>
 
 
@@ -18,6 +19,10 @@ void blasso(double * B, double * S, double *M, double *Om, double * soft, int * 
     max_diff=*tol+1.0;
     while( (max_diff > *tol) && (kit < *maxit) )
     {
+        /* Once per sweep. The long jump is safe only while every buffer
+           here stays caller-owned. */
+        R_CheckUserInterrupt();
+
         kit++;
         max_diff = 0.0;
         soft_rc=soft;

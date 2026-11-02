@@ -19,7 +19,9 @@ multivariate_mtlasso(
   seed = 123,
   par = FALSE,
   n.cores = 1,
-  backend = c("fast", "rmtl")
+  backend = c("fast", "rmtl"),
+  r2_method = c("oos", "refit"),
+  floor_r2 = FALSE
 )
 }
 \arguments{
@@ -62,11 +64,19 @@ If NULL, automatically generates a sequence.}
   \item "fast": Custom fast implementation optimized for shared X (default)
   \item "rmtl": Use RMTL package (slower, but supports Trace/Lasso regularization)
 }}
+
+\item{r2_method}{character, "oos" for the direct out-of-sample R-squared
+this method has always used, or "refit" for the lm(obs ~ pred) adjusted
+R-squared that calc.r2() applies to the other methods}
+
+\item{floor_r2}{logical, clamp a negative R-squared to 0, as earlier
+versions did. Default FALSE.}
 }
 \value{
 isotwas_model object containing:
   \itemize{
-    \item transcripts: list of transcript_model objects with weights, R2, pvalues
+    \item transcripts: list of transcript_model objects with weights, R2,
+      pvalues and the regularization each was fitted with
     \item best_lambda: optimal lambda from CV
     \item regularization: type of regularization used
   }

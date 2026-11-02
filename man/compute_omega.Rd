@@ -9,7 +9,7 @@ compute_omega(
   Y.rep,
   R,
   id,
-  method = c("replicates", "mean"),
+  method = c("replicates", "residuals", "mean"),
   nlambda = 15,
   verbose = F
 )
@@ -23,7 +23,8 @@ compute_omega(
 
 \item{id}{vector, vector of sample ids showing rep to id}
 
-\item{method}{character, use Y.rep or Y}
+\item{method}{character, one of 'replicates', 'residuals' or 'mean'; see
+Details.}
 
 \item{nlambda}{int, number of matrices to produce in terms of sparsity}
 
@@ -35,4 +36,15 @@ covariance and/or precision matrix list in huge form
 \description{
 The function computes the covariance and precision matrix between
 columns of the isoform matrix
+}
+\details{
+\code{'mean'} runs the graphical lasso on \code{Y}.
+
+\code{'replicates'} (the default) runs it on each sample's mean across
+replicates in \code{Y.rep}, so within-sample variation is removed. With
+\code{R = 1} it is identical to \code{'mean'}.
+
+\code{'residuals'} runs it on the within-sample deviations from those
+means, the isoform-level technical covariance that replicates carry. It
+needs at least two replicates per sample.
 }

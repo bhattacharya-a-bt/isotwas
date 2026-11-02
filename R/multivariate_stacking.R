@@ -18,6 +18,11 @@
 #' @param parallel logical, use parallel processing for base methods
 #' @param n.cores int, number of cores for parallel processing
 #'
+#' @param r2_method character, "oos" for the direct out-of-sample R-squared
+#'   this method has always used, or "refit" for the lm(obs ~ pred) adjusted
+#'   R-squared that calc.r2() applies to the other methods
+#' @param floor_r2 logical, clamp a negative R-squared to 0, as earlier
+#'   versions did. Default FALSE.
 #' @return isotwas_model object with stacked predictions
 #'
 #' @export
@@ -32,7 +37,11 @@ multivariate_stacking <- function(X,
                                    verbose = FALSE,
                                    seed = 123,
                                    parallel = FALSE,
-                                   n.cores = 1) {
+                                   n.cores = 1,
+                                   r2_method = c("oos", "refit"),
+                                   floor_r2 = FALSE) {
+
+  r2_method <- match.arg(r2_method)
 
   set.seed(seed)
   n <- nrow(X)
@@ -89,10 +98,10 @@ multivariate_stacking <- function(X,
 
     # Fit all base methods (optionally in parallel)
     if (parallel && n.cores > 1 && length(base_methods) > 1) {
-      fold_preds <- parallel::mclapply(base_methods, function(method) {
+      fold_preds <- .mclapply_seeded(base_methods, function(method) {
         .fit_base_method_fast(method, X_train, Y_train, X_test,
                               param_cache[[method]], seed + fold_idx)
-      }, mc.cores = min(n.cores, length(base_methods)))
+      }, mc.cores = min(n.cores, length(base_methods)), seed = seed + fold_idx)
       names(fold_preds) <- base_methods
     } else {
       fold_preds <- lapply(base_methods, function(method) {
@@ -151,22 +160,9 @@ multivariate_stacking <- function(X,
     y <- Y[, j]
     pred <- final_preds[, j]
 
-    ss_res <- sum((y - pred)^2)
-    ss_tot <- sum((y - mean(y))^2)
-
-    if (ss_tot > 0) {
-      r2 <- 1 - ss_res / ss_tot
-      r2_adj <- 1 - (1 - r2) * (n - 1) / (n - 2)
-      r2_vec[j] <- max(0, r2_adj)
-    }
-
-    if (sd(pred) > 0) {
-      r <- cor(y, pred)
-      t_stat <- r * sqrt((n - 2) / (1 - r^2))
-      p_vec[j] <- 2 * pt(-abs(t_stat), df = n - 2)
-    } else {
-      p_vec[j] <- 1
-    }
+    scored <- .score_r2(y, pred, method = r2_method)
+    r2_vec[j] <- if (floor_r2) max(0, scored$R2) else scored$R2
+    p_vec[j] <- scored$P
   }
 
   # Build output
@@ -194,6 +190,8 @@ multivariate_stacking <- function(X,
 
   result$base_methods <- base_methods
   result$stack_weights_matrix <- stack_weights
+
+  result <- .drop_null_fits(result, Y)
 
   return(result)
 }

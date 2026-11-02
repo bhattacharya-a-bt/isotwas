@@ -12,6 +12,7 @@ compute_isotwas(
   R = NULL,
   id,
   omega_est = "replicates",
+  r2_scale = c("coherent", "legacy"),
   omega_nlambda = 10,
   method = c("mrce_lasso", "multi_enet", "joinet", "spls", "sgl", "mtlasso", "stacking",
     "graph_reg", "univariate"),
@@ -29,7 +30,9 @@ compute_isotwas(
   run_all = TRUE,
   return_all = FALSE,
   tol.in = 0.001,
-  maxit.in = 1000
+  maxit.in = 1000,
+  joinet_nfolds_int = 10,
+  sgl_nlambda = 20
 )
 }
 \arguments{
@@ -45,7 +48,11 @@ compute_isotwas(
 
 \item{id}{vector, vector of sample ids showing rep to id}
 
-\item{omega_est}{character, 'replicates' or 'mean' to use Y.rep or Y}
+\item{omega_est}{character, passed to compute_omega() as its \code{method}:
+'replicates', 'residuals' or 'mean'}
+
+\item{r2_scale}{character, how methods are scored for comparison:
+'coherent' (the default) or 'legacy'. See Details.}
 
 \item{omega_nlambda}{int, number of omegas to generate}
 
@@ -93,11 +100,33 @@ Can be created using \code{\link{similarity_from_gtf}} or
 \item{tol.in}{numeric, tolerance for objective difference}
 
 \item{maxit.in}{int, maximum number of iterations}
+
+\item{joinet_nfolds_int}{int, folds for joinet's inner cross-validation.}
+
+\item{sgl_nlambda}{int, lambda path length for multivariate_sgl}
 }
 \value{
-optimal isoTWAS model
+an isotwas_result. Its \code{comparison} table holds each method's
+  cross-validated R-squared as the method reported it. Selection scores a
+  model that selected no SNPs as described in Details, so a method can show
+  the highest R-squared in \code{comparison} without being selected.
 }
 \description{
 The function runs multivariate regression models for a set of transcripts
 and outputs the best model based on cross-validated R-squared.
+}
+\details{
+The best model per transcript is the which.max of cross-validated R-squared
+across methods. Under the default \code{r2_scale = 'coherent'}, a model
+that selected no SNPs scores -Inf, and a transcript for which every model
+is empty is labelled NA.
+
+\code{r2_scale = 'legacy'} reproduces the scoring of earlier versions:
+mrce_lasso, sgl, mtlasso, stacking and graph_reg clamp their R-squared at 0
+while the other methods can score below 0, and an empty model scores 0. On
+a transcript no method predicts, a clamped or empty model therefore wins.
+
+joinet is the most expensive method at moderate transcript counts, and most
+of that time is its inner cross-validation. Lowering
+\code{joinet_nfolds_int} is the first way to make the method set cheaper.
 }

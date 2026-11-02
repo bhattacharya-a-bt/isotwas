@@ -68,7 +68,7 @@ univariate_blup <- function(X,
     }
 
     r2.vec = sapply(1:ncol(Y),function(x){
-      summary((lm(Y[,x] ~ pred[,x])))$adj.r.sq
+      .score_r2(Y[,x], pred[,x])$R2
     })
 
 
@@ -107,6 +107,8 @@ univariate_blup <- function(X,
       n_samples = nrow(X),
       n_snps = ncol(X)
     )
+
+    result <- .drop_null_fits(result, Y)
 
     return(result)
 

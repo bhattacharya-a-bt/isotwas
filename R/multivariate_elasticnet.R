@@ -186,11 +186,13 @@ multivariate_elasticnet <- function(X,
     }
 
     result <- create_isotwas_model(
-      method = "multivariate_enet",
+      method = "multi_enet",
       transcripts = transcripts,
       n_samples = nrow(X),
       n_snps = ncol(X)
     )
+
+    result <- .drop_null_fits(result, Y)
 
     return(result)
 

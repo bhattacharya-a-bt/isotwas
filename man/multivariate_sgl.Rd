@@ -15,7 +15,9 @@ multivariate_sgl(
   verbose = FALSE,
   seed = 123,
   par = FALSE,
-  n.cores = 1
+  n.cores = 1,
+  r2_method = c("oos", "refit"),
+  floor_r2 = FALSE
 )
 }
 \arguments{
@@ -41,6 +43,14 @@ alpha=1 is pure LASSO, alpha=0 is pure group LASSO}
 \item{par}{logical, use parallel processing for CV folds}
 
 \item{n.cores}{int, number of cores for parallel processing}
+
+\item{r2_method}{character, "oos" for the direct out-of-sample
+R-squared this method has always used, or "refit" for the
+lm(obs ~ pred) adjusted R-squared that calc.r2() applies to the
+other methods}
+
+\item{floor_r2}{logical, clamp a negative R-squared to 0, as earlier
+versions did. Default FALSE.}
 }
 \value{
 isotwas_model object

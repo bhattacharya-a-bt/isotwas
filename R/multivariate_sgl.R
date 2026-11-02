@@ -20,6 +20,12 @@
 #' @param seed int, random seed
 #' @param par logical, use parallel processing for CV folds
 #' @param n.cores int, number of cores for parallel processing
+#' @param r2_method character, "oos" for the direct out-of-sample
+#'   R-squared this method has always used, or "refit" for the
+#'   lm(obs ~ pred) adjusted R-squared that calc.r2() applies to the
+#'   other methods
+#' @param floor_r2 logical, clamp a negative R-squared to 0, as earlier
+#'   versions did. Default FALSE.
 #'
 #' @return isotwas_model object
 #'
@@ -34,8 +40,11 @@ multivariate_sgl <- function(X,
                               verbose = FALSE,
                               seed = 123,
                               par = FALSE,
-                              n.cores = 1) {
+                              n.cores = 1,
+                              r2_method = c("oos", "refit"),
+                              floor_r2 = FALSE) {
 
+  r2_method <- match.arg(r2_method)
   set.seed(seed)
   n <- nrow(X)
   p <- ncol(X)
@@ -107,7 +116,9 @@ multivariate_sgl <- function(X,
 
   # Run CV folds (parallel or sequential)
   if (par && n.cores > 1) {
-    fold_results <- parallel::mclapply(1:nfolds, run_fold, mc.cores = min(n.cores, nfolds))
+    fold_results <- .mclapply_seeded(1:nfolds, run_fold,
+                                     mc.cores = min(n.cores, nfolds),
+                                     seed = seed)
   } else {
     fold_results <- lapply(1:nfolds, function(fold_idx) {
       if (verbose) cat(sprintf("  Fold %d/%d\n", fold_idx, nfolds))
@@ -161,22 +172,9 @@ multivariate_sgl <- function(X,
     y <- Y[, j]
     pred <- final_preds[, j]
 
-    ss_res <- sum((y - pred)^2)
-    ss_tot <- sum((y - mean(y))^2)
-
-    if (ss_tot > 0) {
-      r2 <- 1 - ss_res / ss_tot
-      r2_adj <- 1 - (1 - r2) * (n - 1) / (n - 2)
-      r2_vec[j] <- max(0, r2_adj)
-    }
-
-    if (sd(pred) > 0) {
-      r <- cor(y, pred)
-      t_stat <- r * sqrt((n - 2) / (1 - r^2))
-      p_vec[j] <- 2 * pt(-abs(t_stat), df = n - 2)
-    } else {
-      p_vec[j] <- 1
-    }
+    scored <- .score_r2(y, pred, method = r2_method)
+    r2_vec[j] <- if (floor_r2) max(0, scored$R2) else scored$R2
+    p_vec[j] <- scored$P
   }
 
   # Build output
@@ -199,7 +197,7 @@ multivariate_sgl <- function(X,
   }
 
   result <- create_isotwas_model(
-    method = "sparse_group_lasso",
+    method = "sgl",
     transcripts = transcripts,
     n_samples = n,
     n_snps = p
@@ -210,6 +208,8 @@ multivariate_sgl <- function(X,
   result$best_lambda <- best_lambda
   result$cv_mse <- cv_mse
   result$lambda_seq <- lambda_seq
+
+  result <- .drop_null_fits(result, Y)
 
   return(result)
 }

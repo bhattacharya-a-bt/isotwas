@@ -4,7 +4,8 @@
 #' gene based on shared exon structure. This matrix can be used with
 #' \code{\link{multivariate_graph_reg}} for graph-regularized prediction.
 #'
-#' @param gtf_path character, path to GTF file (can be gzipped)
+#' @param gtf_path character, path to GTF file (can be gzipped), or a GRanges
+#'   already imported from one; see Details.
 #' @param gene character, gene name (HGNC symbol) or Ensembl gene ID
 #' @param method character, similarity method:
 #'   \itemize{
@@ -37,6 +38,11 @@
 #'
 #' where overlap and union are computed in terms of genomic base pairs.
 #'
+#' A path is re-imported on every call. When building matrices for many genes,
+#' import the annotation once with
+#' \code{rtracklayer::import(path, feature.type = "exon")} and pass the
+#' resulting GRanges as \code{gtf_path}.
+#'
 #' @examples
 #' \dontrun{
 #' # Create similarity matrix for BRCA1 isoforms
@@ -65,9 +71,13 @@ similarity_from_gtf <- function(gtf_path,
     stop("Package 'rtracklayer' is required. Install with: BiocManager::install('rtracklayer')")
   }
 
-  # Import GTF
-  if (verbose) message("Reading GTF file...")
-  gtf <- rtracklayer::import(gtf_path)
+  # Import GTF exons, unless a GRanges was passed
+  if (inherits(gtf_path, "GRanges")) {
+    gtf <- gtf_path
+  } else {
+    if (verbose) message("Reading GTF file...")
+    gtf <- rtracklayer::import(gtf_path, feature.type = "exon")
+  }
 
   # Find the gene
   gene_match <- .find_gene_in_gtf(gtf, gene)
@@ -132,15 +142,16 @@ similarity_from_gtf <- function(gtf_path,
     sum(exons$transcript_id == tx, na.rm = TRUE)
   })
 
+  exons_by_tx <- split(exons, factor(exons$transcript_id,
+                                     levels = all_transcripts))
+
   for (i in 1:n) {
     sim_matrix[i, i] <- 1  # Self-similarity
 
     if (i < n) {
       for (j in (i + 1):n) {
-        exons_i <- exons[exons$transcript_id == all_transcripts[i]]
-        exons_j <- exons[exons$transcript_id == all_transcripts[j]]
-
-        sim <- .compute_exon_similarity(exons_i, exons_j, method)
+        sim <- .compute_exon_similarity(exons_by_tx[[i]], exons_by_tx[[j]],
+                                        method)
 
         sim_matrix[i, j] <- sim
         sim_matrix[j, i] <- sim

@@ -83,7 +83,7 @@ univariate_susie <- function(X,
 
     #r2.vec = sapply(1:ncol(Y),calc.r2,Y,pred)
     r2.vec = sapply(1:ncol(Y),function(x){
-      summary((lm(Y[,x] ~ pred[,x])))$adj.r.sq
+      .score_r2(Y[,x], pred[,x])$R2
     })
     P = sapply(1:ncol(Y),function(x){
       cor.test(Y[,x], pred[,x])$p.value
@@ -102,7 +102,7 @@ univariate_susie <- function(X,
                                                  FALSE,
                                              scaled_prior_variance = 0.1,
                                              verbose = verbose,
-                                             intercept = F))
+                                             intercept = T))
 
     }
 
@@ -131,6 +131,8 @@ univariate_susie <- function(X,
       n_samples = nrow(X),
       n_snps = ncol(X)
     )
+
+    result <- .drop_null_fits(result, Y)
 
     return(result)
 

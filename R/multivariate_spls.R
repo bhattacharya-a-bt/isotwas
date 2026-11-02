@@ -93,7 +93,9 @@ multivariate_spls <- function(X,
 
   # Run CV folds (parallel or sequential)
   if (par && !is.null(n.cores) && n.cores > 1) {
-    fold_results <- parallel::mclapply(1:nfolds, run_fold, mc.cores = min(n.cores, nfolds))
+    fold_results <- .mclapply_seeded(1:nfolds, run_fold,
+                                     mc.cores = min(n.cores, nfolds),
+                                     seed = seed)
   } else {
     fold_results <- lapply(1:nfolds, run_fold)
   }
@@ -132,6 +134,8 @@ multivariate_spls <- function(X,
     n_samples = nrow(X),
     n_snps = ncol(X)
   )
+
+  result <- .drop_null_fits(result, Y)
 
   return(result)
 

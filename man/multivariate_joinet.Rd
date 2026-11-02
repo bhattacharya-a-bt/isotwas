@@ -15,7 +15,8 @@ multivariate_joinet(
   par = F,
   n.cores = NULL,
   tx_names = NULL,
-  seed
+  seed,
+  nfolds.int = 10
 )
 }
 \arguments{
@@ -40,6 +41,8 @@ multivariate_joinet(
 \item{tx_names}{vector, character vector of tx names in order of columns of Y}
 
 \item{seed}{int, random seed}
+
+\item{nfolds.int}{int, folds for joinet's inner cross-validation.}
 }
 \value{
 data frame of elastic net, lasso, and LMM based predictions
@@ -47,4 +50,9 @@ data frame of elastic net, lasso, and LMM based predictions
 \description{
 The function trains multivariate elastic net models for all
 isoform transcripts jointly
+}
+\details{
+joinet is the most expensive method at moderate transcript counts, and most
+of that time is its inner cross-validation. Lowering \code{nfolds.int} is
+the first way to make it cheaper.
 }
