@@ -51,28 +51,25 @@ multivariate_spls <- function(X,
   pred = matrix(ncol = ncol(Y),
                 nrow = nrow(Y))
 
+  # spls::cv.spls and spls::spls, reproduced exactly in .cv_spls and
+  # .spls_fit (see spls_fast.R)
+  Ym = as.matrix(Y)
   set.seed(seed)
   max_K = min(ncol(Y),3)
-  opt_model = spls::cv.spls(x = X,
-                            y = Y,
-                            fold = nfolds,
-                            K = c(1:max_K),
-                            eta = seq(.1,.9,.1),
-                            scale.x=F,
-                            scale.y=F,
-                            plot.it = F)
+  opt_model = .cv_spls(x = X,
+                       y = Ym,
+                       fold = nfolds,
+                       K = c(1:max_K),
+                       eta = seq(.1,.9,.1))
 
-  model_out = spls::spls(x = X,
-                         y = Y,
-                         K = opt_model$K.opt,
-                         eta = opt_model$eta.opt,
-                         scale.x=F,
-                         scale.y=F)
-  coef_mat = coef(model_out)
+  model_out = .spls_fit(.spls_prep(X, Ym),
+                        K = opt_model$K.opt,
+                        eta = opt_model$eta.opt)
+  coef_mat = model_out$betahat
 
   # Define fold worker function
   run_fold <- function(tr) {
-    Y.tr = Y[train.folds[[tr]],]
+    Y.tr = Ym[train.folds[[tr]], , drop = FALSE]
     X.tr = X[train.folds[[tr]],]
     test_idx = setdiff(1:nrow(Y), train.folds[[tr]])
     X.test = X[test_idx,]
@@ -81,14 +78,16 @@ multivariate_spls <- function(X,
     X.tr = X.tr[,www]
     X.test = X.test[,www]
 
-    fit <- spls::spls(x = X.tr,
-                      y = Y.tr,
-                      K = opt_model$K.opt,
-                      eta = opt_model$eta.opt,
-                      scale.x=F,
-                      scale.y=F)
+    fit <- .spls_fit(.spls_prep(X.tr, Y.tr),
+                     K = opt_model$K.opt,
+                     eta = opt_model$eta.opt)
 
-    list(test_idx = test_idx, preds = predict(fit, X.test))
+    # predict.spls: centre the selected columns of the new data
+    A = fit$A
+    newx = scale(X.test[, A, drop = FALSE], fit$meanx[A], rep(1, length(A)))
+    preds = newx %*% fit$betahat[A, , drop = FALSE] +
+      matrix(1, nrow(newx), 1) %*% fit$mu
+    list(test_idx = test_idx, preds = preds)
   }
 
   # Run CV folds (parallel or sequential)
