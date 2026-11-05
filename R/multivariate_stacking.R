@@ -15,6 +15,12 @@
 #' @param nfolds_stack int, number of CV folds for stacking weights
 #' @param verbose logical
 #' @param seed int, random seed
+#' @param folds optional cross-validation folds: a list with one vector of
+#'   training-row indices per fold, or a vector of fold labels 1..K, one per
+#'   sample. NULL (the default) draws them from \code{seed} as before;
+#'   compute_isotwas passes every method the same folds.
+#'   They replace the nfolds_stack folds for the stacking weights; the
+#'   3-fold tuning of the base learners is unchanged.
 #' @param parallel logical, use parallel processing for base methods
 #' @param n.cores int, number of cores for parallel processing
 #'
@@ -39,7 +45,8 @@ multivariate_stacking <- function(X,
                                    parallel = FALSE,
                                    n.cores = 1,
                                    r2_method = c("oos", "refit"),
-                                   floor_r2 = FALSE) {
+                                   floor_r2 = FALSE,
+                                   folds = NULL) {
 
   r2_method <- match.arg(r2_method)
 
@@ -77,6 +84,11 @@ multivariate_stacking <- function(X,
 
   # Create CV folds for stacking
   stack_folds <- caret::createFolds(1:n, k = nfolds_stack, returnTrain = TRUE)
+  if (!is.null(folds)) {
+    folds <- .as_folds(folds, n)
+    stack_folds <- folds$train
+    nfolds_stack <- folds$nfolds
+  }
 
   # Initialize prediction matrices for each base method
   base_preds <- list()

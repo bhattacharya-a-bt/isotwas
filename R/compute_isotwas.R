@@ -556,7 +556,8 @@ compute_isotwas <- function(X,
                             seed = seed,
                             parallel = par,
                             n.cores = n.cores,
-                            floor_r2 = floor_r2)
+                            floor_r2 = floor_r2,
+                            folds = cv_folds)
     })
     if (!is.null(stacking_mod)) {
       all_models <- rlist::list.append(all_models, stacking_mod)
