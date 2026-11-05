@@ -173,13 +173,20 @@ NULL
 #'
 #' @param n.cores external folds fitted in parallel with mclapply when > 1
 #'   (the folds are all drawn first, in cv.joinet's order)
+#' @param foldid.ext external fold labels to use instead of drawing them,
+#'   as cv.joinet's foldid.ext
 #' @return n x q matrix of cross-validated meta-model predictions
 #' @noRd
 .cv_joinet <- function(X, Y, nfolds.ext = 5, nfolds.int = 10,
-                       alpha.base = 1, alpha.meta = 1, n.cores = 1L) {
+                       alpha.base = 1, alpha.meta = 1, n.cores = 1L,
+                       foldid.ext = NULL) {
     X <- as.matrix(X)
     Y <- as.matrix(Y)
-    foldid.ext <- .joinet_folds(Y[, 1], nfolds.ext)
+    if (is.null(foldid.ext)) {
+        foldid.ext <- .joinet_folds(Y[, 1], nfolds.ext)
+    } else {
+        nfolds.ext <- max(foldid.ext)
+    }
     foldid.int <- lapply(seq_len(nfolds.ext), function(i)
         .joinet_folds(Y[foldid.ext != i, 1], nfolds.int))
     run_fold <- function(i) {

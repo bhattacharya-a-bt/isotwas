@@ -492,7 +492,8 @@ compute_isotwas <- function(X,
                           n.cores = n.cores,
                           tx_names = tx_names,
                           seed = seed,
-                          nfolds.int = joinet_nfolds_int)
+                          nfolds.int = joinet_nfolds_int,
+                          folds = cv_folds)
     })
     if (!is.null(joinet_mod)) {
       all_models <- rlist::list.append(all_models, joinet_mod)

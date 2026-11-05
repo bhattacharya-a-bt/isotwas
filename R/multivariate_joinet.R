@@ -15,6 +15,11 @@
 #' @param tx_names vector, character vector of tx names in order of columns of Y
 #' @param seed int, random seed
 #' @param nfolds.int int, folds for joinet's inner cross-validation.
+#' @param folds optional cross-validation folds: a list with one vector of
+#'   training-row indices per fold, or a vector of fold labels 1..K, one per
+#'   sample. NULL (the default) draws them from \code{seed} as before;
+#'   compute_isotwas passes every method the same folds.
+#'   They are the external folds; the inner folds are drawn within them.
 #'
 #' @details
 #' joinet is the most expensive method at moderate transcript counts, and most
@@ -40,7 +45,8 @@ multivariate_joinet <- function(X,
                                 n.cores = NULL,
                                 tx_names = NULL,
                                 seed,
-                                nfolds.int = 10){
+                                nfolds.int = 10,
+                                folds = NULL){
 
   if (!is.null(colnames(Y))){
     tx_names = colnames(Y)
@@ -63,8 +69,10 @@ multivariate_joinet <- function(X,
   set.seed(seed)
   Ym = as.matrix(Y)
   cores = if (par && !is.null(n.cores)) n.cores else 1L
+  foldid.ext = if (is.null(folds)) NULL else .as_folds(folds, nrow(Ym))$foldid
   pred = .cv_joinet(X, Ym, nfolds.ext = nfolds, nfolds.int = nfolds.int,
-                    alpha.base = alpha, alpha.meta = alpha, n.cores = cores)
+                    alpha.base = alpha, alpha.meta = alpha, n.cores = cores,
+                    foldid.ext = foldid.ext)
   r2.vec = unlist(sapply(1:ncol(Y),calc.r2,Y,pred)[1,])
   P = sapply(1:ncol(Y),function(x){
     stats::cor.test(Y[,x], pred[,x])$p.value
