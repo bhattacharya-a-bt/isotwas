@@ -6,3 +6,5 @@
 ^doc$
 ^Meta$
 ^\.github$
+^bench_out$
+^benchmarks$
