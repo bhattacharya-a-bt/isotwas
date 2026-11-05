@@ -65,10 +65,6 @@ test_that("methods that already drew the shared folds are unchanged by them", {
                            seed = 74),
     multivariate_graph_reg(X, Y, nlambda = 4, nlambda_graph = 2, nfolds = 5,
                            seed = 74, folds = f))
-  # mtlasso's lambda folds are the shared ones; its R2 folds are drawn next
-  same_model(
-    multivariate_mtlasso(X, Y, nlambda = 5, nfolds = 5, seed = 74),
-    multivariate_mtlasso(X, Y, nlambda = 5, nfolds = 5, seed = 74, folds = f))
   same_model(
     compute_mrce(X, Y, nlambda = 4, Omega = diag(3), nfolds = 5,
                  tol.in = 1e-3, maxit.in = 50, verbose = FALSE, seed = 74),

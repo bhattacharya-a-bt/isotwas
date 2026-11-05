@@ -77,7 +77,8 @@ versions did. Default FALSE.}
 training-row indices per fold, or a vector of fold labels 1..K, one per
 sample. NULL (the default) draws them from \code{seed} as before;
 compute_isotwas passes every method the same folds.
-Used by the fast backend; the rmtl backend draws its own.}
+The fast backend uses them both to choose lambda and to score R2; the
+rmtl backend draws its own.}
 }
 \value{
 isotwas_model object containing:

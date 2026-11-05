@@ -43,7 +43,8 @@
 #'   training-row indices per fold, or a vector of fold labels 1..K, one per
 #'   sample. NULL (the default) draws them from \code{seed} as before;
 #'   compute_isotwas passes every method the same folds.
-#'   Used by the fast backend; the rmtl backend draws its own.
+#'   The fast backend uses them both to choose lambda and to score R2; the
+#'   rmtl backend draws its own.
 #' @return isotwas_model object containing:
 #'   \itemize{
 #'     \item transcripts: list of transcript_model objects with weights, R2,
@@ -246,8 +247,14 @@ multivariate_mtlasso <- function(X,
     W_final <- W_final / X_sds
   }
 
-  # Get CV predictions for R² calculation (single pass)
+  # Get CV predictions for R² calculation (single pass); given folds
+  # (compute_isotwas's shared ones) are used here too
   cv_folds <- caret::createFolds(1:n, k = nfolds, returnTrain = TRUE)
+  if (!is.null(folds)) {
+    folds <- .as_folds(folds, n)
+    cv_folds <- folds$train
+    nfolds <- folds$nfolds
+  }
   cv_preds <- matrix(0, nrow = n, ncol = q)
 
   for (fold_idx in 1:nfolds) {
