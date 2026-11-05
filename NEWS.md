@@ -1,5 +1,71 @@
 # isotwas 2.0.0.9000
 
+## Faster model training, same estimates
+
+Seven fitting routines are reimplemented to do the same computation with
+less work. Each reproduces what it replaces: the same folds and random
+numbers, tuning grids, update order and stopping rules. Fitted weights,
+cross-validated predictions and R-squared agree to rounding error except
+where noted. `tests/testthat/test-fast-*.R` check each against the
+original. `benchmarks/` (not installed) has the timing script, and the
+speed-ups below were measured with it (OpenBLAS, one core, simulated
+genes). The glmnet-based methods (`multivariate_elasticnet()`,
+`univariate_elasticnet()`, `multivariate_joinet()`,
+`multivariate_stacking()`) are unchanged.
+
+* `univariate_blup()` no longer calls `rrBLUP::mixed.solve()` once per
+  transcript. Its kernel is a function of X'X, so both spectra REML needs come
+  from one eigendecomposition of the smaller Gram matrix (X'X or XX') and one
+  of a diagonal-minus-rank-one matrix per training set, shared by every
+  transcript. `mixed.solve()` did two SVDs, a complete QR and an n x n inverse
+  per transcript. The REML objective, bounds and `optimize()` call are
+  unchanged. Weights agree with `mixed.solve()` to about 1e-5 relative:
+  `optimize()` locates the REML optimum only to about 1e-4 relative, and
+  `mixed.solve()` itself moves by up to 2e-6 when its input moves by one ulp.
+  Missing values fall back to `mixed.solve()`. 4.5-34x faster, more at larger n.
+
+* `univariate_susie()` no longer calls `susieR::susie()` on a sparse copy of
+  the dosages. `.susie_fit()` runs the same IBSS iterations as susieR 0.16.6
+  for this fixed-prior-variance configuration, forming X'r from X'y and the
+  training set's standardised X'X (or from cached fitted values when p > n).
+  The training sets' X'X come from one full crossprod minus the held-out rows.
+  Agrees with `susieR::susie()` to 1e-15, iteration count included. 2.8-7.5x
+  faster.
+
+* `multivariate_spls()` no longer calls `spls::cv.spls()` and `spls::spls()`.
+  `.cv_spls()` and `.spls_fit()` reproduce them for the arguments
+  multivariate_spls uses, calling `pls::simpls.fit()` directly instead of
+  through a model frame, centring each training set once for all nine `eta`,
+  and forming the direction vectors' Z Z' v products as Z (Z' v). Results are
+  bit-identical in every benchmark. 2.4-10x faster, more at larger p. `pls`
+  is now in Imports.
+
+* `multivariate_sgl()`, `multivariate_mtlasso()` (L21 backend) and
+  `multivariate_graph_reg()` share one compiled block coordinate-descent solver
+  (`src/rowcd.c`). It makes the same row updates in the same order as the R
+  solvers, which are kept as `.fit_sgl_r()`, `.fit_mtl_l21_r()` and
+  `.fit_graph_reg_r()`. The gradient comes from X'X, updated by one column when a
+  row changes, rather than from three n x q residual updates per SNP.
+  graph_reg's per-SNP q x q `solve()` becomes a product with the Laplacian's
+  eigenvectors. Each training set's X'X is the full X'X minus its held-out
+  rows. Above `getOption("isotwas.gram_max_p", 5000)` SNPs the solver works
+  from residuals instead. Agrees with the R solvers to 1e-14. 7-67x faster.
+
+* MRCE's coordinate descent (`rblasso()`) uses a new kernel,
+  `src/mrce-fast.c`. `blasso()` updates all p*q soft-threshold values whenever
+  one coefficient changes. The new kernel keeps S B instead, which one change
+  touches in one column, and forms each soft-threshold value when it is
+  visited. Agrees with `blasso()` to 1e-14 with the same iteration counts,
+  warm starts included. `options(isotwas.mrce_reference = TRUE)` restores
+  the old kernel. `compute_mrce()` gains `fold_cache`, which `compute_isotwas()`
+  uses to compute the folds' variance filters and cross-products once for all
+  `omega_nlambda` Omegas rather than once per Omega. It also computes the
+  cor.test p-value only at the selected lambda, the only one used. 3.4-7.2x
+  faster for one Omega, 4.5-7.1x for `compute_isotwas()`'s 10 Omegas.
+
+* `univariate_elasticnet()`, `univariate_blup()` and `univariate_susie()` no
+  longer run a `cor.test()` they discard when scoring R-squared.
+
 ## Changes to fitted models
 
 * `univariate_elasticnet()` and the final fit of `univariate_susie()` now fit
