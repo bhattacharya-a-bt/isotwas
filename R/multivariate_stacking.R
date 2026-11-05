@@ -72,7 +72,8 @@ multivariate_stacking <- function(X,
   # Precompute optimal hyperparameters for each method using quick CV on full data
   # This avoids nested CV which is the main bottleneck
   if (verbose) cat("Pre-computing optimal hyperparameters...\n")
-  param_cache <- .precompute_hyperparams(X, Y, base_methods, seed)
+  dz <- .stack_designs(X, Y)
+  param_cache <- .precompute_hyperparams(X, Y, base_methods, seed, dz)
 
   # Create CV folds for stacking
   stack_folds <- caret::createFolds(1:n, k = nfolds_stack, returnTrain = TRUE)
@@ -95,18 +96,23 @@ multivariate_stacking <- function(X,
     X_train <- X[train_idx, , drop = FALSE]
     Y_train <- Y[train_idx, , drop = FALSE]
     X_test <- X[test_idx, , drop = FALSE]
+    # build this fold's compressed design once, before any fork; it serves
+    # every glmnet base method
+    dz(test_idx, q)
 
     # Fit all base methods (optionally in parallel)
     if (parallel && n.cores > 1 && length(base_methods) > 1) {
       fold_preds <- .mclapply_seeded(base_methods, function(method) {
         .fit_base_method_fast(method, X_train, Y_train, X_test,
-                              param_cache[[method]], seed + fold_idx)
+                              param_cache[[method]], seed + fold_idx,
+                              dz, test_idx)
       }, mc.cores = min(n.cores, length(base_methods)), seed = seed + fold_idx)
       names(fold_preds) <- base_methods
     } else {
       fold_preds <- lapply(base_methods, function(method) {
         .fit_base_method_fast(method, X_train, Y_train, X_test,
-                              param_cache[[method]], seed + fold_idx)
+                              param_cache[[method]], seed + fold_idx,
+                              dz, test_idx)
       })
       names(fold_preds) <- base_methods
     }
@@ -143,7 +149,7 @@ multivariate_stacking <- function(X,
   final_base_models <- list()
   for (method in base_methods) {
     final_base_models[[method]] <- .fit_base_method_coef(
-      method, X, Y, param_cache[[method]], seed
+      method, X, Y, param_cache[[method]], seed, dz
     )
   }
 
@@ -199,9 +205,19 @@ multivariate_stacking <- function(X,
 
 #' Precompute optimal hyperparameters for each method
 #' @keywords internal
-.precompute_hyperparams <- function(X, Y, base_methods, seed) {
+.precompute_hyperparams <- function(X, Y, base_methods, seed, dz = NULL) {
   param_cache <- list()
   q <- ncol(Y)
+  N <- nrow(X)
+  # cv.glmnet(nfolds = 3) drew sample(rep(seq(3), length = N)); .cv_glmnet
+  # reproduces it on compressed rows when dz provides them. multi_enet,
+  # ridge and lasso draw the same tuning folds, as does the first
+  # univariate_enet transcript; the full-data design serves every fit.
+  cv_designs <- function(foldid, q_fit, memo = TRUE) {
+    if (is.null(dz)) return(NULL)
+    list(full = dz(integer(0), q_fit),
+         folds = lapply(1:3, function(i) dz(which(foldid == i), q_fit, memo)))
+  }
 
   for (method in base_methods) {
     set.seed(seed)
@@ -213,19 +229,19 @@ multivariate_stacking <- function(X,
                       "lasso" = 1)
 
       # Quick 3-fold CV to get lambda
-      fit <- glmnet::cv.glmnet(
-        x = X, y = Y,
-        family = "mgaussian",
-        alpha = alpha,
-        nfolds = 3,
-        standardize = FALSE
-      )
+      foldid <- sample(rep(seq(3), length = N))
+      fit <- .cv_glmnet(X, Y, foldid, family = "mgaussian", alpha = alpha,
+                        standardize = FALSE,
+                        designs = cv_designs(foldid, q))
       param_cache[[method]] <- list(lambda = fit$lambda.min)
 
     } else if (method == "univariate_enet") {
       # For univariate, get lambda for each transcript
       lambdas <- sapply(1:q, function(j) {
-        fit <- glmnet::cv.glmnet(x = X, y = Y[, j], alpha = 0.5, nfolds = 3)
+        foldid <- sample(rep(seq(3), length = N))
+        fit <- .cv_glmnet(X, Y[, j], foldid, family = "gaussian", alpha = 0.5,
+                          designs = cv_designs(foldid, 1L, memo = j == 1),
+                          j = j)
         fit$lambda.min
       })
       param_cache[[method]] <- list(lambda = lambdas)
@@ -259,20 +275,17 @@ multivariate_stacking <- function(X,
 
 #' Fast base method fitting using pre-computed hyperparameters
 #' @keywords internal
-.fit_base_method_fast <- function(method, X_train, Y_train, X_test, params, seed) {
+.fit_base_method_fast <- function(method, X_train, Y_train, X_test, params, seed,
+                                  dz = NULL, drop = NULL) {
   q <- ncol(Y_train)
   n_test <- nrow(X_test)
   preds <- matrix(0, nrow = n_test, ncol = q)
+  mg <- function(alpha) .stack_mgaussian(X_train, Y_train, alpha,
+                                         params$lambda, dz, drop)
 
   tryCatch({
     if (method == "multi_enet") {
-      fit <- glmnet::glmnet(
-        x = X_train, y = Y_train,
-        family = "mgaussian",
-        alpha = 0.5,
-        lambda = params$lambda,
-        standardize = FALSE
-      )
+      fit <- mg(0.5)
       pred_list <- predict(fit, newx = X_test, s = params$lambda)
       for (j in 1:q) {
         preds[, j] <- pred_list[, j, 1]
@@ -280,35 +293,19 @@ multivariate_stacking <- function(X,
 
     } else if (method == "univariate_enet") {
       for (j in 1:q) {
-        fit <- glmnet::glmnet(
-          x = X_train, y = Y_train[, j],
-          alpha = 0.5,
-          lambda = params$lambda[j]
-        )
+        fit <- .stack_gaussian(X_train, Y_train, j, params$lambda[j], dz, drop)
         preds[, j] <- predict(fit, newx = X_test, s = params$lambda[j])
       }
 
     } else if (method == "ridge") {
-      fit <- glmnet::glmnet(
-        x = X_train, y = Y_train,
-        family = "mgaussian",
-        alpha = 0,
-        lambda = params$lambda,
-        standardize = FALSE
-      )
+      fit <- mg(0)
       pred_list <- predict(fit, newx = X_test, s = params$lambda)
       for (j in 1:q) {
         preds[, j] <- pred_list[, j, 1]
       }
 
     } else if (method == "lasso") {
-      fit <- glmnet::glmnet(
-        x = X_train, y = Y_train,
-        family = "mgaussian",
-        alpha = 1,
-        lambda = params$lambda,
-        standardize = FALSE
-      )
+      fit <- mg(1)
       pred_list <- predict(fit, newx = X_test, s = params$lambda)
       for (j in 1:q) {
         preds[, j] <- pred_list[, j, 1]
@@ -341,50 +338,34 @@ multivariate_stacking <- function(X,
 
 #' Get coefficients from base method using pre-computed hyperparameters
 #' @keywords internal
-.fit_base_method_coef <- function(method, X, Y, params, seed) {
+.fit_base_method_coef <- function(method, X, Y, params, seed, dz = NULL) {
   q <- ncol(Y)
   p <- ncol(X)
   coef_mat <- matrix(0, nrow = p, ncol = q)
+  mg <- function(alpha) .stack_mgaussian(X, Y, alpha, params$lambda, dz,
+                                         integer(0))
 
   tryCatch({
     if (method == "multi_enet") {
-      fit <- glmnet::glmnet(
-        x = X, y = Y,
-        family = "mgaussian",
-        alpha = 0.5,
-        lambda = params$lambda,
-        standardize = FALSE
-      )
+      fit <- mg(0.5)
       for (j in 1:q) {
         coef_mat[, j] <- as.numeric(coef(fit)[[j]])[-1]
       }
 
     } else if (method == "univariate_enet") {
       for (j in 1:q) {
-        fit <- glmnet::glmnet(x = X, y = Y[, j], alpha = 0.5, lambda = params$lambda[j])
+        fit <- .stack_gaussian(X, Y, j, params$lambda[j], dz, integer(0))
         coef_mat[, j] <- as.numeric(coef(fit))[-1]
       }
 
     } else if (method == "ridge") {
-      fit <- glmnet::glmnet(
-        x = X, y = Y,
-        family = "mgaussian",
-        alpha = 0,
-        lambda = params$lambda,
-        standardize = FALSE
-      )
+      fit <- mg(0)
       for (j in 1:q) {
         coef_mat[, j] <- as.numeric(coef(fit)[[j]])[-1]
       }
 
     } else if (method == "lasso") {
-      fit <- glmnet::glmnet(
-        x = X, y = Y,
-        family = "mgaussian",
-        alpha = 1,
-        lambda = params$lambda,
-        standardize = FALSE
-      )
+      fit <- mg(1)
       for (j in 1:q) {
         coef_mat[, j] <- as.numeric(coef(fit)[[j]])[-1]
       }
@@ -474,4 +455,58 @@ multivariate_stacking <- function(X,
   }
 
   return(as.vector(weights))
+}
+
+
+.stack_glmnet_methods <- c("multi_enet", "univariate_enet", "ridge", "lasso")
+
+#' Compressed designs for stacking's glmnet fits
+#'
+#' Returns a function dz(drop, q_fit, keep) giving the compressed design
+#' (glmnet_compress.R) of the rows left after dropping `drop`: one already
+#' built for these rows, or a new one when compression is on for fits with
+#' q_fit responses, or NULL. Designs are kept for
+#' reuse unless keep = FALSE: the base methods share the stacking folds,
+#' and multi_enet, ridge, lasso and the first univariate_enet transcript
+#' share one set of 3-fold tuning folds (each is drawn right after
+#' set.seed(seed)).
+#' @noRd
+.stack_designs <- function(X, Y) {
+  n <- nrow(X)
+  p <- ncol(X)
+  g <- NULL
+  memo <- list()
+  function(drop, q_fit, keep = TRUE) {
+    key <- paste0("d", paste(sort(drop), collapse = ","))
+    if (!is.null(memo[[key]])) return(memo[[key]])
+    if (!.glmnet_compress_on(n - length(drop), p, q_fit)) return(NULL)
+    if (is.null(g)) g <<- .gram_full(X, Y)
+    d <- .glmnet_design(.gram_subset(g, drop))
+    if (keep) memo[[key]] <<- d
+    d
+  }
+}
+
+#' glmnet(x, y, family = 'mgaussian', alpha, lambda, standardize = FALSE)
+#' on the rows left after dropping `drop`, compressed when dz allows
+#' @noRd
+.stack_mgaussian <- function(X, Y, alpha, lambda, dz, drop) {
+  d <- if (is.null(dz)) NULL else dz(drop, ncol(Y))
+  if (is.null(d)) {
+    return(glmnet::glmnet(x = X, y = Y, family = "mgaussian", alpha = alpha,
+                          lambda = lambda, standardize = FALSE))
+  }
+  .glmnet_compressed(d, family = "mgaussian", alpha = alpha,
+                     standardize = FALSE, lambda = lambda)
+}
+
+#' glmnet(x, y = Y[, j], alpha = 0.5, lambda) on the rows left after
+#' dropping `drop`, compressed when dz allows
+#' @noRd
+.stack_gaussian <- function(X, Y, j, lambda, dz, drop) {
+  d <- if (is.null(dz)) NULL else dz(drop, 1L)
+  if (is.null(d)) {
+    return(glmnet::glmnet(x = X, y = Y[, j], alpha = 0.5, lambda = lambda))
+  }
+  .glmnet_compressed(d, j, "gaussian", alpha = 0.5, lambda = lambda)
 }

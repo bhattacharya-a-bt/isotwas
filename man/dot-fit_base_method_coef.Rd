@@ -4,7 +4,7 @@
 \alias{.fit_base_method_coef}
 \title{Get coefficients from base method using pre-computed hyperparameters}
 \usage{
-.fit_base_method_coef(method, X, Y, params, seed)
+.fit_base_method_coef(method, X, Y, params, seed, dz = NULL)
 }
 \description{
 Get coefficients from base method using pre-computed hyperparameters

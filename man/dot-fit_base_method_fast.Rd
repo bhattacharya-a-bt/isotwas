@@ -4,7 +4,16 @@
 \alias{.fit_base_method_fast}
 \title{Fast base method fitting using pre-computed hyperparameters}
 \usage{
-.fit_base_method_fast(method, X_train, Y_train, X_test, params, seed)
+.fit_base_method_fast(
+  method,
+  X_train,
+  Y_train,
+  X_test,
+  params,
+  seed,
+  dz = NULL,
+  drop = NULL
+)
 }
 \description{
 Fast base method fitting using pre-computed hyperparameters
