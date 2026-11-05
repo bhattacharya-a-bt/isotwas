@@ -97,6 +97,27 @@ genes).
 
 ## Changes to fitted models
 
+* `compute_isotwas()` gives every method the same cross-validation folds
+  (`shared_folds = TRUE`, the default), so the cross-validated R-squared that
+  `get_best_isotwas()` compares across methods come from the same splits. The
+  folds are those drawn by `set.seed(seed)` then
+  `caret::createFolds(1:N, k = nfolds, returnTrain = TRUE)`, which
+  `univariate_blup()`, `univariate_susie()`, `compute_mrce()`,
+  `multivariate_sgl()`, `multivariate_graph_reg()` and `multivariate_spls()`
+  already drew for themselves, so their results do not change. The others
+  did not: `multivariate_elasticnet()` drew a different fold set for each of
+  its three alphas, `univariate_elasticnet()` one per transcript,
+  `multivariate_joinet()` its own external folds, `multivariate_stacking()`
+  folds drawn after its tuning had moved the random stream, and
+  `multivariate_mtlasso()` a second set for scoring R-squared. With the same
+  seed their R-squared, and for all but mtlasso their weights, now differ
+  from earlier versions. mtlasso's R-squared now comes from the folds that
+  chose its lambda, as every other method's does, so it can be slightly
+  higher. `shared_folds = FALSE` restores each method's own draw, and
+  `folds` takes the user's own folds (training-row indices per fold, or one
+  fold label per sample). Each fitting function also gains `folds`; its
+  default, `NULL`, keeps the function's own draw.
+
 * `univariate_elasticnet()` and the final fit of `univariate_susie()` now fit
   an intercept. Both used `intercept = FALSE` on expression that still carries
   each feature's mean, so the weights largely reproduced the expression level
