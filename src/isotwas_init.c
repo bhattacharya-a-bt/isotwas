@@ -13,6 +13,7 @@ extern SEXP isotwas_rowcd(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP,
                           SEXP, SEXP, SEXP, SEXP, SEXP);
 
 /* src/mrce-fast.c */
+extern SEXP isotwas_blasso_fast(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 
 static const R_CMethodDef CEntries[] = {
     {"blasso", (DL_FUNC) &blasso, 13},
@@ -23,6 +24,7 @@ static const R_CallMethodDef CallEntries[] = {
     /* src/rowcd.c */
     {"isotwas_rowcd", (DL_FUNC) &isotwas_rowcd, 13},
     /* src/mrce-fast.c */
+    {"isotwas_blasso_fast", (DL_FUNC) &isotwas_blasso_fast, 8},
     {NULL, NULL, 0}
 };
 

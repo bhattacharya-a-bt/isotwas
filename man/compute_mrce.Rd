@@ -18,7 +18,8 @@ compute_mrce(
   parallel = FALSE,
   n.cores = NULL,
   r2_method = c("oos", "refit"),
-  floor_r2 = FALSE
+  floor_r2 = FALSE,
+  fold_cache = NULL
 )
 }
 \arguments{
@@ -52,6 +53,10 @@ R-squared that calc.r2() applies to the other methods}
 
 \item{floor_r2}{logical, clamp a negative R-squared to 0, as earlier
 versions did. Default FALSE.}
+
+\item{fold_cache}{list or NULL, the Omega-independent quantities from an
+internal helper, so that fits to several Omegas on the same X, Y, nfolds
+and seed compute them once. Leave NULL.}
 }
 \value{
 CV MRCE fit

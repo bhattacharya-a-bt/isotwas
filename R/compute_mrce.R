@@ -19,6 +19,9 @@
 #'   R-squared that calc.r2() applies to the other methods
 #' @param floor_r2 logical, clamp a negative R-squared to 0, as earlier
 #'   versions did. Default FALSE.
+#' @param fold_cache list or NULL, the Omega-independent quantities from an
+#'   internal helper, so that fits to several Omegas on the same X, Y, nfolds
+#'   and seed compute them once. Leave NULL.
 #'
 #' @return CV MRCE fit
 #'
@@ -36,7 +39,8 @@ compute_mrce = function(X,
                         parallel = FALSE,
                         n.cores = NULL,
                         r2_method = c("oos", "refit"),
-                        floor_r2 = FALSE){
+                        floor_r2 = FALSE,
+                        fold_cache = NULL){
 
   r2_method = match.arg(r2_method)
 
@@ -46,64 +50,34 @@ compute_mrce = function(X,
 
   # Smarter lambda grid: data-driven range
 
+  # Everything that does not depend on Omega: the folds, each fold's
+  # variance filter and cross-products, and the full-data cross-products.
+  # compute_isotwas fits one Omega after another on the same data, so it
+  # builds this once and passes it in.
+  if (is.null(fold_cache)) {
+    fold_cache = .mrce_fold_cache(X, Y, nfolds, seed)
+  }
+  set.seed(seed)
+  train.folds = caret::createFolds(1:nrow(Y),
+                                   k = nfolds,
+                                   returnTrain = TRUE)
+  if (!identical(train.folds, fold_cache$train.folds)) {
+    stop("fold_cache was built with different folds")
+  }
+  full = fold_cache$full
+
   if (is.null(lambda)){
     # Compute lambda_max (smallest lambda that gives all zeros)
-    mx = colMeans(X)
-    my = colMeans(Y)
-    X.centered = scale(X, center = mx, scale = FALSE)
-    Y.centered = scale(Y, center = my, scale = FALSE)
-    xty = crossprod(X.centered, Y.centered)
-    xtyom = xty %*% Omega
+    xtyom = full$xty %*% Omega
     lambda_max = max(abs(xtyom)) / n
     lambda_min = lambda_max * 1e-4
     lambda = 10^seq(log10(lambda_max), log10(lambda_min), length.out = nlambda)
   }
 
-  set.seed(seed)
-  train.folds = caret::createFolds(1:nrow(Y),
-                                   k = nfolds,
-                                   returnTrain = TRUE)
-
-  # Precompute fold-specific data (variance filtering, matrices)
-  fold_data = lapply(1:nfolds, function(tr) {
-    train_idx = train.folds[[tr]]
-    test_idx = setdiff(1:n, train_idx)
-
-    Y.tr = Y[train_idx, , drop = FALSE]
-    X.tr = X[train_idx, , drop = FALSE]
-    X.test = X[test_idx, , drop = FALSE]
-
-    # Variance filter - compute once per fold
-    sd_train = apply(X.tr, 2, sd)
-    sd_test = apply(X.test, 2, sd)
-    valid_snps = which(sd_train != 0 & sd_test != 0)
-
-    X.tr = X.tr[, valid_snps, drop = FALSE]
-    X.test = X.test[, valid_snps, drop = FALSE]
-
-    # Precompute matrices for this fold
-    mx = colMeans(X.tr)
-    my = colMeans(Y.tr)
-    X.tr.centered = scale(X.tr, center = mx, scale = FALSE)
-    Y.tr.centered = scale(Y.tr, center = my, scale = FALSE)
-
-    xtx = crossprod(X.tr.centered)
-    xty = crossprod(X.tr.centered, Y.tr.centered)
-    xtyom = xty %*% Omega
-    tolmult = sum(crossprod(Y.tr.centered) * Omega)
-
-    list(
-      train_idx = train_idx,
-      test_idx = test_idx,
-      valid_snps = valid_snps,
-      X.test = X.test,
-      n_train = nrow(X.tr),
-      mx = mx,
-      my = my,
-      xtx = xtx,
-      xtyom = xtyom,
-      tolmult = tolmult
-    )
+  fold_data = lapply(fold_cache$folds, function(fd) {
+    fd$xtyom = fd$xty %*% Omega
+    fd$tolmult = sum(fd$yty * Omega)
+    fd
   })
 
   # Function to run CV for a single fold with warm starts across lambda path
@@ -138,7 +112,10 @@ compute_mrce = function(X,
       )
 
       B_warm = mod$Bhat  # Warm start for next lambda
-      fold_preds[, , lam_idx] = fd$X.test %*% mod$Bhat
+      # SNPs with no weight add exact zeros to the prediction, so skip them
+      nz = which(rowSums(mod$Bhat != 0) > 0)
+      fold_preds[, , lam_idx] = fd$X.test[, nz, drop = FALSE] %*%
+        mod$Bhat[nz, , drop = FALSE]
     }
 
     list(test_idx = fd$test_idx, preds = fold_preds)
@@ -180,9 +157,9 @@ compute_mrce = function(X,
       y_obs = Y[, tx]
       y_pred = pred[, tx]
 
-      scored = .score_r2(y_obs, y_pred, method = r2_method)
+      # P is needed only at the selected lambda, scored below
+      scored = .score_r2(y_obs, y_pred, method = r2_method, pvalue = FALSE)
       r2Mat[tx, lam_idx] = if (floor_r2) max(0, scored$R2) else scored$R2
-      pMat[tx, lam_idx] = scored$P
     }
   }
 
@@ -194,21 +171,16 @@ compute_mrce = function(X,
   # Get final predictions at best lambda
   pred = pred_array[, , best_lambda_idx]
   pred[is.na(pred)] = 0
+  for (tx in 1:q) {
+    pMat[tx, best_lambda_idx] = .score_r2(Y[, tx], pred[, tx],
+                                          method = r2_method)$P
+  }
 
   # Fit final model on all data with warm start
-  mx_full = colMeans(X)
-  my_full = colMeans(Y)
-  X.centered = scale(X, center = mx_full, scale = FALSE)
-  Y.centered = scale(Y, center = my_full, scale = FALSE)
-  xtx_full = crossprod(X.centered)
-  xty_full = crossprod(X.centered, Y.centered)
-  xtyom_full = xty_full %*% Omega
-  tolmult_full = sum(crossprod(Y.centered) * Omega)
-
   final.model = compute_fixed_precomputed(
-    xtx = xtx_full,
-    xtyom = xtyom_full,
-    tolmult = tolmult_full,
+    xtx = full$xtx,
+    xtyom = full$xty %*% Omega,
+    tolmult = sum(full$yty * Omega),
     n = n,
     p = p,
     q = q,
@@ -218,8 +190,8 @@ compute_mrce = function(X,
     maxit.in = maxit.in,
     silent = !verbose,
     B0 = NULL,
-    mx = mx_full,
-    my = my_full
+    mx = full$mx,
+    my = full$my
   )
 
   # Build output using isotwas_model class
@@ -251,4 +223,68 @@ compute_mrce = function(X,
   result <- .drop_null_fits(result, Y)
 
   return(result)
+}
+
+#' Omega-independent part of compute_mrce
+#'
+#' The folds compute_mrce draws for this seed, each fold's variance filter,
+#' centring and cross-products, and the full-data cross-products. The RNG
+#' state is restored on exit, since compute_mrce draws the folds again itself.
+#'
+#' @return list(train.folds, folds, full)
+#' @noRd
+.mrce_fold_cache <- function(X, Y, nfolds, seed) {
+  if (exists(".Random.seed", envir = globalenv(), inherits = FALSE)) {
+    old_seed <- get(".Random.seed", envir = globalenv())
+    on.exit(assign(".Random.seed", old_seed, envir = globalenv()), add = TRUE)
+  }
+  n <- nrow(X)
+  set.seed(seed)
+  train.folds <- caret::createFolds(1:nrow(Y), k = nfolds, returnTrain = TRUE)
+
+  folds <- lapply(seq_along(train.folds), function(tr) {
+    train_idx <- train.folds[[tr]]
+    test_idx <- setdiff(1:n, train_idx)
+
+    Y.tr <- Y[train_idx, , drop = FALSE]
+    X.tr <- X[train_idx, , drop = FALSE]
+    X.test <- X[test_idx, , drop = FALSE]
+
+    # Variance filter
+    sd_train <- apply(X.tr, 2, sd)
+    sd_test <- apply(X.test, 2, sd)
+    valid_snps <- which(sd_train != 0 & sd_test != 0)
+
+    X.tr <- X.tr[, valid_snps, drop = FALSE]
+    X.test <- X.test[, valid_snps, drop = FALSE]
+
+    mx <- colMeans(X.tr)
+    my <- colMeans(Y.tr)
+    X.tr.centered <- scale(X.tr, center = mx, scale = FALSE)
+    Y.tr.centered <- scale(Y.tr, center = my, scale = FALSE)
+
+    list(train_idx = train_idx,
+         test_idx = test_idx,
+         valid_snps = valid_snps,
+         X.test = X.test,
+         n_train = nrow(X.tr),
+         mx = mx,
+         my = my,
+         xtx = crossprod(X.tr.centered),
+         xty = crossprod(X.tr.centered, Y.tr.centered),
+         yty = crossprod(Y.tr.centered))
+  })
+
+  mx <- colMeans(X)
+  my <- colMeans(Y)
+  X.centered <- scale(X, center = mx, scale = FALSE)
+  Y.centered <- scale(Y, center = my, scale = FALSE)
+
+  list(train.folds = train.folds,
+       folds = folds,
+       full = list(mx = mx,
+                   my = my,
+                   xtx = crossprod(X.centered),
+                   xty = crossprod(X.centered, Y.centered),
+                   yty = crossprod(Y.centered)))
 }

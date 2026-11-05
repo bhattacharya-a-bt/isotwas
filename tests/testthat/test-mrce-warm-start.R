@@ -16,12 +16,16 @@ test_that("a warm-started MRCE lasso converges to the cold-start solution", {
   B0 <- matrix(0, 40, 4)
   B0[sample(160, 20)] <- .3
 
-  cold <- rblasso(S, M, Om, nl, 150, tol = tol, maxit = 5000)
-  expect_gt(sum(cold$B != 0), 0)
-  # restarting at the solution must not move it
-  again <- rblasso(S, M, Om, nl, 150, B0 = cold$B, tol = tol, maxit = 5000)
-  expect_equal(again$B, cold$B, tolerance = 1e-8)
-  # nor may an arbitrary starting point change where it ends up
-  warm <- rblasso(S, M, Om, nl, 150, B0 = B0, tol = tol, maxit = 5000)
-  expect_equal(warm$B, cold$B, tolerance = 1e-8)
+  # the compiled solver (default) and the reference blasso()
+  for (ref in c(FALSE, TRUE)) {
+    withr::local_options(list(isotwas.mrce_reference = ref))
+    cold <- rblasso(S, M, Om, nl, 150, tol = tol, maxit = 5000)
+    expect_gt(sum(cold$B != 0), 0)
+    # restarting at the solution must not move it
+    again <- rblasso(S, M, Om, nl, 150, B0 = cold$B, tol = tol, maxit = 5000)
+    expect_equal(again$B, cold$B, tolerance = 1e-8)
+    # nor may an arbitrary starting point change where it ends up
+    warm <- rblasso(S, M, Om, nl, 150, B0 = B0, tol = tol, maxit = 5000)
+    expect_equal(warm$B, cold$B, tolerance = 1e-8)
+  }
 })

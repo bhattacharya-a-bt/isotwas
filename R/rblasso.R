@@ -14,6 +14,21 @@ function(s, m, om, nlam, n, B0=NULL, soft=NULL, objective=0, tol=1e-5, maxit=500
     B0 = as.double(B0)
   }
 
+  # Without a supplied soft vector, the compiled solver in src/mrce-fast.c
+  # reproduces blasso() at a fraction of the cost (see that file)
+  if(is.null(soft) && !isTRUE(getOption("isotwas.mrce_reference", FALSE))) {
+    dbl = function(x, r, c) {
+      if (is.matrix(x) && is.double(x) && all(dim(x) == c(r, c))) x
+      else matrix(as.double(x), r, c)
+    }
+    B0m = matrix(B0, nrow=p, ncol=q)
+    fit = .Call("isotwas_blasso_fast", B0m,
+                dbl(s, p, p), dbl(m, p, q), dbl(om, q, q), dbl(nlam, p, q),
+                as.double(n), as.double(tol), as.integer(maxit),
+                PACKAGE = "isotwas")
+    return(list(B=fit$B, obj=objective + fit$obj, iterations=fit$iterations))
+  }
+
   # Compute soft-thresholding vector from current B0 if not provided.
   # blasso() never updates an entry's soft value when that entry changes, so
   # soft[r,c] must leave out B[r,c]'s own term: M - S B Omega plus
