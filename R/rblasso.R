@@ -14,12 +14,15 @@ function(s, m, om, nlam, n, B0=NULL, soft=NULL, objective=0, tol=1e-5, maxit=500
     B0 = as.double(B0)
   }
 
-  # Compute soft-thresholding vector from current B0 if not provided
-  # This helps warm starts converge faster
+  # Compute soft-thresholding vector from current B0 if not provided.
+  # blasso() never updates an entry's soft value when that entry changes, so
+  # soft[r,c] must leave out B[r,c]'s own term: M - S B Omega plus
+  # S[r,r] Omega[c,c] B[r,c]. Without the add-back a warm start does not
+  # converge to the lasso solution.
   if(is.null(soft)) {
-    # soft = M - S %*% B %*% Omega (gradient at current B)
     B_mat = matrix(B0, nrow=p, ncol=q)
-    soft = as.double(m - s %*% B_mat %*% om)
+    soft = as.double(m - s %*% B_mat %*% om +
+                     outer(diag(as.matrix(s)), diag(as.matrix(om))) * B_mat)
   } else {
     soft = as.double(soft)
   }

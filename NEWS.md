@@ -21,6 +21,22 @@
   are now also treated as empty. multi_enet's choice of `alpha` uses the same
   score, so it changes too.
 
+* A warm-started MRCE lasso fit now converges to the lasso solution.
+  `rblasso()` started its soft-threshold values at M - S B0 Omega, which
+  still holds each coefficient's own term S[r,r] Omega[c,c] B0[r,c].
+  `blasso()` never updates an entry's soft value when that entry changes, so
+  the offset stayed for the whole fit: restarting at the exact solution moved
+  it, for example from 0.92 to 0 for the largest coefficient. `rblasso()` now
+  adds the own term back. Cold starts are unchanged, so the final model at a
+  given lambda is the same. The cross-validation fits along the lambda path
+  are warm-started, so the chosen lambda and the reported cross-validated
+  R-squared can change, in either direction and sometimes by a lot. On 16
+  simulated genes (n = 300, p = 150, q = 4) the lambda changed for 4 of them
+  and the mean R-squared went from 0.044 to 0.040. On the simulated gene of
+  `benchmarks/` (n = 300, p = 400, q = 8) it rose for all 8 isoforms,
+  by up to 0.31, with the same weights. Before the fix, the reported R-squared came from fits that were not
+  the estimator whose weights were returned.
+
 * `compute_isotwas()` now defaults to `r2_scale = 'coherent'` (see New
   features). Clamped methods no longer win transcripts that no method
   predicts, and a transcript for which every model is empty is
