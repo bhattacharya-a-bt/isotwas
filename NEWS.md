@@ -9,9 +9,37 @@ cross-validated predictions and R-squared agree to rounding error except
 where noted. `tests/testthat/test-fast-*.R` check each against the
 original. `benchmarks/` (not installed) has the timing script, and the
 speed-ups below were measured with it (OpenBLAS, one core, simulated
-genes). The glmnet-based methods (`multivariate_elasticnet()`,
-`univariate_elasticnet()`, `multivariate_joinet()`,
-`multivariate_stacking()`) are unchanged.
+genes).
+
+* The glmnet-based methods (`multivariate_elasticnet()`,
+  `univariate_elasticnet()`, `multivariate_joinet()`, `multivariate_stacking()`)
+  can fit each elastic-net path on compressed rows. A gaussian or mgaussian
+  path depends on the data only through the centred X'X, X'Y and Y'Y, so
+  `R/glmnet_compress.R` replaces the n rows by rank(X) + 1 rows per response
+  (rank(X) + q for mgaussian) with the same cross-products, from a pivoted
+  Cholesky factor of X'X, and calls `glmnet()` on those. Each training fold's
+  cross-products are the full ones minus its held-out rows. `.cv_glmnet()`
+  reproduces `cv.glmnet(keep = TRUE)` around these fits with the same folds,
+  lambda interpolation and choice of `lambda.min`. With `verbose = TRUE`,
+  `multivariate_elasticnet()` and `multivariate_joinet()` no longer print
+  glmnet's progress bars, and `par = TRUE` runs their folds with `mclapply()`
+  rather than a doParallel backend, as `univariate_elasticnet()` already did
+  (so serially on Windows). joinet is reimplemented in
+  R (`R/joinet_fast.R`) the same way, with joinet 1.0.0's random draws, and no
+  longer fits an unused mgaussian model in every external fold; joinet moves
+  to Suggests. Results agree with the originals to 1e-11 to 1e-14, and are
+  identical where the original rows are used.
+
+  Compression is off unless `options(isotwas.glmnet_compress = TRUE)`. It
+  then applies wherever it removes enough rows (p + q + 1 at most
+  `getOption("isotwas.glmnet_compress_ratio", 0.75)` times the training fold
+  size), never depending on timings, so a rerun gives identical results. It
+  saves glmnet time roughly in proportion to the rows removed, while building
+  the rows is BLAS work, so whether it is faster depends on the BLAS. With
+  OpenBLAS on the cluster, at n = 2011, the four methods ran 1.2-2.3x as fast
+  at p = 550-850 and 0.9-1.5x at p = 1150. With R's reference BLAS, building
+  the rows can cost more than it saves (at p = 850: 0.5-1.3x, slowest for
+  `univariate_elasticnet()`, whose fold designs each serve one transcript).
 
 * `univariate_blup()` no longer calls `rrBLUP::mixed.solve()` once per
   transcript. Its kernel is a function of X'X, so both spectra REML needs come
