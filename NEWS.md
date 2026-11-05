@@ -25,12 +25,13 @@ genes). The glmnet-based methods (`multivariate_elasticnet()`,
   Missing values fall back to `mixed.solve()`. 4.5-34x faster, more at larger n.
 
 * `univariate_susie()` no longer calls `susieR::susie()` on a sparse copy of
-  the dosages. `.susie_fit()` runs the same IBSS iterations as susieR 0.16.6
-  for this fixed-prior-variance configuration, forming X'r from X'y and the
-  training set's standardised X'X (or from cached fitted values when p > n).
-  The training sets' X'X come from one full crossprod minus the held-out rows.
-  Agrees with `susieR::susie()` to 1e-15, iteration count included. 2.8-7.5x
-  faster.
+  the dosages. `.susie_fit()` runs the same IBSS iterations as susieR 0.14.2
+  (the CRAN release) for this fixed-prior-variance configuration, whatever
+  susieR version is installed (see Changes to fitted models). It forms X'r
+  from X'y and the training set's standardised X'X (or from cached fitted
+  values when p > n). The training sets' X'X come from one full crossprod
+  minus the held-out rows. Agrees with susieR 0.14.2's `susie()` to 1e-15,
+  iteration count included. 2.8-7.5x faster.
 
 * `multivariate_spls()` no longer calls `spls::cv.spls()` and `spls::spls()`.
   `.cv_spls()` and `.spls_fit()` reproduce them for the arguments
@@ -102,6 +103,16 @@ genes). The glmnet-based methods (`multivariate_elasticnet()`,
   `benchmarks/` (n = 300, p = 400, q = 8) it rose for all 8 isoforms,
   by up to 0.31, with the same weights. Before the fix, the reported R-squared came from fits that were not
   the estimator whose weights were returned.
+
+* `univariate_susie()` no longer depends on the installed susieR version. It
+  used `susieR::susie()`'s defaults, and susieR 0.16.x (GitHub) runs IBSS
+  differently from 0.14.2 (CRAN): a tolerance of 1e-4 rather than 1e-3, an
+  ELBO decrease not counted as converged, prior log odds rather than log
+  posterior odds 0 for a SNP with no variance (common within
+  cross-validation folds), and trimming of null effects. It now always
+  follows 0.14.2, so fits are unchanged for users of the CRAN release and
+  change slightly for users of 0.16.x. `finemap_regress()` still calls
+  `susieR::susie()` and so still follows the installed version.
 
 * `compute_isotwas()` now defaults to `r2_scale = 'coherent'` (see New
   features). Clamped methods no longer win transcripts that no method
