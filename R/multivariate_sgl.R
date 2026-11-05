@@ -89,13 +89,16 @@ multivariate_sgl <- function(X,
   # CV to find best lambda
   if (verbose) cat("Running cross-validation for lambda selection...\n")
 
+  # Sufficient statistics shared by every fit (see .cd_data)
+  G_full <- if (.use_gram(p)) crossprod(X_scaled) else NULL
+  XtY_full <- if (!is.null(G_full)) crossprod(X_scaled, Y_centered) else NULL
+
   # Define fold worker function
   run_fold <- function(fold_idx) {
     train_idx <- cv_folds[[fold_idx]]
     test_idx <- setdiff(1:n, train_idx)
 
-    X_train <- X_scaled[train_idx, , drop = FALSE]
-    Y_train <- Y_centered[train_idx, , drop = FALSE]
+    cd <- .cd_data(X_scaled, Y_centered, train_idx, G_full, XtY_full)
     X_test <- X_scaled[test_idx, , drop = FALSE]
     Y_test <- Y_centered[test_idx, , drop = FALSE]
 
@@ -104,11 +107,11 @@ multivariate_sgl <- function(X,
     fold_mse <- matrix(0, nrow = nlambda, ncol = q)
 
     for (lam_idx in 1:nlambda) {
-      B_warm <- .fit_sgl(X_train, Y_train, lambda_seq[lam_idx], alpha,
-                         B_init = B_warm, max_iter = 500, tol = 1e-4)
+      B_warm <- .cd_solve(cd, 0L, .sgl_pars(lambda_seq[lam_idx], alpha),
+                          B0 = B_warm, max_iter = 500, tol = 1e-4)
 
       # Predictions
-      pred <- X_test %*% B_warm
+      pred <- .xb_sparse(X_test, B_warm)
       fold_mse[lam_idx, ] <- colMeans((Y_test - pred)^2)
     }
     fold_mse
@@ -138,8 +141,9 @@ multivariate_sgl <- function(X,
 
   # Fit final model on full data
   if (verbose) cat("Fitting final model...\n")
-  B_final <- .fit_sgl(X_scaled, Y_centered, best_lambda, alpha,
-                      B_init = NULL, max_iter = 1000, tol = 1e-5)
+  B_final <- .cd_solve(.cd_data(X_scaled, Y_centered, NULL, G_full, XtY_full),
+                       0L, .sgl_pars(best_lambda, alpha),
+                       max_iter = 1000, tol = 1e-5)
 
   # Rescale coefficients if standardized
   if (standardize) {
@@ -152,13 +156,12 @@ multivariate_sgl <- function(X,
     train_idx <- cv_folds[[fold_idx]]
     test_idx <- setdiff(1:n, train_idx)
 
-    X_train <- X_scaled[train_idx, , drop = FALSE]
-    Y_train <- Y_centered[train_idx, , drop = FALSE]
     X_test <- X_scaled[test_idx, , drop = FALSE]
 
-    B_fold <- .fit_sgl(X_train, Y_train, best_lambda, alpha,
-                       B_init = NULL, max_iter = 500, tol = 1e-4)
-    cv_preds[test_idx, ] <- X_test %*% B_fold
+    B_fold <- .cd_solve(.cd_data(X_scaled, Y_centered, train_idx, G_full, XtY_full),
+                        0L, .sgl_pars(best_lambda, alpha),
+                        max_iter = 500, tol = 1e-4)
+    cv_preds[test_idx, ] <- .xb_sparse(X_test, B_fold)
   }
 
   # Add back means for final predictions
@@ -241,8 +244,24 @@ multivariate_sgl <- function(X,
 
 
 #' Fit Sparse Group LASSO using coordinate descent
+#'
+#' Compiled; see .fit_sgl_r for the R reference it reproduces.
 #' @keywords internal
 .fit_sgl <- function(X, Y, lambda, alpha, B_init = NULL, max_iter = 500, tol = 1e-4) {
+  .cd_solve(.cd_data(X, Y), 0L, .sgl_pars(lambda, alpha),
+            B0 = B_init, max_iter = max_iter, tol = tol)
+}
+
+#' Penalties of the sparse group lasso row update
+#' @noRd
+.sgl_pars <- function(lambda, alpha) c(alpha * lambda, (1 - alpha) * lambda, 0)
+
+#' Sparse group lasso by coordinate descent: R reference implementation
+#'
+#' Kept to test the compiled solver against.
+#' @keywords internal
+#' @noRd
+.fit_sgl_r <- function(X, Y, lambda, alpha, B_init = NULL, max_iter = 500, tol = 1e-4) {
   n <- nrow(X)
   p <- ncol(X)
   q <- ncol(Y)
