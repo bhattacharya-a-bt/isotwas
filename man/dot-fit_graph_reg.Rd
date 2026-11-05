@@ -19,4 +19,7 @@
 \description{
 Solves: min (1/2n)||Y - XB||²_F + λ₁α||B||₁ + λ₁(1-α)/2||B||²_F + λ_g/2 tr(B'BL)
 }
+\details{
+Compiled; see .fit_graph_reg_r for the R reference it reproduces.
+}
 \keyword{internal}
