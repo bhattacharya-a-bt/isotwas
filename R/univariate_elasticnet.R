@@ -101,7 +101,7 @@ univariate_elasticnet <- function(X,
         transcripts[[tx_name]] <- create_transcript_model(
           transcript_id = tx_name,
           weights = weights,
-          r2 = .score_r2(as.numeric(Y[, i]), best.pred)$R2,
+          r2 = .score_r2(as.numeric(Y[, i]), best.pred, pvalue = FALSE)$R2,
           pvalue = cor.test(as.numeric(Y[, i]), best.pred)$p.value,
           predicted = best.pred
         )

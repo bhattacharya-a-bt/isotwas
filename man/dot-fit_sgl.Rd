@@ -7,6 +7,6 @@
 .fit_sgl(X, Y, lambda, alpha, B_init = NULL, max_iter = 500, tol = 1e-04)
 }
 \description{
-Fit Sparse Group LASSO using coordinate descent
+Compiled; see .fit_sgl_r for the R reference it reproduces.
 }
 \keyword{internal}

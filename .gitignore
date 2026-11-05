@@ -5,3 +5,4 @@
 *.o
 *.so
 *.Rcheck/
+bench_out/

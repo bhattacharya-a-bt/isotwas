@@ -155,6 +155,10 @@ multivariate_mtlasso <- function(X,
   XtX_diag <- colSums(X_scaled^2) / n
   XtY <- crossprod(X_scaled, Y_centered) / n
 
+  # Sufficient statistics shared by every fit (see .cd_data)
+  G_full <- if (.use_gram(p)) crossprod(X_scaled) else NULL
+  XtY_full <- if (!is.null(G_full)) crossprod(X_scaled, Y_centered) else NULL
+
   # Compute lambda sequence
   if (is.null(lambda_seq)) {
     # Lambda_max: smallest lambda that gives all zeros
@@ -180,25 +184,19 @@ multivariate_mtlasso <- function(X,
       train_idx <- cv_folds[[fold_idx]]
       test_idx <- setdiff(1:n, train_idx)
 
-      X_train <- X_scaled[train_idx, , drop = FALSE]
-      Y_train <- Y_centered[train_idx, , drop = FALSE]
+      cd <- .cd_data(X_scaled, Y_centered, train_idx, G_full, XtY_full)
       X_test <- X_scaled[test_idx, , drop = FALSE]
       Y_test <- Y_centered[test_idx, , drop = FALSE]
-
-      # Precompute for training data
-      XtX_train <- colSums(X_train^2) / length(train_idx)
-      XtY_train <- crossprod(X_train, Y_train) / length(train_idx)
 
       # Warm start path
       W <- matrix(0, p, q)
       fold_mse <- rep(0, length(lambda_seq))
 
       for (lam_idx in seq_along(lambda_seq)) {
-        W <- .fit_mtl_l21(X_train, Y_train, lambda_seq[lam_idx],
-                          XtX_diag = XtX_train, XtY = XtY_train,
-                          W_init = W, max_iter = 200, tol = 1e-4)
+        W <- .cd_solve(cd, 1L, c(lambda_seq[lam_idx], 0, 0),
+                       B0 = W, max_iter = 200, tol = 1e-4)
 
-        pred <- X_test %*% W
+        pred <- .xb_sparse(X_test, W)
         fold_mse[lam_idx] <- mean((Y_test - pred)^2)
       }
       fold_mse
@@ -227,9 +225,9 @@ multivariate_mtlasso <- function(X,
 
   # Fit final model
   if (verbose) cat("Fitting final model...\n")
-  W_final <- .fit_mtl_l21(X_scaled, Y_centered, best_lambda,
-                          XtX_diag = XtX_diag, XtY = XtY,
-                          W_init = NULL, max_iter = 1000, tol = 1e-5)
+  W_final <- .cd_solve(.cd_data(X_scaled, Y_centered, NULL, G_full, XtY_full),
+                       1L, c(best_lambda, 0, 0),
+                       max_iter = 1000, tol = 1e-5)
 
   # Rescale if standardized
   if (standardize) {
@@ -244,17 +242,12 @@ multivariate_mtlasso <- function(X,
     train_idx <- cv_folds[[fold_idx]]
     test_idx <- setdiff(1:n, train_idx)
 
-    X_train <- X_scaled[train_idx, , drop = FALSE]
-    Y_train <- Y_centered[train_idx, , drop = FALSE]
     X_test <- X_scaled[test_idx, , drop = FALSE]
 
-    XtX_train <- colSums(X_train^2) / length(train_idx)
-    XtY_train <- crossprod(X_train, Y_train) / length(train_idx)
-
-    W_fold <- .fit_mtl_l21(X_train, Y_train, best_lambda,
-                           XtX_diag = XtX_train, XtY = XtY_train,
-                           W_init = NULL, max_iter = 500, tol = 1e-4)
-    cv_preds[test_idx, ] <- X_test %*% W_fold
+    W_fold <- .cd_solve(.cd_data(X_scaled, Y_centered, train_idx, G_full, XtY_full),
+                        1L, c(best_lambda, 0, 0),
+                        max_iter = 500, tol = 1e-4)
+    cv_preds[test_idx, ] <- .xb_sparse(X_test, W_fold)
   }
 
   # Add back means
@@ -314,8 +307,25 @@ multivariate_mtlasso <- function(X,
 
 #' Fit L21-penalized multi-task regression via block coordinate descent
 #'
+#' Compiled; see .fit_mtl_l21_r for the R reference it reproduces. XtY is
+#' accepted for compatibility and not used. XtX_diag, when given, is the
+#' curvature X_j'X_j / n of each row update.
+#'
 #' @keywords internal
 .fit_mtl_l21 <- function(X, Y, lambda, XtX_diag = NULL, XtY = NULL,
+                         W_init = NULL, max_iter = 500, tol = 1e-4) {
+  cd <- .cd_data(X, Y)
+  if (!is.null(XtX_diag)) cd$d <- XtX_diag
+  .cd_solve(cd, 1L, c(lambda, 0, 0), B0 = W_init,
+            max_iter = max_iter, tol = tol)
+}
+
+#' L21 multi-task regression by block coordinate descent: R reference
+#'
+#' Kept to test the compiled solver against.
+#' @keywords internal
+#' @noRd
+.fit_mtl_l21_r <- function(X, Y, lambda, XtX_diag = NULL, XtY = NULL,
                          W_init = NULL, max_iter = 500, tol = 1e-4) {
   n <- nrow(X)
   p <- ncol(X)

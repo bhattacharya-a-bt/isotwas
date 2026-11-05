@@ -395,6 +395,8 @@ compute_isotwas <- function(X,
   # --- MRCE LASSO ---
   if ('mrce_lasso' %in% method) {
     mrce_mod <- run_method("MRCE Lasso (mrce_lasso)", function() {
+      # The folds and cross-products are the same for every Omega
+      mrce_cache <- .mrce_fold_cache(X, Y, nfolds, seed)
       run_mrce_omega <- function(omega_idx) {
         compute_mrce(X = X,
                      Y = Y,
@@ -408,7 +410,8 @@ compute_isotwas <- function(X,
                      seed = seed,
                      parallel = FALSE,
                      n.cores = 1,
-                     floor_r2 = floor_r2)
+                     floor_r2 = floor_r2,
+                     fold_cache = mrce_cache)
       }
 
       if (par && !is.null(n.cores) && n.cores > 1) {

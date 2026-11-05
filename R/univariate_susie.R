@@ -56,63 +56,40 @@ univariate_susie <- function(X,
 
     pred = matrix(ncol = ncol(Y),
                   nrow = nrow(Y))
+    # X'X on all samples; each fold's is this minus its held-out rows
+    X = as.matrix(X)
+    XtX = if (nrow(X) >= ncol(X) && .use_gram(ncol(X))) crossprod(X) else NULL
     for (tr in 1:nfolds){
 
         Y.tr = as.matrix(Y[train.folds[[tr]],])
         X.tr = as.matrix(X[train.folds[[tr]],])
         X.test = as.matrix(X[-train.folds[[tr]],])
-        susie.fit = list()
-        for (i in 1:ncol(Y.tr)){
-
-            susie.fit =
-                rlist::list.append(susie.fit,
-                                   susieR::susie(Matrix::Matrix(X.tr,sparse=T),
-                                                 Y.tr[,i],
-                                                 estimate_residual_variance =
-                                                     TRUE,
-                                                 estimate_prior_variance =
-                                                     FALSE,
-                                                 scaled_prior_variance = 0.1,
-                                                 verbose = verbose))
-
-        }
-        B.cur = sapply(susie.fit,function(x) as.numeric(coef(x))[-1])
+        # susieR::susie(X.tr, Y.tr[, i], estimate_residual_variance = TRUE,
+        # estimate_prior_variance = FALSE, scaled_prior_variance = 0.1) for
+        # every transcript, sharing the work on X.tr (see .susie_fit)
+        B.cur = .susie_coef(X.tr, Y.tr,
+                            XtX = if (!is.null(XtX)) XtX - crossprod(X.test))
         pred[-train.folds[[tr]],] = X.test %*% B.cur
 
     }
 
     #r2.vec = sapply(1:ncol(Y),calc.r2,Y,pred)
     r2.vec = sapply(1:ncol(Y),function(x){
-      .score_r2(Y[,x], pred[,x])$R2
+      .score_r2(Y[,x], pred[,x], pvalue = FALSE)$R2
     })
     P = sapply(1:ncol(Y),function(x){
       cor.test(Y[,x], pred[,x])$p.value
     })
 
-    susie.fit = list()
-    for (i in 1:ncol(Y.tr)){
-
-        susie.fit =
-            rlist::list.append(susie.fit,
-                               susieR::susie(Matrix::Matrix(X,sparse=T),
-                                             Y[,i],
-                                             estimate_residual_variance =
-                                                 TRUE,
-                                             estimate_prior_variance =
-                                                 FALSE,
-                                             scaled_prior_variance = 0.1,
-                                             verbose = verbose,
-                                             intercept = T))
-
-    }
+    B.full = .susie_coef(X, as.matrix(Y), XtX = XtX)
 
     # Build output using isotwas_model class
     transcripts <- list()
-    for (i in 1:length(susie.fit)){
+    for (i in 1:ncol(B.full)){
         tx_name <- colnames(Y)[i]
         weights <- tibble::tibble(
           SNP = colnames(X),
-          Weight = coef(susie.fit[[i]])[-1]
+          Weight = B.full[, i]
         )
         weights <- subset(weights, Weight != 0)
 

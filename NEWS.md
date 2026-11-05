@@ -1,5 +1,72 @@
 # isotwas 2.0.0.9000
 
+## Faster model training, same estimates
+
+Seven fitting routines are reimplemented to do the same computation with
+less work. Each reproduces what it replaces: the same folds and random
+numbers, tuning grids, update order and stopping rules. Fitted weights,
+cross-validated predictions and R-squared agree to rounding error except
+where noted. `tests/testthat/test-fast-*.R` check each against the
+original. `benchmarks/` (not installed) has the timing script, and the
+speed-ups below were measured with it (OpenBLAS, one core, simulated
+genes). The glmnet-based methods (`multivariate_elasticnet()`,
+`univariate_elasticnet()`, `multivariate_joinet()`,
+`multivariate_stacking()`) are unchanged.
+
+* `univariate_blup()` no longer calls `rrBLUP::mixed.solve()` once per
+  transcript. Its kernel is a function of X'X, so both spectra REML needs come
+  from one eigendecomposition of the smaller Gram matrix (X'X or XX') and one
+  of a diagonal-minus-rank-one matrix per training set, shared by every
+  transcript. `mixed.solve()` did two SVDs, a complete QR and an n x n inverse
+  per transcript. The REML objective, bounds and `optimize()` call are
+  unchanged. Weights agree with `mixed.solve()` to about 1e-5 relative:
+  `optimize()` locates the REML optimum only to about 1e-4 relative, and
+  `mixed.solve()` itself moves by up to 2e-6 when its input moves by one ulp.
+  Missing values fall back to `mixed.solve()`. 4.5-34x faster, more at larger n.
+
+* `univariate_susie()` no longer calls `susieR::susie()` on a sparse copy of
+  the dosages. `.susie_fit()` runs the same IBSS iterations as susieR 0.14.2
+  (the CRAN release) for this fixed-prior-variance configuration, whatever
+  susieR version is installed (see Changes to fitted models). It forms X'r
+  from X'y and the training set's standardised X'X (or from cached fitted
+  values when p > n). The training sets' X'X come from one full crossprod
+  minus the held-out rows. Agrees with susieR 0.14.2's `susie()` to 1e-15,
+  iteration count included. 2.8-7.5x faster.
+
+* `multivariate_spls()` no longer calls `spls::cv.spls()` and `spls::spls()`.
+  `.cv_spls()` and `.spls_fit()` reproduce them for the arguments
+  multivariate_spls uses, calling `pls::simpls.fit()` directly instead of
+  through a model frame, centring each training set once for all nine `eta`,
+  and forming the direction vectors' Z Z' v products as Z (Z' v). Results are
+  bit-identical in every benchmark. 2.4-10x faster, more at larger p. `pls`
+  is now in Imports.
+
+* `multivariate_sgl()`, `multivariate_mtlasso()` (L21 backend) and
+  `multivariate_graph_reg()` share one compiled block coordinate-descent solver
+  (`src/rowcd.c`). It makes the same row updates in the same order as the R
+  solvers, which are kept as `.fit_sgl_r()`, `.fit_mtl_l21_r()` and
+  `.fit_graph_reg_r()`. The gradient comes from X'X, updated by one column when a
+  row changes, rather than from three n x q residual updates per SNP.
+  graph_reg's per-SNP q x q `solve()` becomes a product with the Laplacian's
+  eigenvectors. Each training set's X'X is the full X'X minus its held-out
+  rows. Above `getOption("isotwas.gram_max_p", 5000)` SNPs the solver works
+  from residuals instead. Agrees with the R solvers to 1e-14. 7-67x faster.
+
+* MRCE's coordinate descent (`rblasso()`) uses a new kernel,
+  `src/mrce-fast.c`. `blasso()` updates all p*q soft-threshold values whenever
+  one coefficient changes. The new kernel keeps S B instead, which one change
+  touches in one column, and forms each soft-threshold value when it is
+  visited. Agrees with `blasso()` to 1e-14 with the same iteration counts,
+  warm starts included. `options(isotwas.mrce_reference = TRUE)` restores
+  the old kernel. `compute_mrce()` gains `fold_cache`, which `compute_isotwas()`
+  uses to compute the folds' variance filters and cross-products once for all
+  `omega_nlambda` Omegas rather than once per Omega. It also computes the
+  cor.test p-value only at the selected lambda, the only one used. 3.4-7.2x
+  faster for one Omega, 4.5-7.1x for `compute_isotwas()`'s 10 Omegas.
+
+* `univariate_elasticnet()`, `univariate_blup()` and `univariate_susie()` no
+  longer run a `cor.test()` they discard when scoring R-squared.
+
 ## Changes to fitted models
 
 * `univariate_elasticnet()` and the final fit of `univariate_susie()` now fit
@@ -20,6 +87,32 @@
   were kept and could win selection. Weights all below 1e-8 in absolute value
   are now also treated as empty. multi_enet's choice of `alpha` uses the same
   score, so it changes too.
+
+* A warm-started MRCE lasso fit now converges to the lasso solution.
+  `rblasso()` started its soft-threshold values at M - S B0 Omega, which
+  still holds each coefficient's own term S[r,r] Omega[c,c] B0[r,c].
+  `blasso()` never updates an entry's soft value when that entry changes, so
+  the offset stayed for the whole fit: restarting at the exact solution moved
+  it, for example from 0.92 to 0 for the largest coefficient. `rblasso()` now
+  adds the own term back. Cold starts are unchanged, so the final model at a
+  given lambda is the same. The cross-validation fits along the lambda path
+  are warm-started, so the chosen lambda and the reported cross-validated
+  R-squared can change, in either direction and sometimes by a lot. On 16
+  simulated genes (n = 300, p = 150, q = 4) the lambda changed for 4 of them
+  and the mean R-squared went from 0.044 to 0.040. On the simulated gene of
+  `benchmarks/` (n = 300, p = 400, q = 8) it rose for all 8 isoforms,
+  by up to 0.31, with the same weights. Before the fix, the reported R-squared came from fits that were not
+  the estimator whose weights were returned.
+
+* `univariate_susie()` no longer depends on the installed susieR version. It
+  used `susieR::susie()`'s defaults, and susieR 0.16.x (GitHub) runs IBSS
+  differently from 0.14.2 (CRAN): a tolerance of 1e-4 rather than 1e-3, an
+  ELBO decrease not counted as converged, prior log odds rather than log
+  posterior odds 0 for a SNP with no variance (common within
+  cross-validation folds), and trimming of null effects. It now always
+  follows 0.14.2, so fits are unchanged for users of the CRAN release and
+  change slightly for users of 0.16.x. `finemap_regress()` still calls
+  `susieR::susie()` and so still follows the installed version.
 
 * `compute_isotwas()` now defaults to `r2_scale = 'coherent'` (see New
   features). Clamped methods no longer win transcripts that no method

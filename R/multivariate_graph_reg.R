@@ -137,9 +137,22 @@ multivariate_graph_reg <- function(X,
     X_sds <- rep(1, p)
   }
 
-  # Precompute X'X and X'Y
-  XtX <- crossprod(X_scaled) / n
+  # Precompute X'Y
   XtY <- crossprod(X_scaled, Y_centered) / n
+
+  # Sufficient statistics shared by every fit (see .cd_data)
+  G_full <- if (.use_gram(p)) crossprod(X_scaled) else NULL
+  XtY_full <- if (!is.null(G_full)) crossprod(X_scaled, Y_centered) else NULL
+
+  # The Laplacian enters each row update through its eigendecomposition
+  L_eig <- eigen(L, symmetric = TRUE)
+  has_graph <- max(abs(L - diag(diag(L)))) > 1e-10
+  graph_fit <- function(cd, l1, lg, B0, max_iter, tol) {
+    .cd_solve(cd, if (lg > 0 && has_graph) 3L else 2L,
+              c(l1 * alpha, l1 * (1 - alpha), lg),
+              B0 = B0, max_iter = max_iter, tol = tol,
+              V = L_eig$vectors, ev = L_eig$values)
+  }
 
   # Compute lambda1 sequence (L1 penalty)
   lambda1_max <- max(abs(XtY)) / alpha
@@ -181,6 +194,18 @@ multivariate_graph_reg <- function(X,
                   length(lambda_graph_seq), nfolds, n_tasks))
     }
 
+    # Tasks run fold by fold (lg_idx varies fastest), so keeping the last
+    # fold's sufficient statistics serves all its lambda_graph values
+    cd_memo <- new.env()
+    fold_cd <- function(fold_idx) {
+      if (!identical(cd_memo$fold, fold_idx)) {
+        cd_memo$cd <- .cd_data(X_scaled, Y_centered, cv_folds[[fold_idx]],
+                               G_full, XtY_full)
+        cd_memo$fold <- fold_idx
+      }
+      cd_memo$cd
+    }
+
     # Worker function for a single (lambda_graph, fold) combination
     run_cv_task <- function(task_idx) {
       lg_idx <- cv_tasks$lg_idx[task_idx]
@@ -190,8 +215,7 @@ multivariate_graph_reg <- function(X,
       train_idx <- cv_folds[[fold_idx]]
       test_idx <- setdiff(1:n, train_idx)
 
-      X_train <- X_scaled[train_idx, , drop = FALSE]
-      Y_train <- Y_centered[train_idx, , drop = FALSE]
+      cd <- fold_cd(fold_idx)
       X_test <- X_scaled[test_idx, , drop = FALSE]
       Y_test <- Y_centered[test_idx, , drop = FALSE]
 
@@ -202,10 +226,9 @@ multivariate_graph_reg <- function(X,
       for (l1_idx in seq_along(lambda1_seq)) {
         l1 <- lambda1_seq[l1_idx]
 
-        B_warm <- .fit_graph_reg(X_train, Y_train, L, l1, lg, alpha,
-                                 B_init = B_warm, max_iter = 200, tol = 1e-4)
+        B_warm <- graph_fit(cd, l1, lg, B_warm, max_iter = 200, tol = 1e-4)
 
-        pred <- X_test %*% B_warm
+        pred <- .xb_sparse(X_test, B_warm)
         mse_vec[l1_idx] <- mean((Y_test - pred)^2)
       }
 
@@ -243,8 +266,9 @@ multivariate_graph_reg <- function(X,
 
   # Fit final model
   if (verbose) cat("Fitting final model...\n")
-  B_final <- .fit_graph_reg(X_scaled, Y_centered, L, best_lambda1, best_lambda_graph,
-                            alpha, B_init = NULL, max_iter = 1000, tol = 1e-5)
+  B_final <- graph_fit(.cd_data(X_scaled, Y_centered, NULL, G_full, XtY_full),
+                       best_lambda1, best_lambda_graph, NULL,
+                       max_iter = 1000, tol = 1e-5)
 
   # Rescale coefficients if standardized
   if (standardize) {
@@ -256,13 +280,12 @@ multivariate_graph_reg <- function(X,
     train_idx <- cv_folds[[fold_idx]]
     test_idx <- setdiff(1:n, train_idx)
 
-    X_train <- X_scaled[train_idx, , drop = FALSE]
-    Y_train <- Y_centered[train_idx, , drop = FALSE]
     X_test <- X_scaled[test_idx, , drop = FALSE]
 
-    B_fold <- .fit_graph_reg(X_train, Y_train, L, best_lambda1, best_lambda_graph,
-                             alpha, B_init = NULL, max_iter = 500, tol = 1e-4)
-    list(test_idx = test_idx, preds = X_test %*% B_fold)
+    cd <- .cd_data(X_scaled, Y_centered, train_idx, G_full, XtY_full)
+    B_fold <- graph_fit(cd, best_lambda1, best_lambda_graph, NULL,
+                        max_iter = 500, tol = 1e-4)
+    list(test_idx = test_idx, preds = .xb_sparse(X_test, B_fold))
   }
 
   if (par && !is.null(n.cores) && n.cores > 1) {
@@ -366,8 +389,25 @@ multivariate_graph_reg <- function(X,
 #'
 #' Solves: min (1/2n)||Y - XB||²_F + λ₁α||B||₁ + λ₁(1-α)/2||B||²_F + λ_g/2 tr(B'BL)
 #'
+#' Compiled; see .fit_graph_reg_r for the R reference it reproduces.
+#'
 #' @keywords internal
 .fit_graph_reg <- function(X, Y, L, lambda1, lambda_graph, alpha,
+                           B_init = NULL, max_iter = 500, tol = 1e-4) {
+  graph <- lambda_graph > 0 && max(abs(L - diag(diag(L)))) > 1e-10
+  e <- if (graph) eigen(L, symmetric = TRUE) else list(vectors = NULL, values = NULL)
+  .cd_solve(.cd_data(X, Y), if (graph) 3L else 2L,
+            c(lambda1 * alpha, lambda1 * (1 - alpha), lambda_graph),
+            B0 = B_init, max_iter = max_iter, tol = tol,
+            V = e$vectors, ev = e$values)
+}
+
+#' Graph-regularised elastic net by coordinate descent: R reference
+#'
+#' Kept to test the compiled solver against.
+#' @keywords internal
+#' @noRd
+.fit_graph_reg_r <- function(X, Y, L, lambda1, lambda_graph, alpha,
                            B_init = NULL, max_iter = 500, tol = 1e-4) {
   n <- nrow(X)
   p <- ncol(X)

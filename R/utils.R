@@ -125,11 +125,13 @@ calc.r2 <- function(i,obs,pred){
 #' @param obs numeric vector, observed values
 #' @param pred numeric vector, predicted values
 #' @param method character, "refit" or "oos"
+#' @param pvalue logical, compute P; FALSE skips the cor.test and returns
+#'   P = NA, for callers that use only R2
 #'
 #' @return list(R2, P)
 #'
 #' @noRd
-.score_r2 <- function(obs, pred, method = c("refit", "oos")) {
+.score_r2 <- function(obs, pred, method = c("refit", "oos"), pvalue = TRUE) {
 
     method <- match.arg(method)
     n <- length(obs)
@@ -148,7 +150,9 @@ calc.r2 <- function(i,obs,pred){
         }
     }
 
-    p <- if (stats::sd(pred) > 0 && stats::sd(obs) > 0) {
+    p <- if (!pvalue) {
+        NA_real_
+    } else if (stats::sd(pred) > 0 && stats::sd(obs) > 0) {
         stats::cor.test(obs, pred)$p.value
     } else {
         1
@@ -298,3 +302,15 @@ cluster_weight = function(x){
   }
 }
 
+
+#' Should X'X be held in memory?
+#'
+#' The faster solvers (univariate_susie, and the coordinate descent behind
+#' multivariate_sgl, multivariate_mtlasso and multivariate_graph_reg) work
+#' from the p x p matrix X'X when it is affordable. Above
+#' getOption('isotwas.gram_max_p', 5000) SNPs they work from X instead.
+#'
+#' @noRd
+.use_gram <- function(p) {
+    p <= getOption("isotwas.gram_max_p", 5000)
+}
