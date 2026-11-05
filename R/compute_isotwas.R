@@ -469,7 +469,8 @@ compute_isotwas <- function(X,
                               par = par,
                               n.cores = n.cores,
                               tx_names = tx_names,
-                              seed = seed)
+                              seed = seed,
+                              folds = cv_folds)
     })
     if (!is.null(enet_mod)) {
       all_models <- rlist::list.append(all_models, enet_mod)

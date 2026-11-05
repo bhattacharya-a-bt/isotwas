@@ -14,6 +14,11 @@
 #' @param n.cores int, number of parallel cores
 #' @param tx_names vector, character vector of tx names in order of columns of Y
 #' @param seed int, random seed
+#' @param folds optional cross-validation folds: a list with one vector of
+#'   training-row indices per fold, or a vector of fold labels 1..K, one per
+#'   sample. NULL (the default) draws them from \code{seed} as before;
+#'   compute_isotwas passes every method the same folds.
+#'   All three alphas then use these folds.
 #'
 #' @return data frame of elastic net, lasso, and LMM based predictions
 #'
@@ -34,7 +39,8 @@ multivariate_elasticnet <- function(X,
                                     par = F,
                                     n.cores = NULL,
                                     tx_names = NULL,
-                                    seed){
+                                    seed,
+                                    folds = NULL){
 
     if (!is.null(colnames(Y))){
         tx_names = colnames(Y)
@@ -52,19 +58,32 @@ multivariate_elasticnet <- function(X,
     # cv.glmnet(x = X, y = Y, family = 'mgaussian', standardize = FALSE,
     # keep = TRUE) for alpha = 0, 0.5 and 1, reproduced by .cv_glmnet on
     # compressed rows (see glmnet_compress.R). Each cv.glmnet call drew its
-    # own folds, sample(rep(seq(nfolds), length = N)), in this order.
+    # own folds, sample(rep(seq(nfolds), length = N)), in this order. Given
+    # folds (compute_isotwas's shared ones), all three alphas use them.
     set.seed(seed)
     Ym = as.matrix(Y)
     N = nrow(X)
-    foldids = lapply(1:3, function(i) sample(rep(seq(nfolds), length = N)))
-    # The full-data design serves all three alphas, each fold design one.
+    if (is.null(folds)) {
+        foldids = lapply(1:3, function(i) sample(rep(seq(nfolds), length = N)))
+    } else {
+        folds = .as_folds(folds, N)
+        foldids = rep(list(folds$foldid), 3)
+        nfolds = folds$nfolds
+    }
+    # The full-data design serves all three alphas; a fold design serves
+    # every alpha that uses its fold set.
     designs = list(NULL, NULL, NULL)
     if (.glmnet_compress_on(N - max(tabulate(foldids[[1]])), ncol(X),
                             ncol(Ym))) {
         g = .gram_full(X, Ym)
         full = .glmnet_design(.gram_subset(g))
-        designs = lapply(foldids, function(f)
-            .glmnet_cv_designs(X, Ym, f, g = g, full = full))
+        cv_designs = function(f) .glmnet_cv_designs(X, Ym, f, g = g,
+                                                    full = full)
+        designs = if (!is.null(folds)) {
+            rep(list(cv_designs(foldids[[1]])), 3)
+        } else {
+            lapply(foldids, cv_designs)
+        }
     }
     cores = if (par && !is.null(n.cores)) n.cores else 1L
     fit_alpha = function(i, a) {
