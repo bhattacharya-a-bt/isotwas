@@ -49,78 +49,32 @@ multivariate_elasticnet <- function(X,
         colnames(Y) = tx_names
     }
 
-    if (par){
-        doParallel::registerDoParallel(n.cores)
-        set.seed(seed)
-
-        models_0 = glmnet::cv.glmnet(x = X,
-                                     y = as.matrix(Y),
-                                     nfolds = nfolds,
-                                     parallel = par,
-                                     family = 'mgaussian',
-                                     keep = T,
-                                     alpha = 0,
-                                     intercept = T,
-                                     standardize = F,
-                                     trace.it = ifelse(verbose,1,0))
-
-        models_5 = glmnet::cv.glmnet(x = X,
-                                     y = as.matrix(Y),
-                                     nfolds = nfolds,
-                                     parallel = par,
-                                     family = 'mgaussian',
-                                     keep = T,
-                                     alpha = .5,
-                                     intercept = T,
-                                     standardize = F,
-                                     trace.it = ifelse(verbose,1,0))
-
-        models_1 = glmnet::cv.glmnet(x = X,
-                                   y = as.matrix(Y),
-                                   nfolds = nfolds,
-                                   parallel = par,
-                                   family = 'mgaussian',
-                                   keep = T,
-                                   alpha = 1,
-                                   intercept = T,
-                                   standardize = F,
-                                   trace.it = ifelse(verbose,1,0))
-    } else  {
-        set.seed(seed)
-
-      models_0 = glmnet::cv.glmnet(x = X,
-                                   y = as.matrix(Y),
-                                   nfolds = nfolds,
-                                   parallel = par,
-                                   family = 'mgaussian',
-                                   keep = T,
-                                   alpha = 0,
-                                   intercept = T,
-                                   standardize = F,
-                                   trace.it = ifelse(verbose,1,0))
-
-      models_5 = glmnet::cv.glmnet(x = X,
-                                   y = as.matrix(Y),
-                                   nfolds = nfolds,
-                                   parallel = par,
-                                   family = 'mgaussian',
-                                   keep = T,
-                                   alpha = .5,
-                                   intercept = T,
-                                   standardize = F,
-                                   trace.it = ifelse(verbose,1,0))
-
-      models_1 = glmnet::cv.glmnet(x = X,
-                                   y = as.matrix(Y),
-                                   nfolds = nfolds,
-                                   parallel = par,
-                                   family = 'mgaussian',
-                                   keep = T,
-                                   alpha = 1,
-                                   intercept = T,
-                                   standardize = F,
-                                   trace.it = ifelse(verbose,1,0))
+    # cv.glmnet(x = X, y = Y, family = 'mgaussian', standardize = FALSE,
+    # keep = TRUE) for alpha = 0, 0.5 and 1, reproduced by .cv_glmnet on
+    # compressed rows (see glmnet_compress.R). Each cv.glmnet call drew its
+    # own folds, sample(rep(seq(nfolds), length = N)), in this order.
+    set.seed(seed)
+    Ym = as.matrix(Y)
+    N = nrow(X)
+    foldids = lapply(1:3, function(i) sample(rep(seq(nfolds), length = N)))
+    # The full-data design serves all three alphas, each fold design one.
+    designs = list(NULL, NULL, NULL)
+    if (.glmnet_compress_on(N - max(tabulate(foldids[[1]])), ncol(X),
+                            ncol(Ym))) {
+        g = .gram_full(X, Ym)
+        full = .glmnet_design(.gram_subset(g))
+        designs = lapply(foldids, function(f)
+            .glmnet_cv_designs(X, Ym, f, g = g, full = full))
     }
+    cores = if (par && !is.null(n.cores)) n.cores else 1L
+    fit_alpha = function(i, a) {
+        .cv_glmnet(X, Ym, foldids[[i]], family = 'mgaussian', alpha = a,
+                   standardize = FALSE, designs = designs[[i]],
+                   n.cores = cores)
+    }
+    models_0 = fit_alpha(1, 0)
+    models_5 = fit_alpha(2, .5)
+    models_1 = fit_alpha(3, 1)
 
     pred_5 = models_5$fit.preval[,,which.min(models_5$cvm)]
     pred_0 = models_0$fit.preval[,,which.min(models_0$cvm)]
