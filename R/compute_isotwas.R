@@ -45,6 +45,14 @@
 #' @param sgl_nlambda int, lambda path length for multivariate_sgl
 #' @param gene_exp vector, vector of total gene expression
 #' @param run_all logical, run all methods
+#' @param shared_folds logical, give every method the same cross-validation
+#'   folds (default TRUE), so that the cross-validated R2 compared across
+#'   methods come from the same splits. The folds are those drawn by
+#'   set.seed(seed) and caret::createFolds(1:N, k = nfolds,
+#'   returnTrain = TRUE). FALSE lets each method draw its own, as before.
+#' @param folds optional folds to use instead: a list with one vector of
+#'   training-row indices per fold, or a vector of fold labels 1..K, one per
+#'   sample. They override nfolds and shared_folds.
 #'
 #' @importFrom glmnet glmnet
 #' @importFrom glmnet cv.glmnet
@@ -109,7 +117,9 @@ compute_isotwas <- function(X,
                             tol.in = 1e-3,
                             maxit.in = 1e3,
                             joinet_nfolds_int = 10,
-                            sgl_nlambda = 20) {
+                            sgl_nlambda = 20,
+                            shared_folds = TRUE,
+                            folds = NULL) {
 
   # Start timing
   start_time <- Sys.time()
@@ -192,6 +202,17 @@ compute_isotwas <- function(X,
     seed <- as.integer(Sys.time()) %% 100000L
   }
   set.seed(seed)
+
+  # One set of cross-validation folds for every method that takes them
+  cv_folds <- NULL
+  if (!is.null(folds)) {
+    cv_folds <- .as_folds(folds, N)
+  } else if (shared_folds) {
+    cv_folds <- .isotwas_folds(N, nfolds, seed)
+  }
+  if (!is.null(cv_folds)) {
+    nfolds <- cv_folds$nfolds
+  }
 
   # Set transcript names
   if (is.null(tx_names)) {
@@ -384,7 +405,8 @@ compute_isotwas <- function(X,
                         tx_names = tx_names,
                         par = par,
                         n.cores = n.cores,
-                        seed = seed)
+                        seed = seed,
+                        folds = cv_folds)
     })
     if (!is.null(spls_mod)) {
       all_models <- rlist::list.append(all_models, spls_mod)
@@ -396,7 +418,7 @@ compute_isotwas <- function(X,
   if ('mrce_lasso' %in% method) {
     mrce_mod <- run_method("MRCE Lasso (mrce_lasso)", function() {
       # The folds and cross-products are the same for every Omega
-      mrce_cache <- .mrce_fold_cache(X, Y, nfolds, seed)
+      mrce_cache <- .mrce_fold_cache(X, Y, nfolds, seed, cv_folds)
       run_mrce_omega <- function(omega_idx) {
         compute_mrce(X = X,
                      Y = Y,
@@ -411,7 +433,8 @@ compute_isotwas <- function(X,
                      parallel = FALSE,
                      n.cores = 1,
                      floor_r2 = floor_r2,
-                     fold_cache = mrce_cache)
+                     fold_cache = mrce_cache,
+                     folds = cv_folds)
       }
 
       if (par && !is.null(n.cores) && n.cores > 1) {
@@ -488,7 +511,8 @@ compute_isotwas <- function(X,
                        seed = seed,
                        par = par,
                        n.cores = n.cores,
-                       floor_r2 = floor_r2)
+                       floor_r2 = floor_r2,
+                       folds = cv_folds)
     })
     if (!is.null(sgl_mod)) {
       all_models <- rlist::list.append(all_models, sgl_mod)
@@ -507,7 +531,8 @@ compute_isotwas <- function(X,
                            seed = seed,
                            par = par,
                            n.cores = n.cores,
-                           floor_r2 = floor_r2)
+                           floor_r2 = floor_r2,
+                           folds = cv_folds)
     })
     if (!is.null(mtlasso_mod)) {
       all_models <- rlist::list.append(all_models, mtlasso_mod)
@@ -549,7 +574,8 @@ compute_isotwas <- function(X,
                              seed = seed,
                              par = par,
                              n.cores = n.cores,
-                             floor_r2 = floor_r2)
+                             floor_r2 = floor_r2,
+                             folds = cv_folds)
     })
     if (!is.null(graph_mod)) {
       all_models <- rlist::list.append(all_models, graph_mod)
@@ -582,7 +608,8 @@ compute_isotwas <- function(X,
                                   par = par,
                                   n.cores = n.cores,
                                   tx_names = tx_names,
-                                  seed = seed)
+                                  seed = seed,
+                                  folds = cv_folds)
 
       uni_susie <- univariate_susie(X = X,
                                     Y = Y,
@@ -594,7 +621,8 @@ compute_isotwas <- function(X,
                                     par = par,
                                     n.cores = n.cores,
                                     tx_names = tx_names,
-                                    seed = seed)
+                                    seed = seed,
+                                    folds = cv_folds)
 
       get_best(list(uni_enet, uni_blup, uni_susie), G = G,
                empty_r2 = empty_r2)
@@ -644,6 +672,9 @@ compute_isotwas <- function(X,
                                      k = nfolds,
                                      returnTrain = FALSE,
                                      list = FALSE)
+    if (!is.null(cv_folds)) {
+      test.folds <- cv_folds$foldid
+    }
 
     glmnet_pred <- glmnet::cv.glmnet(x = pred_mat,
                                      y = gene_exp,

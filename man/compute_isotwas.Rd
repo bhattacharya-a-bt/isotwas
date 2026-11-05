@@ -32,7 +32,9 @@ compute_isotwas(
   tol.in = 0.001,
   maxit.in = 1000,
   joinet_nfolds_int = 10,
-  sgl_nlambda = 20
+  sgl_nlambda = 20,
+  shared_folds = TRUE,
+  folds = NULL
 )
 }
 \arguments{
@@ -104,6 +106,16 @@ Can be created using \code{\link{similarity_from_gtf}} or
 \item{joinet_nfolds_int}{int, folds for joinet's inner cross-validation.}
 
 \item{sgl_nlambda}{int, lambda path length for multivariate_sgl}
+
+\item{shared_folds}{logical, give every method the same cross-validation
+folds (default TRUE), so that the cross-validated R2 compared across
+methods come from the same splits. The folds are those drawn by
+set.seed(seed) and caret::createFolds(1:N, k = nfolds,
+returnTrain = TRUE). FALSE lets each method draw its own, as before.}
+
+\item{folds}{optional folds to use instead: a list with one vector of
+training-row indices per fold, or a vector of fold labels 1..K, one per
+sample. They override nfolds and shared_folds.}
 }
 \value{
 an isotwas_result. Its \code{comparison} table holds each method's

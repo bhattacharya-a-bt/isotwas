@@ -39,6 +39,11 @@
 #'   R-squared that calc.r2() applies to the other methods
 #' @param floor_r2 logical, clamp a negative R-squared to 0, as earlier
 #'   versions did. Default FALSE.
+#' @param folds optional cross-validation folds: a list with one vector of
+#'   training-row indices per fold, or a vector of fold labels 1..K, one per
+#'   sample. NULL (the default) draws them from \code{seed} as before;
+#'   compute_isotwas passes every method the same folds.
+#'   Used by the fast backend; the rmtl backend draws its own.
 #' @return isotwas_model object containing:
 #'   \itemize{
 #'     \item transcripts: list of transcript_model objects with weights, R2,
@@ -74,7 +79,8 @@ multivariate_mtlasso <- function(X,
                                   n.cores = 1,
                                   backend = c("fast", "rmtl"),
                                   r2_method = c("oos", "refit"),
-                                  floor_r2 = FALSE) {
+                                  floor_r2 = FALSE,
+                                  folds = NULL) {
 
   r2_method <- match.arg(r2_method)
   regularization <- match.arg(regularization)
@@ -93,7 +99,8 @@ multivariate_mtlasso <- function(X,
                          nfolds = nfolds, standardize = standardize,
                          verbose = verbose, seed = seed,
                          par = par, n.cores = n.cores,
-                         r2_method = r2_method, floor_r2 = floor_r2))
+                         r2_method = r2_method, floor_r2 = floor_r2,
+                         folds = folds))
   } else {
     return(.mtlasso_rmtl(X, Y, regularization = regularization,
                          Lam1_seq = lambda_seq, Lam2 = Lam2,
@@ -116,7 +123,7 @@ multivariate_mtlasso <- function(X,
                           verbose = FALSE, seed = 123,
                           par = FALSE, n.cores = 1,
                           r2_method = c("oos", "refit"),
-                          floor_r2 = FALSE) {
+                          floor_r2 = FALSE, folds = NULL) {
 
   r2_method <- match.arg(r2_method)
   set.seed(seed)
@@ -176,6 +183,11 @@ multivariate_mtlasso <- function(X,
   } else {
     # Cross-validation
     cv_folds <- caret::createFolds(1:n, k = nfolds, returnTrain = TRUE)
+    if (!is.null(folds)) {
+      folds <- .as_folds(folds, n)
+      cv_folds <- folds$train
+      nfolds <- folds$nfolds
+    }
 
     if (verbose) cat("Running cross-validation...\n")
 

@@ -14,6 +14,10 @@
 #' @param n.cores int, number of parallel cores
 #' @param tx_names vector, character vector of tx names in order of columns of Y
 #' @param seed int, random seed
+#' @param folds optional cross-validation folds: a list with one vector of
+#'   training-row indices per fold, or a vector of fold labels 1..K, one per
+#'   sample. NULL (the default) draws them from \code{seed} as before;
+#'   compute_isotwas passes every method the same folds.
 #'
 #' @return data frame of elastic net, lasso, and LMM based predictions
 #'
@@ -35,7 +39,8 @@ univariate_susie <- function(X,
                              par = F,
                              n.cores = NULL,
                              tx_names = NULL,
-                             seed){
+                             seed,
+                             folds = NULL){
 
     if (!is.null(colnames(Y))){
         tx_names = colnames(Y)
@@ -53,6 +58,11 @@ univariate_susie <- function(X,
     train.folds = caret::createFolds(1:nrow(Y),
                                      k = nfolds,
                                      returnTrain = T)
+    if (!is.null(folds)) {
+        folds = .as_folds(folds, nrow(Y))
+        train.folds = folds$train
+        nfolds = folds$nfolds
+    }
 
     pred = matrix(ncol = ncol(Y),
                   nrow = nrow(Y))

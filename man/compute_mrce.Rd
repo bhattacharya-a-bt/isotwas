@@ -19,7 +19,8 @@ compute_mrce(
   n.cores = NULL,
   r2_method = c("oos", "refit"),
   floor_r2 = FALSE,
-  fold_cache = NULL
+  fold_cache = NULL,
+  folds = NULL
 )
 }
 \arguments{
@@ -57,6 +58,11 @@ versions did. Default FALSE.}
 \item{fold_cache}{list or NULL, the Omega-independent quantities from an
 internal helper, so that fits to several Omegas on the same X, Y, nfolds
 and seed compute them once. Leave NULL.}
+
+\item{folds}{optional cross-validation folds: a list with one vector of
+training-row indices per fold, or a vector of fold labels 1..K, one per
+sample. NULL (the default) draws them from \code{seed} as before;
+compute_isotwas passes every method the same folds.}
 }
 \value{
 CV MRCE fit
