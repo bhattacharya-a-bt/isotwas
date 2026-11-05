@@ -9,6 +9,8 @@ extern void blasso(void *, void *, void *, void *, void *, void *, void *, void 
    each file's routines can be added or removed on their own */
 
 /* src/rowcd.c */
+extern SEXP isotwas_rowcd(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP,
+                          SEXP, SEXP, SEXP, SEXP, SEXP);
 
 /* src/mrce-fast.c */
 
@@ -19,6 +21,7 @@ static const R_CMethodDef CEntries[] = {
 
 static const R_CallMethodDef CallEntries[] = {
     /* src/rowcd.c */
+    {"isotwas_rowcd", (DL_FUNC) &isotwas_rowcd, 13},
     /* src/mrce-fast.c */
     {NULL, NULL, 0}
 };
