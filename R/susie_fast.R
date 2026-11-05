@@ -3,15 +3,20 @@
 #' univariate_susie fits susieR::susie(X, y, estimate_residual_variance =
 #' TRUE, estimate_prior_variance = FALSE, scaled_prior_variance = 0.1) with
 #' the other arguments at their defaults (L = min(10, p), intercept and
-#' standardize TRUE, max_iter = 100, tol = 1e-4, convergence on the ELBO).
+#' standardize TRUE, max_iter = 100, convergence on the ELBO).
 #' .susie_prep() computes what depends on X alone, once per training set;
 #' .susie_fit() runs IBSS for one response.
 #'
-#' The algorithm is susieR 0.16.6's, step for step: the same order of
-#' single-effect updates, the same log Bayes factors, posterior moments, KL
-#' terms, ELBO, convergence test (0 <= ELBO change < tol), residual variance
-#' update and bounds, and the same trimming of null effects. What changes is
-#' how the products with the standardised X are formed:
+#' The algorithm is susieR 0.14.2's (the CRAN release), step for step,
+#' whatever susieR version is installed, so a fit does not depend on it:
+#' the same order of single-effect updates, the same log Bayes factors,
+#' posterior moments, KL terms, ELBO, convergence test, and residual
+#' variance update and bounds. susieR 0.16.x (GitHub) differs in four ways,
+#' which this code does not follow: tol defaults to 1e-4 rather than 1e-3;
+#' an ELBO decrease does not count as converged; a SNP with no variance
+#' (d = 0) keeps its prior log odds rather than log posterior odds 0; and
+#' null effects are trimmed at the end. What changes from susieR is how the
+#' products with the standardised X are formed:
 #' \itemize{
 #'   \item X'R for the residual R is taken from X'y and a cached X'X b_l per
 #'     effect when n >= p (a p x p product instead of two n x p ones), or
@@ -19,8 +24,8 @@
 #'   \item the KL term's R'X E[b] is formed as (X'R)'E[b], and the ELBO's
 #'     ||X b_l||^2 from the same caches.
 #' }
-#' The estimates agree with susieR to rounding error, as long as no ELBO
-#' change falls within rounding error of the tolerance.
+#' The estimates agree with susieR 0.14.2 to rounding error, as long as no
+#' ELBO change falls within rounding error of the tolerance.
 #'
 #' @noRd
 NULL
@@ -58,7 +63,7 @@ NULL
 #'   c(intercept, beta) equal to coef() of the susieR fit
 #' @noRd
 .susie_fit <- function(prep, y, scaled_prior_variance = 0.1,
-                       max_iter = 100, tol = 1e-4, prior_tol = 1e-9) {
+                       max_iter = 100, tol = 1e-3) {
     X <- prep$X
     n <- prep$n
     p <- prep$p
@@ -112,33 +117,30 @@ NULL
             betahat <- XtR / d
             shat2 <- sigma2 / d
 
-            # gaussian_ser_lbf and lbf_stabilization
-            shat2_safe <- pmax(shat2, .Machine$double.eps)
-            lbf <- -0.5 * log(1 + V / shat2_safe) +
-                0.5 * betahat^2 * V / (shat2_safe * (V + shat2_safe))
-            lbf[!is.finite(betahat) | !is.finite(shat2)] <- 0
+            # single_effect_regression. lbf is dnorm(betahat, 0, sqrt(V +
+            # shat2), log = TRUE) - dnorm(betahat, 0, sqrt(shat2), log = TRUE)
+            # in closed form. A SNP with no variance (d = 0, shat2 = Inf)
+            # gets log posterior odds 0, the prior variance and a mean of
+            # (rounding error) 0.
+            lbf <- -0.5 * log(1 + V / shat2) +
+                0.5 * betahat^2 * V / (shat2 * (V + shat2))
             lpo <- lbf + lpi
             inf_idx <- is.infinite(shat2)
-            lpo[inf_idx] <- lpi[inf_idx]
-            # compute_posterior_weights
+            lpo[inf_idx] <- 0
             mx <- max(lpo)
             w <- exp(lpo - mx)
             sw <- sum(w)
             a_l <- w / sw
             lbf_model <- log(sw) + mx
-            # gaussian_ser_moments
-            post_var <- V * shat2 / (V + shat2)
-            post_mean <- post_var / shat2 * betahat
-            no_info <- !is.finite(betahat) | !is.finite(shat2)
-            post_var[no_info] <- 0
-            post_mean[no_info] <- 0
+            post_var <- 1 / (1 / V + d / sigma2)
+            post_mean <- post_var * XtR / sigma2
 
             alpha[l, ] <- a_l
             mu[l, ] <- post_mean
             mu2[l, ] <- post_var + post_mean^2
             eb <- a_l * post_mean
             Eb[l, ] <- eb
-            # compute_kl.individual, with the R'R and log 2 pi sigma2 terms
+            # update_each_effect's KL, with the R'R and log 2 pi sigma2 terms
             # that cancel between its two halves removed
             KL[l] <- -lbf_model +
                 (2 * sum(XtR * eb) - sum(d * a_l * mu2[l, ])) / (2 * sigma2)
@@ -154,7 +156,7 @@ NULL
             }
         }
 
-        # get_ER2.individual
+        # get_ER2
         B <- colSums(Eb)
         Eb2_d <- sum((alpha * mu2) %*% d)
         if (!is.null(G)) {
@@ -170,26 +172,20 @@ NULL
 
         if (iter > 1) {
             diff <- elbo - prev_elbo
-            converged <- !is.na(diff) && diff >= 0 && diff < tol
+            # a decrease counts as converged too
+            converged <- !is.na(diff) && diff < tol
         }
         prev_elbo <- elbo
         if (converged) break
 
-        # update_model_variance.default
-        sigma2 <- ER2 / n
-        if (sigma2 < 0) stop("est_residual_variance() failed: the estimated value is negative")
-        sigma2 <- min(max(sigma2, lowerbound), Inf)
+        # estimate_residual_variance, bounded below as susie() does
+        sigma2 <- max(lowerbound, ER2 / n)
     }
     if (!converged) {
         warning("IBSS algorithm did not converge in ", max_iter, " iterations!",
                 call. = FALSE)
     }
 
-    # trim_null_effects: V is fixed and equal for every effect
-    if (V < prior_tol) {
-        alpha[] <- 1 / p
-        mu[] <- 0
-    }
     b <- colSums(alpha * mu) / csd
     list(intercept = mean_y - sum(cm * b),
          beta = b,
