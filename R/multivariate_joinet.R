@@ -23,8 +23,6 @@
 #'
 #' @return data frame of elastic net, lasso, and LMM based predictions
 #'
-#' @importFrom joinet cv.joinet
-#' @importFrom joinet joinet
 #' @importFrom pbapply pbapply
 #' @importFrom tibble tibble
 #' @importFrom rlist list.append
@@ -57,49 +55,24 @@ multivariate_joinet <- function(X,
     colnames(Y) = tx_names
   }
 
-  if (par){
-    doParallel::registerDoParallel(n.cores)
-    set.seed(seed)
-    models = joinet::cv.joinet(Y = Y,
-                               X = X,
-                               family="gaussian",
-                               nfolds.ext=nfolds,
-                               nfolds.int=nfolds.int,
-                               alpha.base=alpha,
-                               alpha.meta=alpha,
-                               parallel = T,
-                               cvpred=T,
-                               times=F,
-                               trace.it = ifelse(verbose,1,0))
-  } else  {
-    set.seed(seed)
-    models = joinet::cv.joinet(Y = Y,
-                               X = X,
-                               family="gaussian",
-                               nfolds.ext=nfolds,
-                               nfolds.int=nfolds.int,
-                               alpha.base=alpha,
-                               alpha.meta=alpha,
-                               parallel = F,
-                               cvpred=T,
-                               times=F,
-                               trace.it = ifelse(verbose,1,0))
-  }
-
-
-
-  pred = models$cvpred
+  # joinet::cv.joinet(Y, X, nfolds.ext = nfolds, nfolds.int = nfolds.int,
+  # alpha.base = alpha, alpha.meta = alpha, cvpred = TRUE)$cvpred and then
+  # joinet::joinet(Y, X, nfolds = 5, alpha.base = alpha, alpha.meta = alpha),
+  # reproduced by .cv_joinet and .joinet_fit (joinet_fast.R) with the same
+  # random draws, in the same order.
+  set.seed(seed)
+  Ym = as.matrix(Y)
+  cores = if (par && !is.null(n.cores)) n.cores else 1L
+  pred = .cv_joinet(X, Ym, nfolds.ext = nfolds, nfolds.int = nfolds.int,
+                    alpha.base = alpha, alpha.meta = alpha, n.cores = cores)
   r2.vec = unlist(sapply(1:ncol(Y),calc.r2,Y,pred)[1,])
   P = sapply(1:ncol(Y),function(x){
     stats::cor.test(Y[,x], pred[,x])$p.value
   })
 
-  models = joinet::joinet(Y = Y,
-                          X = X,
-                          family="gaussian",
-                          nfolds = 5,
-                          alpha.base = alpha,
-                          alpha.meta = alpha)
+  final = .joinet_fit(X, Ym, .joinet_folds(Ym[, 1], 5),
+                      alpha.base = alpha, alpha.meta = alpha)
+  beta = .joinet_coef(final)$beta
 
   # Build output using isotwas_model class
   transcripts <- list()
@@ -107,7 +80,7 @@ multivariate_joinet <- function(X,
     tx_name <- colnames(Y)[i]
     weights <- tibble::tibble(
       SNP = colnames(X),
-      Weight = coef(models)$beta[, i]
+      Weight = beta[, i]
     )
     weights <- subset(weights, Weight != 0)
 

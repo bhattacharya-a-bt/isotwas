@@ -16,6 +16,7 @@ RoxygenNote: 7.3.2
 biocViews: Software, GeneExpression, Transcriptomics, GeneticVariability, SNP, GWAS
 Suggests:
     dplyr,
+    joinet,
     knitr,
     magrittr,
     rmarkdown,
@@ -38,7 +39,6 @@ Imports:
     estimatr,
     glmnet,
     huge,
-    joinet,
     MASS,
     Matrix,
     mvtnorm,
