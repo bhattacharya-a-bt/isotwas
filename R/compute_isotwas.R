@@ -598,7 +598,8 @@ compute_isotwas <- function(X,
                                         par = par,
                                         n.cores = n.cores,
                                         tx_names = tx_names,
-                                        seed = seed)
+                                        seed = seed,
+                                        folds = cv_folds)
 
       uni_blup <- univariate_blup(X = X,
                                   Y = Y,
