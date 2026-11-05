@@ -16,6 +16,8 @@
 )
 }
 \description{
-Fit L21-penalized multi-task regression via block coordinate descent
+Compiled; see .fit_mtl_l21_r for the R reference it reproduces. XtY is
+accepted for compatibility and not used. XtX_diag, when given, is the
+curvature X_j'X_j / n of each row update.
 }
 \keyword{internal}
