@@ -56,19 +56,13 @@ univariate_blup <- function(X,
         Y.tr = as.matrix(Y[train.folds[[tr]],])
         X.tr = as.matrix(X[train.folds[[tr]],])
         X.test = as.matrix(X[-train.folds[[tr]],])
-        blup.fit = apply(Y.tr,
-                         FUN = rrBLUP::mixed.solve,
-                         MARGIN = 2,
-                         Z = X.tr,
-                         K = t(X.tr) %*% X.tr / (ncol(X.tr) - 1))
-        B.cur = sapply(blup.fit,
-                       function(x) as.numeric(x$u))
+        B.cur = .blup_u(Y.tr, X.tr)
         pred[-train.folds[[tr]],] = X.test %*% B.cur
 
     }
 
     r2.vec = sapply(1:ncol(Y),function(x){
-      .score_r2(Y[,x], pred[,x])$R2
+      .score_r2(Y[,x], pred[,x], pvalue = FALSE)$R2
     })
 
 
@@ -76,19 +70,15 @@ univariate_blup <- function(X,
       cor.test(Y[,x], pred[,x])$p.value
     })
 
-    blup.fit = apply(Y,
-                     FUN = rrBLUP::mixed.solve,
-                     MARGIN = 2,
-                     Z = X,
-                     K = t(X) %*% X / (ncol(X) - 1))
+    U.full = .blup_u(as.matrix(Y), as.matrix(X))
 
     # Build output using isotwas_model class
     transcripts <- list()
-    for (i in 1:length(blup.fit)){
+    for (i in 1:ncol(U.full)){
         tx_name <- colnames(Y)[i]
         weights <- tibble::tibble(
           SNP = colnames(X),
-          Weight = blup.fit[[i]]$u
+          Weight = U.full[, i]
         )
         weights <- subset(weights, Weight != 0)
 
