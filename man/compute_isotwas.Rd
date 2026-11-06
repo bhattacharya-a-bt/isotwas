@@ -141,4 +141,19 @@ a transcript no method predicts, a clamped or empty model therefore wins.
 joinet is the most expensive method at moderate transcript counts, and most
 of that time is its inner cross-validation. Lowering
 \code{joinet_nfolds_int} is the first way to make the method set cheaper.
+
+With shared folds (the default) or folds given in \code{folds}, the
+glmnet-based methods (multi_enet,
+joinet, stacking and the univariate elastic net) fit on compressed rows:
+each training set's n rows are replaced by about p + q rows with the same
+cross-products, built once per run and shared by the methods. The fits
+agree with those on the original rows to rounding error. Compression
+applies where it removes enough rows (p + q + 1 at most
+\code{getOption('isotwas.glmnet_compress_ratio', 0.75)} times the training
+set size), and never depends on timings, so a rerun gives identical
+results. It gains most with an optimised BLAS such as OpenBLAS.
+\code{options(isotwas.glmnet_compress = FALSE)} turns it off;
+\code{options(isotwas.glmnet_compress = TRUE)} also turns it on with
+\code{shared_folds = FALSE} and no \code{folds}, and when the methods are
+called on their own.
 }

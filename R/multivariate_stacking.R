@@ -492,8 +492,8 @@ multivariate_stacking <- function(X,
     key <- paste0("d", paste(sort(drop), collapse = ","))
     if (!is.null(memo[[key]])) return(memo[[key]])
     if (!.glmnet_compress_on(n - length(drop), p, q_fit)) return(NULL)
-    if (is.null(g)) g <<- .gram_full(X, Y)
-    d <- .glmnet_design(.gram_subset(g, drop))
+    if (is.null(g)) g <<- .gram_full_memo(X, Y)
+    d <- .gram_design(g, drop)
     if (keep) memo[[key]] <<- d
     d
   }

@@ -72,15 +72,16 @@ univariate_elasticnet <- function(X,
         # set.seed(seed), or one seed per transcript with par = TRUE);
         # given folds (compute_isotwas's shared ones), every transcript uses
         # them. The full-data design serves every transcript; a fold design
-        # serves its own transcript, or all of them with given folds.
+        # serves its own transcript (so it is not kept in the run's memo),
+        # or all of them with given folds.
         Ym = as.matrix(Y)
         N = nrow(X)
         n_fold = if (is.null(foldid_given)) N - ceiling(N / nfolds)
                  else N - max(tabulate(foldid_given))
         shared = NULL
         if (.glmnet_compress_on(n_fold, ncol(X))) {
-            g = .gram_full(X, Ym)
-            shared = list(g = g, full = .glmnet_design(.gram_subset(g)))
+            g = .gram_full_memo(X, Ym)
+            shared = list(g = g, full = .gram_design(g))
             if (!is.null(foldid_given)) {
                 shared$designs = .glmnet_cv_designs(X, Ym, foldid_given,
                                                     g = g, full = shared$full)
@@ -97,7 +98,7 @@ univariate_elasticnet <- function(X,
                 designs = shared$designs
             } else if (!is.null(shared)) {
                 designs = .glmnet_cv_designs(X, Ym, foldid, g = shared$g,
-                                             full = shared$full)
+                                             full = shared$full, keep = FALSE)
             }
             .cv_glmnet(X, Ym[, j], foldid, family = 'gaussian',
                        alpha = alpha, designs = designs, j = j)

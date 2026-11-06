@@ -29,29 +29,38 @@
 #' original scale (beta / sd, intercept ym - xm' beta, nobs, nulldev), so
 #' coef() and predict() work on it as on the fit to the original rows.
 #'
-#' Compression is off unless options(isotwas.glmnet_compress = TRUE). It is
-#' then used for every design that removes enough rows: p + q + 1 at most
-#' getOption('isotwas.glmnet_compress_ratio', 0.75) times the rows of the
-#' subset (.glmnet_compress_on()). Whether that is faster depends on the
-#' machine: building a design is BLAS work (cross-products and a p^3/3
+#' Compression is on with options(isotwas.glmnet_compress = TRUE), and by
+#' default inside a compute_isotwas() run with shared folds, where each
+#' design serves several methods (see .glmnet_memo_start()); it is off
+#' otherwise, and everywhere with options(isotwas.glmnet_compress = FALSE).
+#' When on, it is used for every design that removes enough rows: p + q + 1
+#' at most getOption('isotwas.glmnet_compress_ratio', 0.75) times the rows
+#' of the subset (.glmnet_compress_on()). Whether that is faster depends on
+#' the machine: building a design is BLAS work (cross-products and a p^3/3
 #' factorisation), cheap with an optimised BLAS and some 30 times dearer
 #' with R's reference BLAS, where a design that serves only one or two fits
-#' can cost more than it saves. The choice depends only on the option and
-#' the sizes, never on timings, so a rerun takes the same route and gives
-#' identical results; the two routes agree to rounding error.
+#' can cost more than it saves. The choice depends only on the option, the
+#' call and the sizes, never on timings, so a rerun takes the same route
+#' and gives identical results; the two routes agree to rounding error.
 #'
 #' @noRd
 NULL
 
 #' Use compressed rows for a design?
 #'
+#' options(isotwas.glmnet_compress) TRUE or FALSE decides; unset, the
+#' current compute_isotwas run does (.glmnet_memo_start(compress)), and
+#' outside one compression is off.
+#'
 #' @param n rows of the subset the design is for
 #' @param p SNPs
 #' @param q responses per fit (rows added per fit)
 #' @noRd
 .glmnet_compress_on <- function(n, p, q = 1L) {
-    isTRUE(getOption("isotwas.glmnet_compress", FALSE)) &&
-        p + q + 1 <= getOption("isotwas.glmnet_compress_ratio", 0.75) * n
+    mode <- getOption("isotwas.glmnet_compress")
+    on <- if (is.null(mode)) isTRUE(.isotwas_cache$memo$compress)
+          else isTRUE(mode)
+    on && p + q + 1 <= getOption("isotwas.glmnet_compress_ratio", 0.75) * n
 }
 
 #' Cross-products of the full data, for downdating to subsets
@@ -187,20 +196,93 @@ NULL
     fit
 }
 
+.isotwas_cache <- new.env(parent = emptyenv())
+
+#' Designs shared across methods within one compute_isotwas run
+#'
+#' compute_isotwas fits several glmnet-based methods to the same X and Y on
+#' the same (shared) folds. While .glmnet_memo_start() is in effect,
+#' .gram_full_memo() returns the cross-products already formed for an
+#' identical X and Y, and .gram_design() the design already built for the
+#' same rows, so each is built once per run. The memo holds one X and Y at
+#' a time and is cleared by .glmnet_memo_end().
+#'
+#' With compress = TRUE (compute_isotwas passes it when its folds are
+#' shared), compression is on for the run unless
+#' options(isotwas.glmnet_compress) says otherwise (.glmnet_compress_on()).
+#' Each design then serves every method, alpha and transcript that uses its
+#' rows, which makes it worth building even with R's reference BLAS.
+#' @param compress logical, compress by default during the run
+#' @noRd
+.glmnet_memo_start <- function(compress = FALSE) {
+    .isotwas_cache$memo <- new.env(parent = emptyenv())
+    .isotwas_cache$memo$compress <- compress
+    invisible(NULL)
+}
+
+#' @rdname dot-glmnet_memo_start
+#' @noRd
+.glmnet_memo_end <- function() {
+    .isotwas_cache$memo <- NULL
+    invisible(NULL)
+}
+
+.memo_key <- function(drop) {
+    if (is.logical(drop)) drop <- which(drop)
+    paste0("d", paste(sort(drop), collapse = ","))
+}
+
+.memo_matches <- function(m, X, Y) {
+    !is.null(m) && !is.null(m$X) &&
+        identical(m$X, X) && identical(m$Y, unname(as.matrix(Y)))
+}
+
+#' .gram_full(), from the memo when it holds the same X and Y
+#' @noRd
+.gram_full_memo <- function(X, Y) {
+    m <- .isotwas_cache$memo
+    if (.memo_matches(m, X, Y)) return(m$gram)
+    g <- .gram_full(X, Y)
+    if (!is.null(m)) {
+        m$X <- X
+        m$Y <- unname(as.matrix(Y))
+        m$gram <- g
+        m$designs <- list()
+    }
+    g
+}
+
+#' .glmnet_design(.gram_subset(g, drop)), from the memo when built already
+#' @param keep logical, store a newly built design in the memo; FALSE for
+#'   rows no other fit will use (folds drawn for one transcript)
+#' @noRd
+.gram_design <- function(g, drop = integer(0), keep = TRUE) {
+    m <- .isotwas_cache$memo
+    key <- .memo_key(drop)
+    shared <- !is.null(m) && identical(m$gram, g)
+    if (shared && !is.null(m$designs[[key]])) return(m$designs[[key]])
+    d <- .glmnet_design(.gram_subset(g, drop))
+    if (shared && keep) m$designs[[key]] <- d
+    d
+}
+
+
 #' Compressed designs for the full data and each CV training fold
 #'
 #' @param X,Y full data (Y n x q)
 #' @param foldid fold labels 1..K
 #' @param g,full optional .gram_full(X, Y) and full-data design to reuse
 #'   across several fold sets
+#' @param keep logical, store the fold designs in the run's memo
 #' @return list(full, folds): .glmnet_design() outputs
 #' @noRd
-.glmnet_cv_designs <- function(X, Y, foldid, g = NULL, full = NULL) {
-    if (is.null(g)) g <- .gram_full(X, Y)
-    if (is.null(full)) full <- .glmnet_design(.gram_subset(g))
+.glmnet_cv_designs <- function(X, Y, foldid, g = NULL, full = NULL,
+                               keep = TRUE) {
+    if (is.null(g)) g <- .gram_full_memo(X, Y)
+    if (is.null(full)) full <- .gram_design(g)
     list(full = full,
          folds = lapply(seq_len(max(foldid)), function(i)
-             .glmnet_design(.gram_subset(g, foldid == i))))
+             .gram_design(g, which(foldid == i), keep = keep)))
 }
 
 #' cv.glmnet for gaussian and mgaussian fits, on compressed rows

@@ -75,8 +75,8 @@ multivariate_elasticnet <- function(X,
     designs = list(NULL, NULL, NULL)
     if (.glmnet_compress_on(N - max(tabulate(foldids[[1]])), ncol(X),
                             ncol(Ym))) {
-        g = .gram_full(X, Ym)
-        full = .glmnet_design(.gram_subset(g))
+        g = .gram_full_memo(X, Ym)
+        full = .gram_design(g)
         cv_designs = function(f) .glmnet_cv_designs(X, Ym, f, g = g,
                                                     full = full)
         designs = if (!is.null(folds)) {

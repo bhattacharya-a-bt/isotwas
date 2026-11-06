@@ -30,8 +30,9 @@ genes).
   to Suggests. Results agree with the originals to 1e-11 to 1e-14, and are
   identical where the original rows are used.
 
-  Compression is off unless `options(isotwas.glmnet_compress = TRUE)`. It
-  then applies wherever it removes enough rows (p + q + 1 at most
+  Called on their own, the methods compress only with
+  `options(isotwas.glmnet_compress = TRUE)` (for `compute_isotwas()`, see
+  below). It then applies wherever it removes enough rows (p + q + 1 at most
   `getOption("isotwas.glmnet_compress_ratio", 0.75)` times the training fold
   size), never depending on timings, so a rerun gives identical results. It
   saves glmnet time roughly in proportion to the rows removed, while building
@@ -40,6 +41,19 @@ genes).
   at p = 550-850 and 0.9-1.5x at p = 1150. With R's reference BLAS, building
   the rows can cost more than it saves (at p = 850: 0.5-1.3x, slowest for
   `univariate_elasticnet()`, whose fold designs each serve one transcript).
+
+  Inside `compute_isotwas()` with the shared folds (see Changes to fitted
+  models) or folds given in `folds`, compression is on by default, and the
+  glmnet-based methods share the cross-products and designs built for the
+  same rows: each fold's design is built once for multi_enet's three alphas,
+  every transcript of univariate_enet and stacking's base learners. A run
+  with the four methods
+  at n = 2011 ran 1.5-1.8x as fast as before with OpenBLAS at p = 550-850
+  and 0.9-1.6x at p = 1150, and 0.91-1.33x as fast with R's reference BLAS
+  (slowest for a single transcript, where only univariate_enet uses each
+  design).
+  `options(isotwas.glmnet_compress = FALSE)` turns compression off. It is
+  documented under Details in `?compute_isotwas`.
 
 * `univariate_blup()` no longer calls `rrBLUP::mixed.solve()` once per
   transcript. Its kernel is a function of X'X, so both spectra REML needs come

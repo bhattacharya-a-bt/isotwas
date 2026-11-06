@@ -130,6 +130,71 @@ test_that("compression is chosen by the option and the rows it saves", {
                       expect_false(.glmnet_compress_on(1000, 100, 1L)))
 })
 
+test_that("the design memo reuses designs for the same data and rows only", {
+  X <- sim_geno(200, 30, 52)
+  Y <- sim_expr(X, 2, 53)
+  .glmnet_memo_start()
+  on.exit(.glmnet_memo_end())
+  memo <- .isotwas_cache$memo
+  g <- .gram_full_memo(X, Y)
+  d1 <- .gram_design(g, 1:40)
+  expect_identical(names(memo$designs), .memo_key(1:40))
+  # same data in another container (as a method converting Y would make)
+  expect_identical(.gram_full_memo(X, as.matrix(as.data.frame(Y))), g)
+  expect_identical(.gram_design(g, rev(1:40)), d1)
+  expect_equal(d1, .glmnet_design(.gram_subset(.gram_full(X, Y), 1:40)))
+  # other data replace what the memo holds
+  expect_false(identical(.gram_full_memo(X, Y + 1), g))
+  expect_length(memo$designs, 0)
+  .glmnet_memo_end()
+  expect_null(.isotwas_cache$memo)
+})
+
+test_that("folds drawn for one transcript are not kept in the memo", {
+  X <- sim_geno(200, 30, 57)
+  Y <- sim_expr(X, 3, 58)
+  .glmnet_memo_start()
+  on.exit(.glmnet_memo_end())
+  memo <- .isotwas_cache$memo
+  # own folds per transcript: only the full-data design is kept
+  univariate_elasticnet(X, Y, Omega = diag(3), nfolds = 5, verbose = FALSE,
+                        seed = 59)
+  expect_identical(names(memo$designs), .memo_key(integer(0)))
+  # given folds serve every transcript, so their designs are kept
+  folds <- .isotwas_folds(nrow(X), 5, 60)
+  univariate_elasticnet(X, Y, Omega = diag(3), nfolds = 5, verbose = FALSE,
+                        seed = 59, folds = folds)
+  expect_length(memo$designs, 6)
+})
+
+test_that("compression is on by default only in a run with shared folds", {
+  withr::local_options(isotwas.glmnet_compress = NULL)
+  expect_false(.glmnet_compress_on(1000, 100))
+  .glmnet_memo_start(compress = TRUE)
+  on.exit(.glmnet_memo_end())
+  expect_true(.glmnet_compress_on(1000, 100))
+  expect_false(.glmnet_compress_on(1000, 800))   # too few rows saved
+  withr::with_options(list(isotwas.glmnet_compress = FALSE),
+                      expect_false(.glmnet_compress_on(1000, 100)))
+  .glmnet_memo_start(compress = FALSE)
+  expect_false(.glmnet_compress_on(1000, 100))
+  .glmnet_memo_end()
+  expect_false(.glmnet_compress_on(1000, 100))
+})
+
+test_that("compute_isotwas gives the same glmnet models with shared designs", {
+  X <- sim_geno(200, 30, 54)
+  Y <- sim_expr(X, 3, 55)
+  run <- function() compute_isotwas(
+    X, Y, Y.rep = Y, R = 1, id = seq_len(nrow(X)), omega_est = "mean",
+    omega_nlambda = 3, method = c("multi_enet", "stacking", "univariate"),
+    run_all = FALSE, return_all = TRUE, verbose = FALSE, seed = 56)
+  # the default compresses here (shared folds); FALSE uses the original rows
+  a <- withr::with_options(list(isotwas.glmnet_compress = NULL), run())
+  b <- withr::with_options(list(isotwas.glmnet_compress = FALSE), run())
+  expect_equal(a$comparison, b$comparison, tolerance = 1e-8)
+})
+
 test_that("shared designs serve each response of a gaussian fit", {
   X <- sim_geno(300, 40, 46)
   Y <- sim_expr(X, 3, 47)

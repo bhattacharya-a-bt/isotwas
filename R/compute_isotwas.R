@@ -76,6 +76,21 @@
 #' of that time is its inner cross-validation. Lowering
 #' \code{joinet_nfolds_int} is the first way to make the method set cheaper.
 #'
+#' With shared folds (the default) or folds given in \code{folds}, the
+#' glmnet-based methods (multi_enet,
+#' joinet, stacking and the univariate elastic net) fit on compressed rows:
+#' each training set's n rows are replaced by about p + q rows with the same
+#' cross-products, built once per run and shared by the methods. The fits
+#' agree with those on the original rows to rounding error. Compression
+#' applies where it removes enough rows (p + q + 1 at most
+#' \code{getOption('isotwas.glmnet_compress_ratio', 0.75)} times the training
+#' set size), and never depends on timings, so a rerun gives identical
+#' results. It gains most with an optimised BLAS such as OpenBLAS.
+#' \code{options(isotwas.glmnet_compress = FALSE)} turns it off;
+#' \code{options(isotwas.glmnet_compress = TRUE)} also turns it on with
+#' \code{shared_folds = FALSE} and no \code{folds}, and when the methods are
+#' called on their own.
+#'
 #' @return an isotwas_result. Its \code{comparison} table holds each method's
 #'   cross-validated R-squared as the method reported it. Selection scores a
 #'   model that selected no SNPs as described in Details, so a method can show
@@ -213,6 +228,13 @@ compute_isotwas <- function(X,
   if (!is.null(cv_folds)) {
     nfolds <- cv_folds$nfolds
   }
+
+  # The glmnet-based methods share compressed designs built for the same
+  # data and rows within this run, and with shared folds they compress by
+  # default, since each design then serves several methods (see
+  # .glmnet_memo_start)
+  .glmnet_memo_start(compress = !is.null(cv_folds))
+  on.exit(.glmnet_memo_end(), add = TRUE)
 
   # Set transcript names
   if (is.null(tx_names)) {
