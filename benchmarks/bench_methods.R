@@ -18,9 +18,13 @@
 #
 # <methods> is a comma-separated subset of:
 #   multi_enet joinet spls uni_enet uni_blup uni_susie sgl mtlasso
-#   stacking graph_reg mrce iso_mrce
+#   stacking graph_reg mrce iso_mrce iso_glmnet
 # iso_mrce is compute_isotwas(method = 'mrce_lasso') with 10 Omegas, the way
-# compute_isotwas runs MRCE; mrce is one compute_mrce() call.
+# compute_isotwas runs MRCE; mrce is one compute_mrce() call. iso_glmnet is
+# compute_isotwas() with the four glmnet-based methods (multi_enet, joinet,
+# stacking, univariate), so it includes what the methods share within one run
+# (folds and compressed designs); against a build without shared folds its
+# weights and R-squared differ, since the folds differ.
 #
 # Data are simulated: binomial dosages with MAF ~ U(0.05, 0.5), 10 causal
 # SNPs shared by all isoforms, and correlated isoform noise. The timings
@@ -49,6 +53,11 @@ if (nzchar(lib) || mode == "ref") {
 }
 ns <- asNamespace("isotwas")
 g <- function(f) get(f, envir = ns)
+# ISOTWAS_GLMNET_COMPRESS=TRUE (or FALSE) sets options(isotwas.glmnet_compress);
+# unset, the glmnet-based methods compress only inside compute_isotwas with
+# shared folds, so the per-method cases need TRUE to time compression
+compress <- Sys.getenv("ISOTWAS_GLMNET_COMPRESS")
+if (nzchar(compress)) options(isotwas.glmnet_compress = as.logical(compress))
 
 set.seed(dseed)
 maf <- runif(p, .05, .5)
@@ -75,6 +84,10 @@ f <- list(
   iso_mrce = function() g("compute_isotwas")(X, Y, Y.rep = Y, R = 1, id = seq_len(n), omega_est = "mean",
                                              omega_nlambda = 10, method = "mrce_lasso", run_all = FALSE,
                                              verbose = FALSE, seed = 42)$best_models,
+  iso_glmnet = function() g("compute_isotwas")(X, Y, Y.rep = Y, R = 1, id = seq_len(n), omega_est = "mean",
+                                               omega_nlambda = 5,
+                                               method = c("multi_enet", "joinet", "stacking", "univariate"),
+                                               run_all = FALSE, verbose = FALSE, seed = 42)$best_models,
   mrce = function() g("compute_mrce")(X, Y, lambda = NULL, nlambda = 20, Omega = Om, nfolds = 5,
                                       tol.in = 1e-3, maxit.in = 1e3, verbose = FALSE, seed = 42,
                                       parallel = FALSE, n.cores = 1)

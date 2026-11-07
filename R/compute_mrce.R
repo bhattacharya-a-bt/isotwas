@@ -22,6 +22,10 @@
 #' @param fold_cache list or NULL, the Omega-independent quantities from an
 #'   internal helper, so that fits to several Omegas on the same X, Y, nfolds
 #'   and seed compute them once. Leave NULL.
+#' @param folds optional cross-validation folds: a list with one vector of
+#'   training-row indices per fold, or a vector of fold labels 1..K, one per
+#'   sample. NULL (the default) draws them from \code{seed} as before;
+#'   compute_isotwas passes every method the same folds.
 #'
 #' @return CV MRCE fit
 #'
@@ -40,7 +44,8 @@ compute_mrce = function(X,
                         n.cores = NULL,
                         r2_method = c("oos", "refit"),
                         floor_r2 = FALSE,
-                        fold_cache = NULL){
+                        fold_cache = NULL,
+                        folds = NULL){
 
   r2_method = match.arg(r2_method)
 
@@ -55,12 +60,17 @@ compute_mrce = function(X,
   # compute_isotwas fits one Omega after another on the same data, so it
   # builds this once and passes it in.
   if (is.null(fold_cache)) {
-    fold_cache = .mrce_fold_cache(X, Y, nfolds, seed)
+    fold_cache = .mrce_fold_cache(X, Y, nfolds, seed, folds)
   }
   set.seed(seed)
   train.folds = caret::createFolds(1:nrow(Y),
                                    k = nfolds,
                                    returnTrain = TRUE)
+  if (!is.null(folds)) {
+    folds = .as_folds(folds, nrow(Y))
+    train.folds = folds$train
+    nfolds = folds$nfolds
+  }
   if (!identical(train.folds, fold_cache$train.folds)) {
     stop("fold_cache was built with different folds")
   }
@@ -233,7 +243,7 @@ compute_mrce = function(X,
 #'
 #' @return list(train.folds, folds, full)
 #' @noRd
-.mrce_fold_cache <- function(X, Y, nfolds, seed) {
+.mrce_fold_cache <- function(X, Y, nfolds, seed, folds = NULL) {
   if (exists(".Random.seed", envir = globalenv(), inherits = FALSE)) {
     old_seed <- get(".Random.seed", envir = globalenv())
     on.exit(assign(".Random.seed", old_seed, envir = globalenv()), add = TRUE)
@@ -241,6 +251,7 @@ compute_mrce = function(X,
   n <- nrow(X)
   set.seed(seed)
   train.folds <- caret::createFolds(1:nrow(Y), k = nfolds, returnTrain = TRUE)
+  if (!is.null(folds)) train.folds <- .as_folds(folds, nrow(Y))$train
 
   folds <- lapply(seq_along(train.folds), function(tr) {
     train_idx <- train.folds[[tr]]

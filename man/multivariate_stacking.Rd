@@ -18,7 +18,8 @@ multivariate_stacking(
   parallel = FALSE,
   n.cores = 1,
   r2_method = c("oos", "refit"),
-  floor_r2 = FALSE
+  floor_r2 = FALSE,
+  folds = NULL
 )
 }
 \arguments{
@@ -53,6 +54,13 @@ R-squared that calc.r2() applies to the other methods}
 
 \item{floor_r2}{logical, clamp a negative R-squared to 0, as earlier
 versions did. Default FALSE.}
+
+\item{folds}{optional cross-validation folds: a list with one vector of
+training-row indices per fold, or a vector of fold labels 1..K, one per
+sample. NULL (the default) draws them from \code{seed} as before;
+compute_isotwas passes every method the same folds.
+They replace the nfolds_stack folds for the stacking weights; the
+3-fold tuning of the base learners is unchanged.}
 }
 \value{
 isotwas_model object with stacked predictions

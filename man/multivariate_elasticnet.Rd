@@ -15,7 +15,8 @@ multivariate_elasticnet(
   par = F,
   n.cores = NULL,
   tx_names = NULL,
-  seed
+  seed,
+  folds = NULL
 )
 }
 \arguments{
@@ -40,6 +41,12 @@ multivariate_elasticnet(
 \item{tx_names}{vector, character vector of tx names in order of columns of Y}
 
 \item{seed}{int, random seed}
+
+\item{folds}{optional cross-validation folds: a list with one vector of
+training-row indices per fold, or a vector of fold labels 1..K, one per
+sample. NULL (the default) draws them from \code{seed} as before;
+compute_isotwas passes every method the same folds.
+All three alphas then use these folds.}
 }
 \value{
 data frame of elastic net, lasso, and LMM based predictions

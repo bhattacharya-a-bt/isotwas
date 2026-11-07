@@ -4,7 +4,7 @@
 \alias{.precompute_hyperparams}
 \title{Precompute optimal hyperparameters for each method}
 \usage{
-.precompute_hyperparams(X, Y, base_methods, seed)
+.precompute_hyperparams(X, Y, base_methods, seed, dz = NULL)
 }
 \description{
 Precompute optimal hyperparameters for each method
