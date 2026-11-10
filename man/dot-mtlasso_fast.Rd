@@ -18,7 +18,8 @@
   par = FALSE,
   n.cores = 1,
   r2_method = c("oos", "refit"),
-  floor_r2 = FALSE
+  floor_r2 = FALSE,
+  folds = NULL
 )
 }
 \description{

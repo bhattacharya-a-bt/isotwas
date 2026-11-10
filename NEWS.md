@@ -9,9 +9,51 @@ cross-validated predictions and R-squared agree to rounding error except
 where noted. `tests/testthat/test-fast-*.R` check each against the
 original. `benchmarks/` (not installed) has the timing script, and the
 speed-ups below were measured with it (OpenBLAS, one core, simulated
-genes). The glmnet-based methods (`multivariate_elasticnet()`,
-`univariate_elasticnet()`, `multivariate_joinet()`,
-`multivariate_stacking()`) are unchanged.
+genes).
+
+* The glmnet-based methods (`multivariate_elasticnet()`,
+  `univariate_elasticnet()`, `multivariate_joinet()`, `multivariate_stacking()`)
+  can fit each elastic-net path on compressed rows. A gaussian or mgaussian
+  path depends on the data only through the centred X'X, X'Y and Y'Y, so
+  `R/glmnet_compress.R` replaces the n rows by rank(X) + 1 rows per response
+  (rank(X) + q for mgaussian) with the same cross-products, from a pivoted
+  Cholesky factor of X'X, and calls `glmnet()` on those. Each training fold's
+  cross-products are the full ones minus its held-out rows. `.cv_glmnet()`
+  reproduces `cv.glmnet(keep = TRUE)` around these fits with the same folds,
+  lambda interpolation and choice of `lambda.min`. With `verbose = TRUE`,
+  `multivariate_elasticnet()` and `multivariate_joinet()` no longer print
+  glmnet's progress bars, and `par = TRUE` runs their folds with `mclapply()`
+  rather than a doParallel backend, as `univariate_elasticnet()` already did
+  (so serially on Windows). joinet is reimplemented in
+  R (`R/joinet_fast.R`) the same way, with joinet 1.0.0's random draws, and no
+  longer fits an unused mgaussian model in every external fold; joinet moves
+  to Suggests. Results agree with the originals to 1e-11 to 1e-14, and are
+  identical where the original rows are used.
+
+  Called on their own, the methods compress only with
+  `options(isotwas.glmnet_compress = TRUE)` (for `compute_isotwas()`, see
+  below). It then applies wherever it removes enough rows (p + q + 1 at most
+  `getOption("isotwas.glmnet_compress_ratio", 0.75)` times the training fold
+  size), never depending on timings, so a rerun gives identical results. It
+  saves glmnet time roughly in proportion to the rows removed, while building
+  the rows is BLAS work, so whether it is faster depends on the BLAS. With
+  OpenBLAS on the cluster, at n = 2011, the four methods ran 1.2-2.3x as fast
+  at p = 550-850 and 0.9-1.5x at p = 1150. With R's reference BLAS, building
+  the rows can cost more than it saves (at p = 850: 0.5-1.3x, slowest for
+  `univariate_elasticnet()`, whose fold designs each serve one transcript).
+
+  Inside `compute_isotwas()` with the shared folds (see Changes to fitted
+  models) or folds given in `folds`, compression is on by default, and the
+  glmnet-based methods share the cross-products and designs built for the
+  same rows: each fold's design is built once for multi_enet's three alphas,
+  every transcript of univariate_enet and stacking's base learners. A run
+  with the four methods
+  at n = 2011 ran 1.5-1.8x as fast as before with OpenBLAS at p = 550-850
+  and 0.9-1.6x at p = 1150, and 0.91-1.33x as fast with R's reference BLAS
+  (slowest for a single transcript, where only univariate_enet uses each
+  design).
+  `options(isotwas.glmnet_compress = FALSE)` turns compression off. It is
+  documented under Details in `?compute_isotwas`.
 
 * `univariate_blup()` no longer calls `rrBLUP::mixed.solve()` once per
   transcript. Its kernel is a function of X'X, so both spectra REML needs come
@@ -68,6 +110,27 @@ genes). The glmnet-based methods (`multivariate_elasticnet()`,
   longer run a `cor.test()` they discard when scoring R-squared.
 
 ## Changes to fitted models
+
+* `compute_isotwas()` gives every method the same cross-validation folds
+  (`shared_folds = TRUE`, the default), so the cross-validated R-squared that
+  `get_best_isotwas()` compares across methods come from the same splits. The
+  folds are those drawn by `set.seed(seed)` then
+  `caret::createFolds(1:N, k = nfolds, returnTrain = TRUE)`, which
+  `univariate_blup()`, `univariate_susie()`, `compute_mrce()`,
+  `multivariate_sgl()`, `multivariate_graph_reg()` and `multivariate_spls()`
+  already drew for themselves, so their results do not change. The others
+  did not: `multivariate_elasticnet()` drew a different fold set for each of
+  its three alphas, `univariate_elasticnet()` one per transcript,
+  `multivariate_joinet()` its own external folds, `multivariate_stacking()`
+  folds drawn after its tuning had moved the random stream, and
+  `multivariate_mtlasso()` a second set for scoring R-squared. With the same
+  seed their R-squared, and for all but mtlasso their weights, now differ
+  from earlier versions. mtlasso's R-squared now comes from the folds that
+  chose its lambda, as every other method's does, so it can be slightly
+  higher. `shared_folds = FALSE` restores each method's own draw, and
+  `folds` takes the user's own folds (training-row indices per fold, or one
+  fold label per sample). Each fitting function also gains `folds`; its
+  default, `NULL`, keeps the function's own draw.
 
 * `univariate_elasticnet()` and the final fit of `univariate_susie()` now fit
   an intercept. Both used `intercept = FALSE` on expression that still carries

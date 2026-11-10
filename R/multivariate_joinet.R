@@ -15,6 +15,11 @@
 #' @param tx_names vector, character vector of tx names in order of columns of Y
 #' @param seed int, random seed
 #' @param nfolds.int int, folds for joinet's inner cross-validation.
+#' @param folds optional cross-validation folds: a list with one vector of
+#'   training-row indices per fold, or a vector of fold labels 1..K, one per
+#'   sample. NULL (the default) draws them from \code{seed} as before;
+#'   compute_isotwas passes every method the same folds.
+#'   They are the external folds; the inner folds are drawn within them.
 #'
 #' @details
 #' joinet is the most expensive method at moderate transcript counts, and most
@@ -23,8 +28,6 @@
 #'
 #' @return data frame of elastic net, lasso, and LMM based predictions
 #'
-#' @importFrom joinet cv.joinet
-#' @importFrom joinet joinet
 #' @importFrom pbapply pbapply
 #' @importFrom tibble tibble
 #' @importFrom rlist list.append
@@ -42,7 +45,8 @@ multivariate_joinet <- function(X,
                                 n.cores = NULL,
                                 tx_names = NULL,
                                 seed,
-                                nfolds.int = 10){
+                                nfolds.int = 10,
+                                folds = NULL){
 
   if (!is.null(colnames(Y))){
     tx_names = colnames(Y)
@@ -57,49 +61,26 @@ multivariate_joinet <- function(X,
     colnames(Y) = tx_names
   }
 
-  if (par){
-    doParallel::registerDoParallel(n.cores)
-    set.seed(seed)
-    models = joinet::cv.joinet(Y = Y,
-                               X = X,
-                               family="gaussian",
-                               nfolds.ext=nfolds,
-                               nfolds.int=nfolds.int,
-                               alpha.base=alpha,
-                               alpha.meta=alpha,
-                               parallel = T,
-                               cvpred=T,
-                               times=F,
-                               trace.it = ifelse(verbose,1,0))
-  } else  {
-    set.seed(seed)
-    models = joinet::cv.joinet(Y = Y,
-                               X = X,
-                               family="gaussian",
-                               nfolds.ext=nfolds,
-                               nfolds.int=nfolds.int,
-                               alpha.base=alpha,
-                               alpha.meta=alpha,
-                               parallel = F,
-                               cvpred=T,
-                               times=F,
-                               trace.it = ifelse(verbose,1,0))
-  }
-
-
-
-  pred = models$cvpred
+  # joinet::cv.joinet(Y, X, nfolds.ext = nfolds, nfolds.int = nfolds.int,
+  # alpha.base = alpha, alpha.meta = alpha, cvpred = TRUE)$cvpred and then
+  # joinet::joinet(Y, X, nfolds = 5, alpha.base = alpha, alpha.meta = alpha),
+  # reproduced by .cv_joinet and .joinet_fit (joinet_fast.R) with the same
+  # random draws, in the same order.
+  set.seed(seed)
+  Ym = as.matrix(Y)
+  cores = if (par && !is.null(n.cores)) n.cores else 1L
+  foldid.ext = if (is.null(folds)) NULL else .as_folds(folds, nrow(Ym))$foldid
+  pred = .cv_joinet(X, Ym, nfolds.ext = nfolds, nfolds.int = nfolds.int,
+                    alpha.base = alpha, alpha.meta = alpha, n.cores = cores,
+                    foldid.ext = foldid.ext)
   r2.vec = unlist(sapply(1:ncol(Y),calc.r2,Y,pred)[1,])
   P = sapply(1:ncol(Y),function(x){
     stats::cor.test(Y[,x], pred[,x])$p.value
   })
 
-  models = joinet::joinet(Y = Y,
-                          X = X,
-                          family="gaussian",
-                          nfolds = 5,
-                          alpha.base = alpha,
-                          alpha.meta = alpha)
+  final = .joinet_fit(X, Ym, .joinet_folds(Ym[, 1], 5),
+                      alpha.base = alpha, alpha.meta = alpha)
+  beta = .joinet_coef(final)$beta
 
   # Build output using isotwas_model class
   transcripts <- list()
@@ -107,7 +88,7 @@ multivariate_joinet <- function(X,
     tx_name <- colnames(Y)[i]
     weights <- tibble::tibble(
       SNP = colnames(X),
-      Weight = coef(models)$beta[, i]
+      Weight = beta[, i]
     )
     weights <- subset(weights, Weight != 0)
 

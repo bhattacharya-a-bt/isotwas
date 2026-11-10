@@ -16,7 +16,8 @@ multivariate_joinet(
   n.cores = NULL,
   tx_names = NULL,
   seed,
-  nfolds.int = 10
+  nfolds.int = 10,
+  folds = NULL
 )
 }
 \arguments{
@@ -43,6 +44,12 @@ multivariate_joinet(
 \item{seed}{int, random seed}
 
 \item{nfolds.int}{int, folds for joinet's inner cross-validation.}
+
+\item{folds}{optional cross-validation folds: a list with one vector of
+training-row indices per fold, or a vector of fold labels 1..K, one per
+sample. NULL (the default) draws them from \code{seed} as before;
+compute_isotwas passes every method the same folds.
+They are the external folds; the inner folds are drawn within them.}
 }
 \value{
 data frame of elastic net, lasso, and LMM based predictions

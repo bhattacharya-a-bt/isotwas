@@ -12,7 +12,8 @@ multivariate_spls(
   tx_names = NULL,
   par,
   n.cores,
-  seed
+  seed,
+  folds = NULL
 )
 }
 \arguments{
@@ -31,6 +32,11 @@ multivariate_spls(
 \item{n.cores}{int, number of parallel cores}
 
 \item{seed}{int, random seed}
+
+\item{folds}{optional cross-validation folds: a list with one vector of
+training-row indices per fold, or a vector of fold labels 1..K, one per
+sample. NULL (the default) draws them from \code{seed} as before;
+compute_isotwas passes every method the same folds.}
 }
 \value{
 spls models

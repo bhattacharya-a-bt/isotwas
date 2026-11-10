@@ -45,6 +45,14 @@
 #' @param sgl_nlambda int, lambda path length for multivariate_sgl
 #' @param gene_exp vector, vector of total gene expression
 #' @param run_all logical, run all methods
+#' @param shared_folds logical, give every method the same cross-validation
+#'   folds (default TRUE), so that the cross-validated R2 compared across
+#'   methods come from the same splits. The folds are those drawn by
+#'   set.seed(seed) and caret::createFolds(1:N, k = nfolds,
+#'   returnTrain = TRUE). FALSE lets each method draw its own, as before.
+#' @param folds optional folds to use instead: a list with one vector of
+#'   training-row indices per fold, or a vector of fold labels 1..K, one per
+#'   sample. They override nfolds and shared_folds.
 #'
 #' @importFrom glmnet glmnet
 #' @importFrom glmnet cv.glmnet
@@ -67,6 +75,21 @@
 #' joinet is the most expensive method at moderate transcript counts, and most
 #' of that time is its inner cross-validation. Lowering
 #' \code{joinet_nfolds_int} is the first way to make the method set cheaper.
+#'
+#' With shared folds (the default) or folds given in \code{folds}, the
+#' glmnet-based methods (multi_enet,
+#' joinet, stacking and the univariate elastic net) fit on compressed rows:
+#' each training set's n rows are replaced by about p + q rows with the same
+#' cross-products, built once per run and shared by the methods. The fits
+#' agree with those on the original rows to rounding error. Compression
+#' applies where it removes enough rows (p + q + 1 at most
+#' \code{getOption('isotwas.glmnet_compress_ratio', 0.75)} times the training
+#' set size), and never depends on timings, so a rerun gives identical
+#' results. It gains most with an optimised BLAS such as OpenBLAS.
+#' \code{options(isotwas.glmnet_compress = FALSE)} turns it off;
+#' \code{options(isotwas.glmnet_compress = TRUE)} also turns it on with
+#' \code{shared_folds = FALSE} and no \code{folds}, and when the methods are
+#' called on their own.
 #'
 #' @return an isotwas_result. Its \code{comparison} table holds each method's
 #'   cross-validated R-squared as the method reported it. Selection scores a
@@ -109,7 +132,9 @@ compute_isotwas <- function(X,
                             tol.in = 1e-3,
                             maxit.in = 1e3,
                             joinet_nfolds_int = 10,
-                            sgl_nlambda = 20) {
+                            sgl_nlambda = 20,
+                            shared_folds = TRUE,
+                            folds = NULL) {
 
   # Start timing
   start_time <- Sys.time()
@@ -192,6 +217,24 @@ compute_isotwas <- function(X,
     seed <- as.integer(Sys.time()) %% 100000L
   }
   set.seed(seed)
+
+  # One set of cross-validation folds for every method that takes them
+  cv_folds <- NULL
+  if (!is.null(folds)) {
+    cv_folds <- .as_folds(folds, N)
+  } else if (shared_folds) {
+    cv_folds <- .isotwas_folds(N, nfolds, seed)
+  }
+  if (!is.null(cv_folds)) {
+    nfolds <- cv_folds$nfolds
+  }
+
+  # The glmnet-based methods share compressed designs built for the same
+  # data and rows within this run, and with shared folds they compress by
+  # default, since each design then serves several methods (see
+  # .glmnet_memo_start)
+  .glmnet_memo_start(compress = !is.null(cv_folds))
+  on.exit(.glmnet_memo_end(), add = TRUE)
 
   # Set transcript names
   if (is.null(tx_names)) {
@@ -384,7 +427,8 @@ compute_isotwas <- function(X,
                         tx_names = tx_names,
                         par = par,
                         n.cores = n.cores,
-                        seed = seed)
+                        seed = seed,
+                        folds = cv_folds)
     })
     if (!is.null(spls_mod)) {
       all_models <- rlist::list.append(all_models, spls_mod)
@@ -396,7 +440,7 @@ compute_isotwas <- function(X,
   if ('mrce_lasso' %in% method) {
     mrce_mod <- run_method("MRCE Lasso (mrce_lasso)", function() {
       # The folds and cross-products are the same for every Omega
-      mrce_cache <- .mrce_fold_cache(X, Y, nfolds, seed)
+      mrce_cache <- .mrce_fold_cache(X, Y, nfolds, seed, cv_folds)
       run_mrce_omega <- function(omega_idx) {
         compute_mrce(X = X,
                      Y = Y,
@@ -411,7 +455,8 @@ compute_isotwas <- function(X,
                      parallel = FALSE,
                      n.cores = 1,
                      floor_r2 = floor_r2,
-                     fold_cache = mrce_cache)
+                     fold_cache = mrce_cache,
+                     folds = cv_folds)
       }
 
       if (par && !is.null(n.cores) && n.cores > 1) {
@@ -446,7 +491,8 @@ compute_isotwas <- function(X,
                               par = par,
                               n.cores = n.cores,
                               tx_names = tx_names,
-                              seed = seed)
+                              seed = seed,
+                              folds = cv_folds)
     })
     if (!is.null(enet_mod)) {
       all_models <- rlist::list.append(all_models, enet_mod)
@@ -468,7 +514,8 @@ compute_isotwas <- function(X,
                           n.cores = n.cores,
                           tx_names = tx_names,
                           seed = seed,
-                          nfolds.int = joinet_nfolds_int)
+                          nfolds.int = joinet_nfolds_int,
+                          folds = cv_folds)
     })
     if (!is.null(joinet_mod)) {
       all_models <- rlist::list.append(all_models, joinet_mod)
@@ -488,7 +535,8 @@ compute_isotwas <- function(X,
                        seed = seed,
                        par = par,
                        n.cores = n.cores,
-                       floor_r2 = floor_r2)
+                       floor_r2 = floor_r2,
+                       folds = cv_folds)
     })
     if (!is.null(sgl_mod)) {
       all_models <- rlist::list.append(all_models, sgl_mod)
@@ -507,7 +555,8 @@ compute_isotwas <- function(X,
                            seed = seed,
                            par = par,
                            n.cores = n.cores,
-                           floor_r2 = floor_r2)
+                           floor_r2 = floor_r2,
+                           folds = cv_folds)
     })
     if (!is.null(mtlasso_mod)) {
       all_models <- rlist::list.append(all_models, mtlasso_mod)
@@ -529,7 +578,8 @@ compute_isotwas <- function(X,
                             seed = seed,
                             parallel = par,
                             n.cores = n.cores,
-                            floor_r2 = floor_r2)
+                            floor_r2 = floor_r2,
+                            folds = cv_folds)
     })
     if (!is.null(stacking_mod)) {
       all_models <- rlist::list.append(all_models, stacking_mod)
@@ -549,7 +599,8 @@ compute_isotwas <- function(X,
                              seed = seed,
                              par = par,
                              n.cores = n.cores,
-                             floor_r2 = floor_r2)
+                             floor_r2 = floor_r2,
+                             folds = cv_folds)
     })
     if (!is.null(graph_mod)) {
       all_models <- rlist::list.append(all_models, graph_mod)
@@ -571,7 +622,8 @@ compute_isotwas <- function(X,
                                         par = par,
                                         n.cores = n.cores,
                                         tx_names = tx_names,
-                                        seed = seed)
+                                        seed = seed,
+                                        folds = cv_folds)
 
       uni_blup <- univariate_blup(X = X,
                                   Y = Y,
@@ -582,7 +634,8 @@ compute_isotwas <- function(X,
                                   par = par,
                                   n.cores = n.cores,
                                   tx_names = tx_names,
-                                  seed = seed)
+                                  seed = seed,
+                                  folds = cv_folds)
 
       uni_susie <- univariate_susie(X = X,
                                     Y = Y,
@@ -594,7 +647,8 @@ compute_isotwas <- function(X,
                                     par = par,
                                     n.cores = n.cores,
                                     tx_names = tx_names,
-                                    seed = seed)
+                                    seed = seed,
+                                    folds = cv_folds)
 
       get_best(list(uni_enet, uni_blup, uni_susie), G = G,
                empty_r2 = empty_r2)
@@ -644,6 +698,9 @@ compute_isotwas <- function(X,
                                      k = nfolds,
                                      returnTrain = FALSE,
                                      list = FALSE)
+    if (!is.null(cv_folds)) {
+      test.folds <- cv_folds$foldid
+    }
 
     glmnet_pred <- glmnet::cv.glmnet(x = pred_mat,
                                      y = gene_exp,

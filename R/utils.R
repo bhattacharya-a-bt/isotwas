@@ -314,3 +314,73 @@ cluster_weight = function(x){
 .use_gram <- function(p) {
     p <= getOption("isotwas.gram_max_p", 5000)
 }
+
+
+#' Cross-validation folds shared by every method
+#'
+#' compute_isotwas draws one set of folds and passes it to every method, so
+#' their cross-validated R2, which get_best_isotwas compares, come from the
+#' same splits. The draw, set.seed(seed) then
+#' caret::createFolds(1:n, k = nfolds, returnTrain = TRUE), is the one
+#' univariate_blup, univariate_susie, compute_mrce, multivariate_sgl,
+#' multivariate_graph_reg, multivariate_spls and multivariate_mtlasso made
+#' for themselves, so their results do not change. The caller's RNG state is
+#' restored on exit.
+#'
+#' @param n number of samples
+#' @param nfolds number of folds
+#' @param seed seed for the draw
+#' @return an isotwas_folds object (see .as_folds)
+#' @noRd
+.isotwas_folds <- function(n, nfolds, seed) {
+    if (exists(".Random.seed", envir = globalenv(), inherits = FALSE)) {
+        old_seed <- get(".Random.seed", envir = globalenv())
+        on.exit(assign(".Random.seed", old_seed, envir = globalenv()),
+                add = TRUE)
+    }
+    set.seed(seed)
+    .as_folds(caret::createFolds(1:n, k = nfolds, returnTrain = TRUE), n)
+}
+
+#' Normalise user- or compute_isotwas-supplied folds
+#'
+#' @param folds NULL; a list with one vector of training-row indices per
+#'   fold (as caret::createFolds(returnTrain = TRUE) gives); a vector of fold
+#'   labels 1..K, one per row; or an isotwas_folds object
+#' @param n number of rows
+#' @return NULL, or an isotwas_folds list(train, foldid, nfolds): train as
+#'   given (or which(foldid != k)), foldid[i] the fold row i is held out in
+#' @noRd
+.as_folds <- function(folds, n) {
+    if (is.null(folds) || inherits(folds, "isotwas_folds")) {
+        if (!is.null(folds) && length(folds$foldid) != n) {
+            stop("folds are for ", length(folds$foldid), " samples, not ", n)
+        }
+        return(folds)
+    }
+    if (is.list(folds)) {
+        train <- lapply(folds, as.integer)
+        foldid <- integer(n)
+        for (k in seq_along(train)) {
+            held <- setdiff(seq_len(n), train[[k]])
+            if (any(foldid[held] != 0L)) {
+                stop("folds: every sample must be held out in exactly one fold")
+            }
+            foldid[held] <- k
+        }
+        if (any(foldid == 0L)) {
+            stop("folds: every sample must be held out in exactly one fold")
+        }
+    } else {
+        foldid <- as.integer(folds)
+        if (length(foldid) != n || anyNA(foldid) ||
+            !setequal(foldid, seq_len(max(foldid)))) {
+            stop("folds: a fold label vector must give each of the ", n,
+                 " samples one of the labels 1..K")
+        }
+        train <- lapply(seq_len(max(foldid)), function(k) which(foldid != k))
+    }
+    if (length(train) < 2) stop("folds: at least 2 folds are needed")
+    structure(list(train = train, foldid = foldid, nfolds = length(train)),
+              class = "isotwas_folds")
+}
