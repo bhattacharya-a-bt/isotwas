@@ -24,9 +24,11 @@
 #' @param parallel logical, use parallel processing for base methods
 #' @param n.cores int, number of cores for parallel processing
 #'
-#' @param r2_method character, "oos" for the direct out-of-sample R-squared
-#'   this method has always used, or "refit" for the lm(obs ~ pred) adjusted
-#'   R-squared that calc.r2() applies to the other methods
+#' @param r2_method character, how the cross-validated R-squared is scored:
+#'   "refit" (the default), the adjusted R-squared of lm(obs ~ pred) that
+#'   calc.r2() and the other methods use, or "oos", the direct out-of-sample
+#'   R-squared 1 - SS_res/SS_tot that this method used before.
+#'   compute_isotwas() passes "oos" under \code{r2_scale = 'legacy'}.
 #' @param floor_r2 logical, clamp a negative R-squared to 0, as earlier
 #'   versions did. Default FALSE.
 #' @return isotwas_model object with stacked predictions
@@ -44,7 +46,7 @@ multivariate_stacking <- function(X,
                                    seed = 123,
                                    parallel = FALSE,
                                    n.cores = 1,
-                                   r2_method = c("oos", "refit"),
+                                   r2_method = c("refit", "oos"),
                                    floor_r2 = FALSE,
                                    folds = NULL) {
 

@@ -14,9 +14,12 @@
 #' @param nlambda int, number of lambda value for parameter selection
 #' @param parallel logical, whether to parallelize CV folds
 #' @param n.cores int, number of cores for parallelization
-#' @param r2_method character, "oos" for the direct out-of-sample R-squared
-#'   this method has always used, or "refit" for the lm(obs ~ pred) adjusted
-#'   R-squared that calc.r2() applies to the other methods
+#' @param r2_method character, how the cross-validated R-squared is scored:
+#'   "refit" (the default), the adjusted R-squared of lm(obs ~ pred) that
+#'   calc.r2() and the other methods use, or "oos", the direct out-of-sample
+#'   R-squared 1 - SS_res/SS_tot that this method used before.
+#'   compute_isotwas() passes "oos" under \code{r2_scale = 'legacy'}.
+#'   The mean of this score across transcripts also chooses lambda.
 #' @param floor_r2 logical, clamp a negative R-squared to 0, as earlier
 #'   versions did. Default FALSE.
 #' @param fold_cache list or NULL, the Omega-independent quantities from an
@@ -27,7 +30,10 @@
 #'   sample. NULL (the default) draws them from \code{seed} as before;
 #'   compute_isotwas passes every method the same folds.
 #'
-#' @return CV MRCE fit
+#' @return an isotwas_model, with the lambda path in \code{lambda}, the chosen
+#'   value in \code{best_lambda}, and in \code{cv_r2} the cross-validated
+#'   R-squared of each transcript (rows) at each lambda (columns), whose column
+#'   means chose it
 #'
 #' @export
 compute_mrce = function(X,
@@ -42,7 +48,7 @@ compute_mrce = function(X,
                         seed,
                         parallel = FALSE,
                         n.cores = NULL,
-                        r2_method = c("oos", "refit"),
+                        r2_method = c("refit", "oos"),
                         floor_r2 = FALSE,
                         fold_cache = NULL,
                         folds = NULL){
@@ -229,6 +235,11 @@ compute_mrce = function(X,
     n_samples = n,
     n_snps = p
   )
+  # The lambda path and each transcript's cross-validated R2 along it, from
+  # which best_lambda was chosen
+  result$lambda <- lambda
+  result$best_lambda <- best_lambda
+  result$cv_r2 <- r2Mat
 
   result <- .drop_null_fits(result, Y)
 

@@ -63,14 +63,22 @@
 #'
 #' @details
 #' The best model per transcript is the which.max of cross-validated R-squared
-#' across methods. Under the default \code{r2_scale = 'coherent'}, a model
-#' that selected no SNPs scores -Inf, and a transcript for which every model
-#' is empty is labelled NA.
+#' across methods. Under the default \code{r2_scale = 'coherent'}, every
+#' method scores its cross-validated prediction the same way, by the adjusted
+#' R-squared of \code{lm(obs ~ pred)} (\code{r2_method = 'refit'} in the
+#' fitting functions). A prediction that is constant or not positively
+#' correlated with expression scores 0 and its model is emptied. A model that
+#' selected no SNPs scores -Inf, and a transcript for which every model is
+#' empty is labelled NA.
 #'
-#' \code{r2_scale = 'legacy'} reproduces the scoring of earlier versions:
-#' mrce_lasso, sgl, mtlasso, stacking and graph_reg clamp their R-squared at 0
-#' while the other methods can score below 0, and an empty model scores 0. On
-#' a transcript no method predicts, a clamped or empty model therefore wins.
+#' \code{r2_scale = 'legacy'} reproduces the scoring of earlier versions.
+#' mrce_lasso, sgl, mtlasso, stacking and graph_reg score the out-of-sample
+#' R-squared 1 - SS_res/SS_tot (\code{r2_method = 'oos'}) and clamp it at 0,
+#' while the other methods are scored by \code{lm(obs ~ pred)} and can score
+#' below 0, and an empty model scores 0. On the same prediction the
+#' out-of-sample R-squared is never higher, so selection favours the other
+#' methods, and on a transcript no method predicts a clamped or empty model
+#' wins.
 #'
 #' joinet is the most expensive method at moderate transcript counts, and most
 #' of that time is its inner cross-validation. Lowering
@@ -202,8 +210,13 @@ compute_isotwas <- function(X,
   }
 
   r2_scale <- match.arg(r2_scale)
-  floor_r2 <- identical(r2_scale, 'legacy')
-  empty_r2 <- if (identical(r2_scale, 'legacy')) 0 else -Inf
+  legacy <- identical(r2_scale, 'legacy')
+  floor_r2 <- legacy
+  empty_r2 <- if (legacy) 0 else -Inf
+  # Every method scores R2 as the adjusted R2 of lm(obs ~ pred), as calc.r2()
+  # does; legacy scoring keeps the out-of-sample R2 of the five methods that
+  # used it
+  r2_method <- if (legacy) 'oos' else 'refit'
 
   # Restore the caller's RNG state on exit
   if (exists(".Random.seed", envir = globalenv(), inherits = FALSE)) {
@@ -454,6 +467,7 @@ compute_isotwas <- function(X,
                      seed = seed,
                      parallel = FALSE,
                      n.cores = 1,
+                     r2_method = r2_method,
                      floor_r2 = floor_r2,
                      fold_cache = mrce_cache,
                      folds = cv_folds)
@@ -535,6 +549,7 @@ compute_isotwas <- function(X,
                        seed = seed,
                        par = par,
                        n.cores = n.cores,
+                       r2_method = r2_method,
                        floor_r2 = floor_r2,
                        folds = cv_folds)
     })
@@ -555,6 +570,7 @@ compute_isotwas <- function(X,
                            seed = seed,
                            par = par,
                            n.cores = n.cores,
+                           r2_method = r2_method,
                            floor_r2 = floor_r2,
                            folds = cv_folds)
     })
@@ -578,6 +594,7 @@ compute_isotwas <- function(X,
                             seed = seed,
                             parallel = par,
                             n.cores = n.cores,
+                            r2_method = r2_method,
                             floor_r2 = floor_r2,
                             folds = cv_folds)
     })
@@ -599,6 +616,7 @@ compute_isotwas <- function(X,
                              seed = seed,
                              par = par,
                              n.cores = n.cores,
+                             r2_method = r2_method,
                              floor_r2 = floor_r2,
                              folds = cv_folds)
     })
@@ -823,3 +841,4 @@ compute_isotwas <- function(X,
 
   return(result)
 }
+

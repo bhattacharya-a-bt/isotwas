@@ -15,7 +15,7 @@
   seed = 123,
   par = FALSE,
   n.cores = 1,
-  r2_method = c("oos", "refit"),
+  r2_method = c("refit", "oos"),
   floor_r2 = FALSE
 )
 }

@@ -185,6 +185,28 @@ genes).
   `empty_r2` to `-Inf`, to match. `r2_scale = 'legacy'` reproduces earlier
   selection.
 
+* Under the default `r2_scale = 'coherent'`, `compute_isotwas()` now scores
+  every method's cross-validated R-squared the same way: by the adjusted
+  R-squared of `lm(obs ~ pred)`, as `calc.r2()` does. `mrce_lasso`, `sgl`,
+  `mtlasso`, `stacking` and `graph_reg` used the out-of-sample R-squared
+  `1 - SS_res/SS_tot`, which also penalises a prediction that is shrunk,
+  scaled or shifted. On the same prediction it is never higher and can be far
+  below 0 (MRCE's cross-validated predictions also leave out the intercept),
+  so the `which.max` across methods favoured `multi_enet`, `joinet`, `spls`
+  and `univariate`. A TWAS association does not depend on the scale of the
+  prediction, so neither does the score now.
+
+  The `r2_method` argument of those five fitting functions now defaults to
+  `"refit"`. `compute_isotwas()` passes `"refit"` under `'coherent'` and
+  `"oos"` under `'legacy'`, which reproduces earlier results exactly.
+  `compute_mrce()` also chooses lambda by the mean of this score across
+  transcripts, so its lambda, weights and predictions can change. It now
+  returns its lambda path (`lambda`), the value chosen (`best_lambda`) and the
+  cross-validated R-squared along the path (`cv_r2`). The other four choose
+  their penalties by mean squared error, so only the R-squared they report
+  changes. On 20 simulated genes (70 transcripts) the winner changed for 14,
+  10 of them from one of the other methods to one of these five.
+
 ## Bug fixes
 
 * `compute_omega()` now calls `match.arg()` on `method`. Its documented default
@@ -270,7 +292,8 @@ genes).
   `r2_scale = 'coherent'` removes the clamp and scores an empty model `-Inf`,
   leaving a transcript no model could fit labelled `NA` rather than assigned
   an empty winner. `'coherent'` is the default; `'legacy'` reproduces earlier
-  selection.
+  selection. `'coherent'` also scores every method by the same R-squared (see
+  Changes to fitted models).
 
   The underlying `r2_method` and `floor_r2` arguments are also available on
   the individual fitting functions.
