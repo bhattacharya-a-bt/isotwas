@@ -42,7 +42,8 @@ compute_isotwas(
 
 \item{Y}{matrix, matrix of G isoform expression across columns}
 
-\item{gene_exp}{vector, vector of total gene expression}
+\item{gene_exp}{vector, total gene expression. If given, a
+transcript-to-gene model is also fitted (see Details).}
 
 \item{Y.rep}{matrix, matrix of G isoform expression with replicates}
 
@@ -146,6 +147,14 @@ below 0, and an empty model scores 0. On the same prediction the
 out-of-sample R-squared is never higher, so selection favours the other
 methods, and on a transcript no method predicts a clamped or empty model
 wins.
+
+With \code{gene_exp}, the transcript-to-gene model regresses gene
+expression on the selected models' cross-validated predictions with an
+elastic net. Each alpha in 0, 0.25, 0.5, 0.75 and 1 gets a cross-validated
+lambda path on the same folds. The alpha and lambda whose held-out
+predictions have the highest adjusted R-squared of \code{lm(gene ~ pred)}
+give the weights, and that R-squared is reported. When no prediction
+varies, the model is not fitted: its weights are 0 and its R-squared NA.
 
 joinet is the most expensive method at moderate transcript counts, and most
 of that time is its inner cross-validation. Lowering

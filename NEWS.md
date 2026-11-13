@@ -220,6 +220,18 @@ genes).
   The weights at a given lambda are unchanged; the predictions, the reported
   R-squared and the lambda chosen change, under `r2_scale = 'legacy'` too.
 
+* `compute_isotwas()`'s transcript-to-gene model now returns the weights of
+  the model it reports. It cross-validated a relaxed lasso over
+  `gamma = c(0, .25, .5, .75, 1)` and chose a gamma and lambda, then refitted
+  an elastic net with `alpha` set to the chosen gamma, so the weights came
+  from a different model than the reported R-squared. As gamma 0 was usually
+  chosen, the weights were mostly ridge weights at a lambda tuned for the
+  lasso. Each alpha in the same grid now gets a cross-validated path on the
+  same folds, and the alpha and lambda with the best held-out adjusted
+  R-squared give the weights. On 200 simulated genes the weights changed for
+  nearly all of them and the R-squared on independent test data was about
+  the same (0.030 vs 0.030, 0.105 vs 0.104).
+
 ## Bug fixes
 
 * `compute_isotwas()` with `gene_exp` no longer stops with glmnet's "All used
