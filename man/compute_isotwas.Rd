@@ -42,7 +42,8 @@ compute_isotwas(
 
 \item{Y}{matrix, matrix of G isoform expression across columns}
 
-\item{gene_exp}{vector, vector of total gene expression}
+\item{gene_exp}{vector, total gene expression. If given, a
+transcript-to-gene model is also fitted (see Details).}
 
 \item{Y.rep}{matrix, matrix of G isoform expression with replicates}
 
@@ -129,14 +130,31 @@ and outputs the best model based on cross-validated R-squared.
 }
 \details{
 The best model per transcript is the which.max of cross-validated R-squared
-across methods. Under the default \code{r2_scale = 'coherent'}, a model
-that selected no SNPs scores -Inf, and a transcript for which every model
-is empty is labelled NA.
+across methods. Under the default \code{r2_scale = 'coherent'}, every
+method scores its cross-validated prediction the same way, by the adjusted
+R-squared of \code{lm(obs ~ pred)} (\code{r2_method = 'refit'} in the
+fitting functions). A prediction that is constant or not positively
+correlated with expression scores 0 and its model is emptied. A model that
+selected no SNPs scores -Inf, and a transcript for which every model is
+empty is labelled NA.
 
-\code{r2_scale = 'legacy'} reproduces the scoring of earlier versions:
-mrce_lasso, sgl, mtlasso, stacking and graph_reg clamp their R-squared at 0
-while the other methods can score below 0, and an empty model scores 0. On
-a transcript no method predicts, a clamped or empty model therefore wins.
+\code{r2_scale = 'legacy'} reproduces the scoring rules of earlier
+versions. mrce_lasso, sgl, mtlasso, stacking and graph_reg score the
+out-of-sample R-squared 1 - SS_res/SS_tot (\code{r2_method = 'oos'}) and
+clamp it at 0,
+while the other methods are scored by \code{lm(obs ~ pred)} and can score
+below 0, and an empty model scores 0. On the same prediction the
+out-of-sample R-squared is never higher, so selection favours the other
+methods, and on a transcript no method predicts a clamped or empty model
+wins.
+
+With \code{gene_exp}, the transcript-to-gene model regresses gene
+expression on the selected models' cross-validated predictions with an
+elastic net. Each alpha in 0, 0.25, 0.5, 0.75 and 1 gets a cross-validated
+lambda path on the same folds. The alpha and lambda whose held-out
+predictions have the highest adjusted R-squared of \code{lm(gene ~ pred)}
+give the weights, and that R-squared is reported. When no prediction
+varies, the model is not fitted: its weights are 0 and its R-squared NA.
 
 joinet is the most expensive method at moderate transcript counts, and most
 of that time is its inner cross-validation. Lowering

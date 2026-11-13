@@ -117,10 +117,18 @@ calc.r2 <- function(i,obs,pred){
 
 #' Score a prediction against an observation
 #'
-#' "refit" is calc.r2(): the adjusted R-squared of lm(obs ~ pred). "oos" is
-#' the adjusted out-of-sample R-squared 1 - ss_res/ss_tot, which mrce_lasso,
-#' sgl, mtlasso, stacking and graph_reg compute; it is negative when a
-#' prediction is worse than the mean.
+#' "refit" is calc.r2(): the adjusted R-squared of lm(obs ~ pred), which
+#' refits the intercept and slope, so it measures how well the prediction
+#' tracks the observation whatever its scale. A constant or not positively
+#' correlated prediction scores 0. Every method scores this way by default.
+#'
+#' "oos" is the adjusted out-of-sample R-squared 1 - ss_res/ss_tot, which
+#' mrce_lasso, sgl, mtlasso, stacking and graph_reg used before, and still use
+#' under compute_isotwas(r2_scale = 'legacy'). It also penalises a prediction
+#' that is shifted or wrongly scaled, so on the same prediction it is never
+#' above "refit", and it is negative when the prediction is worse than the
+#' mean. Comparing "oos" scores with "refit" ones biases selection toward the
+#' methods scored by "refit".
 #'
 #' @param obs numeric vector, observed values
 #' @param pred numeric vector, predicted values

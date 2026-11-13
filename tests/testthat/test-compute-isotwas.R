@@ -93,15 +93,18 @@ test_that("printing a result lists the methods that failed", {
 test_that("floor_r2 reaches a fitting method and only changes negatives", {
 
     # Y is pure noise against X, so every transcript is unpredictable and the
-    # clamp is what is being measured.
+    # clamp is what is being measured. The clamp goes with the "oos" score
+    # under r2_scale = 'legacy', and that score is negative on noise.
     skip_if_not_installed("tibble")
 
     d <- withr::with_seed(81, mk_xy(n = 60, p = 12, q = 3, h2 = 0))
 
     clamped <- multivariate_sgl(X = d$X, Y = d$Y, nfolds = 3, nlambda = 5,
-                                verbose = FALSE, seed = 42, floor_r2 = TRUE)
+                                verbose = FALSE, seed = 42, r2_method = "oos",
+                                floor_r2 = TRUE)
     honest <- multivariate_sgl(X = d$X, Y = d$Y, nfolds = 3, nlambda = 5,
-                               verbose = FALSE, seed = 42, floor_r2 = FALSE)
+                               verbose = FALSE, seed = 42, r2_method = "oos",
+                               floor_r2 = FALSE)
 
     expect_true(all(clamped$summary$r2 >= 0))
     expect_true(any(honest$summary$r2 < 0))
