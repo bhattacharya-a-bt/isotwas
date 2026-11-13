@@ -209,6 +209,12 @@ genes).
 
 ## Bug fixes
 
+* `compute_isotwas()` with `gene_exp` no longer stops with glmnet's "All used
+  predictors have zero variance" (error 7777) when none of the selected
+  models' cross-validated predictions varies, as when `sgl` runs alone on a
+  gene it cannot predict. The transcript-to-gene model is then not fitted: its
+  weights are 0 and its R-squared is `NA`.
+
 * `compute_omega()` now calls `match.arg()` on `method`. Its documented default
   is `c('replicates','mean')`, which reached `if (method == 'mean')` as a
   length-2 condition — an error since R 4.2, so the exported function could not

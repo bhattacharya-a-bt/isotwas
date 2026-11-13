@@ -720,51 +720,16 @@ compute_isotwas <- function(X,
       test.folds <- cv_folds$foldid
     }
 
-    glmnet_pred <- glmnet::cv.glmnet(x = pred_mat,
-                                     y = gene_exp,
-                                     foldid = test.folds,
-                                     keep = TRUE,
-                                     relax = TRUE,
-                                     gamma = c(0, .25, .5, .75, 1),
-                                     trace.it = FALSE)
-
-    gamma_which <- which.max(sapply(lapply(glmnet_pred$fit.preval,
-                                           function(y) {
-                                             apply(y, 2, function(x) {
-                                               summary(stats::lm(gene_exp ~ x))$adj.r.sq
-                                             })
-                                           }), max))
-
-    which_r2 <- which.max(apply(glmnet_pred$fit.preval[[gamma_which]],
-                                2,
-                                function(x) {
-                                  summary(stats::lm(gene_exp ~ x))$adj.r.sq
-                                }))
-
-    tot_mod <- glmnet::glmnet(x = pred_mat,
-                              y = gene_exp,
-                              alpha = c(0, .25, .5, .75, 1)[gamma_which],
-                              lambda = glmnet_pred$lambda[which_r2])
-
-    glmnet_r2 <- max(sapply(lapply(glmnet_pred$fit.preval,
-                                   function(y) {
-                                     apply(y, 2, function(x) {
-                                       summary(stats::lm(gene_exp ~ x))$adj.r.sq
-                                     })
-                                   }), max))
-
-    if (all(as.numeric(coef(tot_mod))[-1] == 0)) {
-      ccc <- stats::coef(stats::lm(gene_exp ~ pred_mat))[-1]
-    } else {
-      ccc <- as.numeric(stats::coef(tot_mod))[-1]
-    }
-
-    tx2gene_coef <- data.frame(Feature = tx_names,
-                               Weight_tx2gene = ccc,
-                               R2 = glmnet_r2)
+    tx2gene_coef <- .fit_tx2gene(pred_mat, gene_exp, test.folds, tx_names)
 
     if (verbose) {
-      message("  [OK] Transcript-to-gene R2: ", sprintf("%.3f", glmnet_r2))
+      if (is.na(tx2gene_coef$R2[1])) {
+        message("  [!] No transcript has a varying prediction; ",
+                "transcript-to-gene model not fitted")
+      } else {
+        message("  [OK] Transcript-to-gene R2: ",
+                sprintf("%.3f", tx2gene_coef$R2[1]))
+      }
     }
   }
 
@@ -842,3 +807,75 @@ compute_isotwas <- function(X,
   return(result)
 }
 
+
+#' Fit the transcript-to-gene aggregation model
+#'
+#' Regresses total gene expression on the cross-validated transcript
+#' predictions with a relaxed elastic net. When no prediction varies, as when
+#' every selected model is constant, glmnet cannot fit ("All used predictors
+#' have zero variance"), so the fit is skipped: every weight is 0 and R2 is NA.
+#'
+#' @param pred_mat matrix, cross-validated predictions, one column per
+#'   transcript
+#' @param gene_exp numeric, total gene expression
+#' @param foldid integer, a fold label per sample
+#' @param tx_names character, transcript names in the column order of pred_mat
+#'
+#' @return data.frame with columns Feature, Weight_tx2gene and R2
+#'
+#' @noRd
+.fit_tx2gene <- function(pred_mat, gene_exp, foldid, tx_names) {
+
+  pred_mat <- as.matrix(pred_mat)
+  varies <- apply(pred_mat, 2, function(x) {
+    all(is.finite(x)) && stats::sd(x) > 0
+  })
+  if (!any(varies)) {
+    return(data.frame(Feature = tx_names,
+                      Weight_tx2gene = 0,
+                      R2 = NA_real_))
+  }
+
+  glmnet_pred <- glmnet::cv.glmnet(x = pred_mat,
+                                   y = gene_exp,
+                                   foldid = foldid,
+                                   keep = TRUE,
+                                   relax = TRUE,
+                                   gamma = c(0, .25, .5, .75, 1),
+                                   trace.it = FALSE)
+
+  gamma_which <- which.max(sapply(lapply(glmnet_pred$fit.preval,
+                                         function(y) {
+                                           apply(y, 2, function(x) {
+                                             summary(stats::lm(gene_exp ~ x))$adj.r.sq
+                                           })
+                                         }), max))
+
+  which_r2 <- which.max(apply(glmnet_pred$fit.preval[[gamma_which]],
+                              2,
+                              function(x) {
+                                summary(stats::lm(gene_exp ~ x))$adj.r.sq
+                              }))
+
+  tot_mod <- glmnet::glmnet(x = pred_mat,
+                            y = gene_exp,
+                            alpha = c(0, .25, .5, .75, 1)[gamma_which],
+                            lambda = glmnet_pred$lambda[which_r2])
+
+  glmnet_r2 <- max(sapply(lapply(glmnet_pred$fit.preval,
+                                 function(y) {
+                                   apply(y, 2, function(x) {
+                                     summary(stats::lm(gene_exp ~ x))$adj.r.sq
+                                   })
+                                 }), max))
+
+  if (all(as.numeric(coef(tot_mod))[-1] == 0)) {
+    ccc <- stats::coef(stats::lm(gene_exp ~ pred_mat))[-1]
+  } else {
+    ccc <- as.numeric(stats::coef(tot_mod))[-1]
+  }
+
+  data.frame(Feature = tx_names,
+             Weight_tx2gene = ccc,
+             R2 = glmnet_r2)
+}
