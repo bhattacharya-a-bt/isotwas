@@ -128,10 +128,13 @@ compute_mrce = function(X,
       )
 
       B_warm = mod$Bhat  # Warm start for next lambda
-      # SNPs with no weight add exact zeros to the prediction, so skip them
+      # SNPs with no weight add exact zeros to the prediction, so skip them.
+      # The fit is on centred data, so its intercept muhat = my - mx'B goes
+      # back in
       nz = which(rowSums(mod$Bhat != 0) > 0)
       fold_preds[, , lam_idx] = fd$X.test[, nz, drop = FALSE] %*%
-        mod$Bhat[nz, , drop = FALSE]
+        mod$Bhat[nz, , drop = FALSE] +
+        rep(mod$muhat, each = length(fd$test_idx))
     }
 
     list(test_idx = fd$test_idx, preds = fold_preds)

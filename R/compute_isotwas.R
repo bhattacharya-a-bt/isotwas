@@ -71,9 +71,10 @@
 #' selected no SNPs scores -Inf, and a transcript for which every model is
 #' empty is labelled NA.
 #'
-#' \code{r2_scale = 'legacy'} reproduces the scoring of earlier versions.
-#' mrce_lasso, sgl, mtlasso, stacking and graph_reg score the out-of-sample
-#' R-squared 1 - SS_res/SS_tot (\code{r2_method = 'oos'}) and clamp it at 0,
+#' \code{r2_scale = 'legacy'} reproduces the scoring rules of earlier
+#' versions. mrce_lasso, sgl, mtlasso, stacking and graph_reg score the
+#' out-of-sample R-squared 1 - SS_res/SS_tot (\code{r2_method = 'oos'}) and
+#' clamp it at 0,
 #' while the other methods are scored by \code{lm(obs ~ pred)} and can score
 #' below 0, and an empty model scores 0. On the same prediction the
 #' out-of-sample R-squared is never higher, so selection favours the other

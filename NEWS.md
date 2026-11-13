@@ -191,14 +191,15 @@ genes).
   `mtlasso`, `stacking` and `graph_reg` used the out-of-sample R-squared
   `1 - SS_res/SS_tot`, which also penalises a prediction that is shrunk,
   scaled or shifted. On the same prediction it is never higher and can be far
-  below 0 (MRCE's cross-validated predictions also leave out the intercept),
-  so the `which.max` across methods favoured `multi_enet`, `joinet`, `spls`
-  and `univariate`. A TWAS association does not depend on the scale of the
-  prediction, so neither does the score now.
+  below 0 (MRCE's cross-validated predictions also left out the intercept;
+  see below), so the `which.max` across methods favoured `multi_enet`,
+  `joinet`, `spls` and `univariate`. A TWAS association does not depend on
+  the scale of the prediction, so neither does the score now.
 
   The `r2_method` argument of those five fitting functions now defaults to
   `"refit"`. `compute_isotwas()` passes `"refit"` under `'coherent'` and
-  `"oos"` under `'legacy'`, which reproduces earlier results exactly.
+  `"oos"` under `'legacy'`, which reproduces the earlier scoring rules
+  (mrce_lasso's numbers still change; see below).
   `compute_mrce()` also chooses lambda by the mean of this score across
   transcripts, so its lambda, weights and predictions can change. It now
   returns its lambda path (`lambda`), the value chosen (`best_lambda`) and the
@@ -206,6 +207,18 @@ genes).
   their penalties by mean squared error, so only the R-squared they report
   changes. On 20 simulated genes (70 transcripts) the winner changed for 14,
   10 of them from one of the other methods to one of these five.
+
+* `compute_mrce()`'s cross-validated predictions now include each fold's
+  intercept. The fits are on centred data and return the intercept
+  `my - mx'B`, but the held-out predictions were `X %*% B` alone, off by
+  roughly the expression mean. Under `"oos"` scoring that offset dominated:
+  on 30 simulated genes (mean expression about 5) the reported R-squared
+  averaged -19 and was unrelated to performance on new data, so lambda was
+  chosen badly, and adding the intercept changed it for 28 genes and doubled
+  the R-squared on independent test data (0.026 to 0.052). Under `"refit"`
+  scoring, which fits its own intercept, it changed lambda for 2 of the 30.
+  The weights at a given lambda are unchanged; the predictions, the reported
+  R-squared and the lambda chosen change, under `r2_scale = 'legacy'` too.
 
 ## Bug fixes
 
