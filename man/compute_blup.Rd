@@ -2,7 +2,7 @@
 % Please edit documentation in R/compute_blup.R
 \name{compute_blup}
 \alias{compute_blup}
-\title{Univariate BLUP on all columns}
+\title{Univariate BLUP on all columns (deprecated)}
 \usage{
 compute_blup(
   X,
@@ -18,30 +18,40 @@ compute_blup(
 )
 }
 \arguments{
-\item{X}{matrix, design matrix of SNP dosages}
+\item{X}{matrix of SNP dosages, samples in rows and SNPs in columns, with
+SNP IDs as column names and no missing values}
 
-\item{Y}{matrix, matrix of G isoform expression across columns}
+\item{Y}{matrix of expression, samples in rows and one column per
+transcript}
 
-\item{Omega}{matrix, precision matrix of Y}
+\item{Omega}{matrix, precision matrix of \code{Y}; used only when
+\code{scale = TRUE}}
 
-\item{scale}{logical, T/F to scale Y by Omega}
+\item{scale}{logical, multiply \code{Y} by \code{Omega^(1/2)} before
+fitting}
 
-\item{nfolds}{int, number of CV folds}
+\item{nfolds}{int, number of cross-validation folds, used when
+\code{folds} is \code{NULL}}
 
-\item{verbose}{logical}
+\item{verbose}{logical, not used by this method}
 
-\item{par}{logical, uses mclapply to parallelize model fit}
+\item{par}{logical, not used by this method}
 
-\item{n.cores}{int, number of parallel cores}
+\item{n.cores}{int, not used by this method}
 
-\item{tx_names}{vector, character vector of tx names in order of columns of Y}
+\item{tx_names}{character vector of transcript names, in the order of the
+columns of \code{Y}; ignored if \code{Y} has column names}
 
-\item{seed}{int, random seed}
+\item{seed}{int, random seed for drawing the folds}
 }
 \value{
-data frame of elastic net, lasso, and LMM based predictions
+list with one element per transcript, each a list of
+  \code{Transcript} (name), \code{Model} (SNP weights), \code{R2},
+  \code{P} and \code{Pred} (cross-validated predictions), as described
+  for \code{\link{univariate_blup}}
 }
 \description{
-The function trains unvariate rrBLUP models individually for all
-isoform transcripts
+Deprecated: use \code{\link{univariate_blup}}. \code{compute_blup} calls
+\code{univariate_blup} and returns its result in the list format of
+isotwas 2.0.0 and earlier. It will be removed in a future release.
 }

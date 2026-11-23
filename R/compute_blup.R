@@ -1,103 +1,40 @@
-#' Univariate BLUP on all columns
+#' Univariate BLUP on all columns (deprecated)
 #'
-#' The function trains unvariate rrBLUP models individually for all
-#' isoform transcripts
+#' Deprecated: use \code{\link{univariate_blup}}. \code{compute_blup} calls
+#' \code{univariate_blup} and returns its result in the list format of
+#' isotwas 2.0.0 and earlier. It will be removed in a future release.
 #'
-#' @param X matrix, design matrix of SNP dosages
-#' @param Y matrix, matrix of G isoform expression across columns
-#' @param Omega matrix, precision matrix of Y
-#' @param scale logical, T/F to scale Y by Omega
-#' @param nfolds int, number of CV folds
-#' @param verbose logical
-#' @param par logical, uses mclapply to parallelize model fit
-#' @param n.cores int, number of parallel cores
-#' @param tx_names vector, character vector of tx names in order of columns of Y
-#' @param seed int, random seed
+#' @inheritParams univariate_blup
+#' @param seed int, random seed for drawing the folds
 #'
-#' @return data frame of elastic net, lasso, and LMM based predictions
-#'
-#' @importFrom rrBLUP mixed.solve
-#' @importFrom tibble tibble
-#' @importFrom rlist list.append
+#' @return list with one element per transcript, each a list of
+#'   \code{Transcript} (name), \code{Model} (SNP weights), \code{R2},
+#'   \code{P} and \code{Pred} (cross-validated predictions), as described
+#'   for \code{\link{univariate_blup}}
 #'
 #' @export
 compute_blup <- function(X,
-                            Y,
-                            Omega,
-                            scale = F,
-                            nfolds = 5,
-                            verbose,
-                            par = F,
-                            n.cores = NULL,
-                            tx_names = NULL,
-                            seed){
+                         Y,
+                         Omega,
+                         scale = F,
+                         nfolds = 5,
+                         verbose,
+                         par = F,
+                         n.cores = NULL,
+                         tx_names = NULL,
+                         seed){
 
-  if (!is.null(colnames(Y))){
-    tx_names = colnames(Y)
-  }
+  .Deprecated("univariate_blup")
 
-  if (scale){
-    Y = Y %*% (Omega %^% .5)
-  }
+  mod <- univariate_blup(X = X, Y = Y, Omega = Omega, scale = scale,
+                         nfolds = nfolds, verbose = verbose, par = par,
+                         n.cores = n.cores, tx_names = tx_names, seed = seed)
 
-  Y = as.data.frame(Y)
-  if (!is.null(tx_names)){
-    colnames(Y) = tx_names
-  }
-  set.seed(seed)
-  train.folds = caret::createFolds(1:nrow(Y),
-                                   k = nfolds,
-                                   returnTrain = T)
-
-  pred = matrix(ncol = ncol(Y),
-                nrow = nrow(Y))
-  for (tr in 1:nfolds){
-
-    Y.tr = as.matrix(Y[train.folds[[tr]],])
-    X.tr = as.matrix(X[train.folds[[tr]],])
-    X.test = as.matrix(X[-train.folds[[tr]],])
-    blup.fit = apply(Y.tr,
-                     FUN = rrBLUP::mixed.solve,
-                     MARGIN = 2,
-                     Z = X.tr,
-                     K = t(X.tr) %*% X.tr / (ncol(X.tr) - 1))
-    B.cur = sapply(blup.fit,
-                   function(x) as.numeric(x$u))
-    pred[-train.folds[[tr]],] = X.test %*% B.cur
-
-  }
-
-  r2.vec = sapply(1:ncol(Y),function(x){
-    summary((lm(Y[,x] ~ pred[,x])))$adj.r.sq
+  lapply(unname(mod$transcripts), function(tm) {
+    list(Transcript = tm$transcript_id,
+         Model = tm$weights,
+         R2 = tm$r2,
+         P = tm$pvalue,
+         Pred = tm$predicted)
   })
-
-
-  P = sapply(1:ncol(Y),function(x){
-    cor.test(Y[,x], pred[,x])$p.value
-  })
-
-  blup.fit = apply(Y,
-                   FUN = rrBLUP::mixed.solve,
-                   MARGIN = 2,
-                   Z = X,
-                   K = t(X) %*% X / (ncol(X) - 1))
-
-  modelList = list()
-  for (i in 1:length(blup.fit)){
-
-    mod = tibble::tibble(SNP = colnames(X),
-                         Weight = blup.fit[[i]]$u)
-    mod = subset(mod,Weight != 0)
-    modelList = rlist::list.append(modelList,
-                                   list(Transcript = colnames(Y)[i],
-                                        Model = mod,
-                                        R2 = r2.vec[i],
-                                        P = P[i],
-                                        Pred = pred[,i]))
-
-  }
-
-  return(modelList)
-
-
 }

@@ -19,35 +19,59 @@ univariate_blup(
 )
 }
 \arguments{
-\item{X}{matrix, design matrix of SNP dosages}
+\item{X}{matrix of SNP dosages, samples in rows and SNPs in columns, with
+SNP IDs as column names and no missing values}
 
-\item{Y}{matrix, matrix of G isoform expression across columns}
+\item{Y}{matrix of expression, samples in rows and one column per
+transcript}
 
-\item{Omega}{matrix, precision matrix of Y}
+\item{Omega}{matrix, precision matrix of \code{Y}; used only when
+\code{scale = TRUE}}
 
-\item{scale}{logical, T/F to scale Y by Omega}
+\item{scale}{logical, multiply \code{Y} by \code{Omega^(1/2)} before
+fitting}
 
-\item{nfolds}{int, number of CV folds}
+\item{nfolds}{int, number of cross-validation folds, used when
+\code{folds} is \code{NULL}}
 
-\item{verbose}{logical}
+\item{verbose}{logical, not used by this method}
 
-\item{par}{logical, uses mclapply to parallelize model fit}
+\item{par}{logical, not used by this method}
 
-\item{n.cores}{int, number of parallel cores}
+\item{n.cores}{int, not used by this method}
 
-\item{tx_names}{vector, character vector of tx names in order of columns of Y}
+\item{tx_names}{character vector of transcript names, in the order of the
+columns of \code{Y}; ignored if \code{Y} has column names}
 
-\item{seed}{int, random seed}
+\item{seed}{int, random seed for drawing the folds when \code{folds} is
+\code{NULL}}
 
 \item{folds}{optional cross-validation folds: a list with one vector of
 training-row indices per fold, or a vector of fold labels 1..K, one per
-sample. NULL (the default) draws them from \code{seed} as before;
+sample. NULL (the default) draws them from \code{seed};
 compute_isotwas passes every method the same folds.}
 }
 \value{
-data frame of elastic net, lasso, and LMM based predictions
+an \code{isotwas_model} (see \code{\link{create_isotwas_model}})
+  with, for each transcript, the SNP weights on the scale of \code{X}, the
+  cross-validated R2 and p-value, and the cross-validated predictions
+  (which include each training fold's intercept). The intercept of the
+  final model is not stored. A transcript whose cross-validated prediction
+  does not track its expression gets an empty set of weights and R2 0.
 }
 \description{
-The function trains unvariate rrBLUP models individually for all
-isoform transcripts
+Fits a ridge-regression BLUP model to each isoform transcript (each column
+of \code{Y}) separately, and scores it by cross-validation.
+}
+\details{
+Each transcript is fitted with the model
+\eqn{y = 1 b + X u + e}{y = 1 b + X u + e}, where
+\eqn{u \sim N(0, \sigma^2_u I)}{u ~ N(0, s2u I)},
+\eqn{e \sim N(0, \sigma^2_e I)}{e ~ N(0, s2e I)} and the two variances
+are estimated by REML, as
+\code{rrBLUP::mixed.solve(y, Z = X, K = diag(ncol(X)))} would fit it.
+Every SNP keeps a nonzero weight, except monomorphic ones.
+
+Models trained with isotwas 2.0.0 or earlier used a different prior, so
+their weights differ; see NEWS for how to reproduce them.
 }

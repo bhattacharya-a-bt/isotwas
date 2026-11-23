@@ -1,158 +1,162 @@
-#' rrBLUP::mixed.solve for many responses sharing one design
+#' Ridge BLUP for many responses sharing one design
 #'
-#' univariate_blup calls rrBLUP::mixed.solve(y, Z = X, K = X'X / (p - 1))
-#' once per transcript, with the default intercept as the only fixed effect
-#' and REML estimation. Everything mixed.solve decomposes depends on Z and K
-#' only, so .blup_prep() does that work once per design and .blup_solve()
-#' finishes each response: the REML search, beta and u.
+#' For each response y (a column of Y), univariate_blup fits
+#' y = 1 b + X u + e with u ~ N(0, s2u I), e ~ N(0, s2e I) and the variances
+#' estimated by REML: ridge regression BLUP, which is what
+#' rrBLUP::mixed.solve(y, Z = X, K = diag(m)) computes (rrBLUP 4.6.3).
+#' mixed.solve redoes its decompositions for every response, although they
+#' depend only on X. Here .blup_prep() decomposes X once per design and
+#' .blup_solve() finishes each response, in five steps.
 #'
-#' mixed.solve (rrBLUP 4.6.3) needs two spectra: phi, of H0 = Z K Z', and
-#' theta with the projections omega = Q'y, of S H0 S where S = I - 11'/n.
-#' Because K is a function of Z'Z, both follow from one eigendecomposition of
-#' the smaller Gram matrix and one of a diagonal-minus-rank-one matrix:
+#' 1. Centre. Replace X by Xc = X - 1 xbar'. This only moves the intercept
+#' (b becomes b + xbar'u), so u, the REML estimate and the fitted values do
+#' not change. It makes Xc'1 = 0, which simplifies everything below.
+#'
+#' 2. Decompose. mixed.solve needs the spectrum of H0 = Z K Z' = Xc Xc' and
+#' that of S H0 S, where S = I - 11'/n removes the intercept. Because
+#' Xc'1 = 0, S H0 S = H0, so both are the nonzero eigenvalues d2 of Xc Xc'
+#' plus zeros. .blup_prep() takes d2 from the smaller of Xc'Xc (n > m,
+#' eigenvectors V) and Xc Xc' (n <= m, eigenvectors U), dropping eigenvalues
+#' within rounding error of zero.
+#'
+#' 3. Estimate the variances. With lambda = s2e / s2u, mixed.solve's REML
+#' objective depends on y only through omega = U'y, its projections on the
+#' eigenvectors for d2, and tail = ||Sy||^2 - sum(omega^2), the part in the
+#' n - 1 - length(d2) zero directions. .blup_solve() minimises that
+#' objective with mixed.solve's optimize() call and bounds. (In the n > m
+#' branch, U'y = diag(1 / d) V'Xc'y.)
+#'
+#' 4. Solve. H = H0 + lambda I has 1 as an eigenvector, so the GLS intercept
+#' is mean(y), and the marker effects u = Xc'(Xc Xc' + lambda I)^-1 y are
 #' \itemize{
-#'   \item n > m + 1 (mixed.solve's "cholesky" branch, where K carries a
-#'     1e-6 ridge): Z'Z = R diag(mu) R', so K = R diag(Lambda) R' with
-#'     Lambda = mu / (m - 1) + 1e-6, and H0 has nonzero eigenvalues
-#'     a = Lambda mu with eigenvectors Z R Lambda^(1/2) a^(-1/2). Its centred
-#'     version S H0 S has the nonzero spectrum of diag(a) - v v' / n with
-#'     v = Lambda^(1/2) R' Z'1.
-#'   \item n <= m + 1 (the "eigen" branch, K without the ridge): ZZ' =
-#'     U diag(nu) U', so H0 = U diag(nu^2 / (m - 1)) U', and S H0 S has the
-#'     spectrum of diag(phi) - w w' / n with w = phi^(1/2) U'1.
+#'   \item n > m: u = V diag(1 / (d2 + lambda)) V'Xc'y;
+#'   \item n <= m: u = Xc'U diag(1 / (d2 + lambda)) U'y.
 #' }
-#' H^-1 = (H0 + lambda I)^-1 is applied in the same bases. The REML
-#' objective, its bounds and the optimize() call are mixed.solve's; the
-#' objective is evaluated on the nonzero part of theta, with the rest (exact
-#' zeros in mixed.solve, or eigenvalues below rounding error) summed into
-#' one term. The estimates match mixed.solve to the precision of its own
-#' REML search.
+#'
+#' 5. Return to the scale of X. u is the same for X and Xc; the intercept
+#' for X is mean(y) - xbar'u, so X %*% u + intercept is the fitted value. A
+#' monomorphic SNP gets a weight of exactly 0.
+#'
+#' Fitted values match mixed.solve to about 1e-6 relative, and weights to the
+#' precision of optimize()'s search (about 1e-4 relative at worst). In its
+#' "cholesky" branch (n > m + 1) mixed.solve adds 1e-6 to the diagonal of K;
+#' that rescales H0 by 1 + 1e-6, which REML absorbs into lambda, so only the
+#' search path differs.
+#'
+#' Up to isotwas 2.0.0 the prior was K = X'X / (m - 1) on uncentred dosages;
+#' NEWS.md says why it was replaced.
 #'
 #' @noRd
 NULL
 
-#' Marker effects of univariate_blup for every column of Y
+#' Ridge BLUP weights and intercepts for every column of Y
 #'
-#' Equal to sapply over columns of rrBLUP::mixed.solve(Y[, g], Z = Z,
-#' K = crossprod(Z) / (ncol(Z) - 1))$u, which it falls back to when there
-#' are missing values.
+#' A response with missing values is fitted on its observed rows, as
+#' mixed.solve drops them; responses with the same missing rows share one
+#' decomposition. A response with no observed values gets weights 0 and an
+#' NA intercept.
 #'
-#' @return ncol(Z) x ncol(Y) matrix
+#' @param Y n x G matrix of responses
+#' @param X n x m matrix of SNP dosages, no missing values
+#' @return list(weights = m x G matrix of marker effects, on the scale of X;
+#'   intercept = length-G vector)
 #' @noRd
-.blup_u <- function(Y, Z) {
+.blup_fit <- function(Y, X) {
     Y <- as.matrix(Y)
-    Z <- as.matrix(Z)
-    if (anyNA(Y) || anyNA(Z)) {
-        K <- crossprod(Z) / (ncol(Z) - 1)
-        return(sapply(seq_len(ncol(Y)), function(g)
-            as.numeric(rrBLUP::mixed.solve(Y[, g], Z = Z, K = K)$u)))
+    X <- as.matrix(X)
+    if (anyNA(X)) {
+        stop("univariate_blup: X has missing values; impute them first")
     }
-    .blup_solve(.blup_prep(Z), Y)
+    if (!anyNA(Y)) return(.blup_solve(.blup_prep(X), Y))
+
+    out <- list(weights = matrix(0, ncol(X), ncol(Y)),
+                intercept = rep(NA_real_, ncol(Y)))
+    miss <- is.na(Y)
+    pattern <- apply(miss, 2, function(z) paste(which(z), collapse = ","))
+    for (cols in split(seq_len(ncol(Y)), pattern)) {
+        ok <- !miss[, cols[1]]
+        if (!any(ok)) next
+        fit <- .blup_solve(.blup_prep(X[ok, , drop = FALSE]),
+                           Y[ok, cols, drop = FALSE])
+        out$weights[, cols] <- fit$weights
+        out$intercept[cols] <- fit$intercept
+    }
+    out
 }
 
-#' Eigenvalues and eigenvectors of diag(a) - v v' / n
-#'
-#' Eigenvalues within rounding error of zero are dropped: they stand for the
-#' directions of S H0 S that mixed.solve gives theta = 0, or as good as.
-#' @noRd
-.blup_centred_spectrum <- function(a, v, n) {
-    T <- -tcrossprod(v) / n
-    diag(T) <- diag(T) + a
-    e <- eigen(T, symmetric = TRUE)
-    keep <- e$values > max(abs(e$values)) * length(a) * .Machine$double.eps * 8
-    list(theta = e$values[keep], V = e$vectors[, keep, drop = FALSE])
-}
-
-#' @param Z n x m design (SNP dosages), no missing values
+#' @param X n x m design (SNP dosages), no missing values
 #' @return a decomposition for .blup_solve()
 #' @noRd
-.blup_prep <- function(Z) {
-    Z <- as.matrix(Z)
-    n <- nrow(Z)
-    m <- ncol(Z)
-    s <- colSums(Z)
-    if (n > m + 1) {
-        e <- eigen(crossprod(Z), symmetric = TRUE)
-        R <- e$vectors
-        mu <- e$values
-        Lambda <- mu / (m - 1) + 1e-06
-        a <- Lambda * mu
-        Rs <- drop(crossprod(R, s))
-        cs <- .blup_centred_spectrum(a, sqrt(Lambda) * Rs, n)
-        list(branch = "cholesky", n = n, m = m, Z = Z, R = R,
-             Lambda = Lambda, phi = a, Rs = Rs,
-             theta = cs$theta, V2 = cs$V)
-    } else {
-        e <- eigen(tcrossprod(Z), symmetric = TRUE)
-        U <- e$vectors
-        nu <- e$values
-        phi <- nu^2 / (m - 1)
-        U1 <- colSums(U)
-        cs <- .blup_centred_spectrum(phi, sqrt(pmax(phi, 0)) * U1, n)
-        list(branch = "eigen", n = n, m = m, Z = Z, U = U,
-             nu = nu, phi = phi, Rs = U1,
-             theta = cs$theta, V2 = cs$V)
-    }
+.blup_prep <- function(X) {
+    X <- as.matrix(X)
+    n <- nrow(X)
+    m <- ncol(X)
+    if (n < 1) stop("univariate_blup: no samples to fit")
+    xbar <- colMeans(X)
+    Xc <- sweep(X, 2, xbar)
+    # monomorphic SNPs: centred to exactly 0, and given weight exactly 0 in
+    # .blup_solve (in the X'X branch their eigenvector entries are only
+    # zero to rounding error)
+    mono <- colSums(X != rep(X[1, ], each = n)) == 0
+    Xc[, mono] <- 0
+    branch <- if (n > m) "XtX" else "XXt"
+    e <- eigen(if (branch == "XtX") crossprod(Xc) else tcrossprod(Xc),
+               symmetric = TRUE)
+    # eigenvalues within rounding error of zero are the directions of H0
+    # that mixed.solve gives theta = 0, or as good as
+    tol <- max(abs(e$values)) * max(n, m) * .Machine$double.eps * 8
+    keep <- which(e$values > tol)
+    # Xc has rank n - 1 at most: in the XX' branch the direction 1 must
+    # never be kept, even if rounding lifts it above tol
+    if (branch == "XXt") keep <- utils::head(keep, n - 1)
+    list(branch = branch, n = n, m = m, xbar = xbar, Xc = Xc, mono = mono,
+         d2 = e$values[keep], E = e$vectors[, keep, drop = FALSE])
 }
 
 #' @param prep output of .blup_prep()
 #' @param Y n x G matrix of responses, no missing values
-#' @param bounds REML search interval, as mixed.solve
-#' @return m x G matrix of marker effects u
+#' @param bounds REML search interval for lambda, as mixed.solve
+#' @return list(weights = m x G matrix, intercept = length-G vector), as
+#'   .blup_fit()
 #' @noRd
 .blup_solve <- function(prep, Y, bounds = c(1e-09, 1e+09)) {
     Y <- as.matrix(Y)
-    n <- prep$n
-    m <- prep$m
-    n.p <- n - 1
-    theta <- prep$theta
-    n_tail <- n.p - length(theta)
-    phi <- prep$phi
-    # mixed.solve's f.REML, with the theta = 0 directions summed into one term
-    f.REML <- function(lambda, n.p, theta, omega.sq, tail) {
+    n.p <- prep$n - 1
+    d2 <- prep$d2
+    n_tail <- n.p - length(d2)
+    # mixed.solve's f.REML, with the n_tail theta = 0 directions, whose
+    # squared projections sum to tail, summed into one term
+    f.REML <- function(lambda, n.p, theta, omega.sq, tail, n_tail) {
         n.p * log(sum(omega.sq / (theta + lambda)) + tail / lambda) +
             sum(log(theta + lambda)) + n_tail * log(lambda)
     }
 
-    Sy <- sweep(Y, 2, colMeans(Y))
-    if (prep$branch == "cholesky") {
-        # rotated Z'y, and Z'Sy in the basis of the centred spectrum
-        t_y <- crossprod(prep$R, crossprod(prep$Z, Y))
-        t_Sy <- crossprod(prep$R, crossprod(prep$Z, Sy))
-        g <- crossprod(prep$V2, sqrt(prep$Lambda) * t_Sy)
-    } else {
-        t_y <- crossprod(prep$U, Y)
-        g <- crossprod(prep$V2, sqrt(pmax(phi, 0)) * crossprod(prep$U, Sy))
-    }
+    ybar <- colMeans(Y)
+    Sy <- sweep(Y, 2, ybar)
     ss_Sy <- colSums(Sy^2)
-    one_y <- colSums(Y)
+    if (prep$branch == "XtX") {
+        # V'Xc'y = diag(d) U'y
+        t_y <- crossprod(prep$E, crossprod(prep$Xc, Sy))
+        omega.sq <- t_y^2 / d2
+    } else {
+        t_y <- crossprod(prep$E, Sy)
+        omega.sq <- t_y^2
+    }
 
-    out <- matrix(0, m, ncol(Y))
+    u <- matrix(0, prep$m, ncol(Y))
     for (k in seq_len(ncol(Y))) {
-        omega.sq <- g[, k]^2 / theta
-        tail <- max(ss_Sy[k] - sum(omega.sq), 0)
-        lambda <- stats::optimize(f.REML, interval = bounds, n.p, theta,
-                                  omega.sq, tail)$minimum
-        if (prep$branch == "cholesky") {
-            # 1'H^-1 v = (1'v - Rs' diag(Lambda / (lambda + phi)) R'Z'v) / lambda
-            # Z'H^-1 v = R diag(1 / (lambda + phi)) R'Z'v
-            wgt <- prep$Lambda / (lambda + phi)
-            Rs <- prep$Rs
-            oneHy <- (one_y[k] - sum(Rs * wgt * t_y[, k])) / lambda
-            oneH1 <- (n - sum(Rs * wgt * Rs)) / lambda
-            beta <- oneHy / oneH1
-            r <- (t_y[, k] - beta * Rs) / (lambda + phi)
-            # u = K Z'w = R diag(Lambda) R'Z'w
-            out[, k] <- prep$R %*% (prep$Lambda * r)
+        # no genetic variation, or a constant response: u = 0
+        if (length(d2) == 0 || ss_Sy[k] == 0) next
+        tail <- if (n_tail > 0) max(ss_Sy[k] - sum(omega.sq[, k]), 0) else 0
+        lambda <- stats::optimize(f.REML, interval = bounds, n.p, d2,
+                                  omega.sq[, k], tail, n_tail)$minimum
+        r <- t_y[, k] / (d2 + lambda)
+        u[, k] <- if (prep$branch == "XtX") {
+            prep$E %*% r
         } else {
-            # H^-1 = U diag(1 / (phi + lambda)) U'
-            U1 <- prep$Rs
-            dinv <- 1 / (phi + lambda)
-            beta <- sum(U1 * dinv * t_y[, k]) / sum(U1^2 * dinv)
-            r <- (t_y[, k] - beta * U1) * dinv
-            # u = K Z'w = Z'(ZZ') w / (m - 1) = Z'U diag(nu) U'w / (m - 1)
-            out[, k] <- crossprod(prep$Z, prep$U %*% (prep$nu * r)) / (m - 1)
+            crossprod(prep$Xc, prep$E %*% r)
         }
     }
-    out
+    u[prep$mono, ] <- 0
+    list(weights = u, intercept = ybar - drop(crossprod(prep$xbar, u)))
 }

@@ -56,15 +56,11 @@ genes).
   documented under Details in `?compute_isotwas`.
 
 * `univariate_blup()` no longer calls `rrBLUP::mixed.solve()` once per
-  transcript. Its kernel is a function of X'X, so both spectra REML needs come
-  from one eigendecomposition of the smaller Gram matrix (X'X or XX') and one
-  of a diagonal-minus-rank-one matrix per training set, shared by every
-  transcript. `mixed.solve()` did two SVDs, a complete QR and an n x n inverse
-  per transcript. The REML objective, bounds and `optimize()` call are
-  unchanged. Weights agree with `mixed.solve()` to about 1e-5 relative:
-  `optimize()` locates the REML optimum only to about 1e-4 relative, and
-  `mixed.solve()` itself moves by up to 2e-6 when its input moves by one ulp.
-  Missing values fall back to `mixed.solve()`. 4.5-34x faster, more at larger n.
+  transcript. It decomposes each training set once, shares that across
+  transcripts, and runs `mixed.solve()`'s REML search on it. Fitted values
+  agree with `mixed.solve()` to about 1e-6 relative. 29-142x faster in local
+  timings, more at larger n. Its model has also changed (see Changes to
+  fitted models). rrBLUP moves to Suggests.
 
 * `univariate_susie()` no longer calls `susieR::susie()` on a sparse copy of
   the dosages. `.susie_fit()` runs the same IBSS iterations as susieR 0.14.2
@@ -110,6 +106,23 @@ genes).
   longer run a `cor.test()` they discard when scoring R-squared.
 
 ## Changes to fitted models
+
+* `univariate_blup()` now uses the standard ridge-BLUP prior, K = I, as in
+  `rrBLUP::mixed.solve(y, Z = X, K = diag(m))`. **This changes published
+  models.** The old prior, K = X'X / (m - 1) on uncentred dosages, pulled
+  the weights towards the vector of allele frequencies. When the cis signal
+  was weak, nearly all weights took the same sign, in proportion to ALT
+  allele frequency, so the model predicted a count of ALT alleles across the
+  window rather than a cis effect. In simulations this happened in 59% of
+  fits to pure noise, and none with the new prior, which also predicted
+  simulated cis signal about twice as well.
+
+  The cross-validated predictions now also include each fold's intercept,
+  which can move the cross-validated R-squared slightly. Because BLUP's
+  R-squared takes part in model selection, `compute_isotwas()` can select a
+  different method for some transcripts. To reproduce models trained with
+  earlier versions, install the last commit before this change:
+  `remotes::install_github("bhattacharya-a-bt/isotwas@438673e")`.
 
 * `compute_isotwas()` gives every method the same cross-validation folds
   (`shared_folds = TRUE`, the default), so the cross-validated R-squared that
@@ -273,6 +286,12 @@ genes).
   and scaling reached `eigen(NULL)`.
 
 ## Breaking changes
+
+* `compute_blup()` is deprecated; use `univariate_blup()`. It now calls
+  `univariate_blup()` and returns the result in its old list format, so it
+  fits the new BLUP model (see Changes to fitted models) and, like
+  `univariate_blup()`, returns an empty model with R-squared 0 when the
+  cross-validated prediction does not track expression.
 
 * Four fitting functions now label their output with the name the method
   appears under in the comparison table, so `model$method` can be matched
