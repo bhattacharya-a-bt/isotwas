@@ -43,8 +43,9 @@
 #' @param maxit.in int, maximum number of iterations
 #' @param joinet_nfolds_int int, folds for joinet's inner cross-validation.
 #' @param sgl_nlambda int, lambda path length for multivariate_sgl
-#' @param gene_exp vector, total gene expression. If given, a
-#'   transcript-to-gene model is also fitted (see Details).
+#' @param gene_exp vector, total gene expression, one finite value per
+#'   sample. If given, a transcript-to-gene model is also fitted (see
+#'   Details).
 #' @param run_all logical, run all methods
 #' @param shared_folds logical, give every method the same cross-validation
 #'   folds (default TRUE), so that the cross-validated R2 compared across
@@ -85,10 +86,19 @@
 #' With \code{gene_exp}, the transcript-to-gene model regresses gene
 #' expression on the selected models' cross-validated predictions with an
 #' elastic net. Each alpha in 0, 0.25, 0.5, 0.75 and 1 gets a cross-validated
-#' lambda path on the same folds. The alpha and lambda whose held-out
-#' predictions have the highest adjusted R-squared of \code{lm(gene ~ pred)}
-#' give the weights, and that R-squared is reported. When no prediction
-#' varies, the model is not fitted: its weights are 0 and its R-squared NA.
+#' lambda path on the same folds. A lambda is a candidate if its held-out
+#' predictions correlate positively with \code{gene_exp} and glmnet reports a
+#' non-zero coefficient (\code{df > 0}) in its fit on all samples. The
+#' candidate whose held-out predictions have the highest adjusted R-squared
+#' of \code{lm(gene ~ pred)} gives the weights, and that R-squared is
+#' reported. A prediction gets weight 0 if its standard deviation is at most
+#' \code{getOption('isotwas.tx2gene_min_sd_ratio', 0.01)} times that of
+#' \code{gene_exp} (glmnet standardises its predictors, so it would otherwise
+#' get a weight of order one over its standard deviation), if it is
+#' constant within the training samples of a fold, or if it is not finite
+#' (with a warning). The floor assumes
+#' \code{gene_exp} is on the scale of the predictions. Without a candidate,
+#' the model is not fitted: its weights are 0 and its R-squared NA.
 #'
 #' joinet is the most expensive method at moderate transcript counts, and most
 #' of that time is its inner cross-validation. Lowering
@@ -217,6 +227,12 @@ compute_isotwas <- function(X,
   if (nfolds > N) {
     warning("nfolds (", nfolds, ") > N (", N, "). Setting nfolds = N for leave-one-out CV.")
     nfolds <- N
+  }
+
+  # Check gene_exp before the models are fitted
+  if (!is.null(gene_exp) &&
+      (length(gene_exp) != N || !all(is.finite(gene_exp)))) {
+    stop("gene_exp must have one finite value per sample (N=", N, ")")
   }
 
   r2_scale <- match.arg(r2_scale)
@@ -734,8 +750,9 @@ compute_isotwas <- function(X,
 
     if (verbose) {
       if (is.na(tx2gene_coef$R2[1])) {
-        message("  [!] No transcript has a varying prediction; ",
-                "transcript-to-gene model not fitted")
+        message("  [!] Transcript-to-gene model not fitted: no prediction ",
+                "passed the SD floor and correlated positively with gene ",
+                "expression")
       } else {
         message("  [OK] Transcript-to-gene R2: ",
                 sprintf("%.3f", tx2gene_coef$R2[1]))
@@ -820,69 +837,103 @@ compute_isotwas <- function(X,
 
 #' Fit the transcript-to-gene aggregation model
 #'
-#' Regresses total gene expression on the cross-validated transcript
-#' predictions with an elastic net. Each alpha in \code{alphas} gets a
-#' cross-validated lambda path on the same folds. The alpha and lambda whose
-#' held-out predictions have the highest adjusted R-squared of
-#' \code{lm(gene_exp ~ pred)} are chosen, and the weights are that fit's
-#' coefficients, so the reported R2 describes them. If they are all 0, the
-#' weights come from an unpenalised \code{lm()} instead.
-#'
-#' When no prediction varies, as when every selected model is constant,
-#' glmnet cannot fit ("All used predictors have zero variance"), so the fit is
-#' skipped: every weight is 0 and R2 is NA.
+#' Implements the transcript-to-gene model described in the Details of
+#' \code{compute_isotwas}:
+#' \itemize{
+#'   \item A prediction enters the fit only if it is finite (otherwise with a
+#'     warning), varies within the training samples of every fold, and has a
+#'     standard deviation above \code{min_sd_ratio} times that of
+#'     \code{gene_exp}. Any other prediction gets weight 0.
+#'   \item Each alpha gets a cross-validated lambda path on \code{foldid}. A
+#'     lambda is a candidate if its held-out predictions correlate positively
+#'     with \code{gene_exp} and glmnet reports a non-zero coefficient
+#'     (\code{df > 0}) in its fit on all samples.
+#'   \item The candidate with the highest adjusted R2 of its held-out
+#'     predictions gives the weights and the R2.
+#' }
 #'
 #' @param pred_mat matrix, cross-validated predictions, one column per
 #'   transcript
-#' @param gene_exp numeric, total gene expression
+#' @param gene_exp numeric, gene expression
 #' @param foldid integer, a fold label per sample
 #' @param tx_names character, transcript names in the column order of pred_mat
 #' @param alphas numeric, the elastic net mixing parameters to choose from
+#' @param min_sd_ratio numeric, the smallest standard deviation a prediction
+#'   may have, as a fraction of the standard deviation of \code{gene_exp}
 #'
-#' @return data.frame with columns Feature, Weight_tx2gene and R2
+#' @return data.frame with columns Feature, Weight_tx2gene and R2. Without a
+#'   candidate, every weight is 0 and R2 is NA.
 #'
 #' @noRd
 .fit_tx2gene <- function(pred_mat, gene_exp, foldid, tx_names,
-                         alphas = c(0, .25, .5, .75, 1)) {
+                         alphas = c(0, .25, .5, .75, 1),
+                         min_sd_ratio = getOption("isotwas.tx2gene_min_sd_ratio",
+                                                  1e-2)) {
 
   pred_mat <- as.matrix(pred_mat)
-  varies <- apply(pred_mat, 2, function(x) {
-    all(is.finite(x)) && stats::sd(x) > 0
-  })
-  if (!any(varies)) {
-    return(data.frame(Feature = tx_names,
-                      Weight_tx2gene = 0,
-                      R2 = NA_real_))
+  n <- length(gene_exp)
+  weights <- numeric(length(tx_names))
+  no_fit <- data.frame(Feature = tx_names,
+                       Weight_tx2gene = weights,
+                       R2 = NA_real_)
+
+  gene_sd <- stats::sd(gene_exp)
+  if (n < 3 || !is.finite(gene_sd) || gene_sd == 0) {
+    return(no_fit)
   }
 
-  # One cross-validated path per alpha, on the same folds, each lambda scored
-  # by the adjusted R2 of its held-out predictions
+  finite <- apply(pred_mat, 2, function(x) all(is.finite(x)))
+  if (!all(finite)) {
+    warning("Transcript-to-gene model: the cross-validated predictions of ",
+            paste(tx_names[!finite], collapse = ", "),
+            " have missing or infinite values; they get weight 0.")
+  }
+  # glmnet standardises each column, so a nearly constant one gets a weight of
+  # order 1 / sd, and it stops (error 7777) when no column varies within a
+  # fold's training samples.
+  train <- lapply(unique(foldid), function(k) foldid != k)
+  varies_in_folds <- apply(pred_mat, 2, function(x) {
+    all(vapply(train, function(tr) any(x[tr] != x[tr][1]), logical(1)))
+  })
+  pred_sd <- apply(pred_mat, 2, stats::sd)
+  keep <- finite & varies_in_folds & pred_sd > min_sd_ratio * gene_sd
+  if (!any(keep)) {
+    return(no_fit)
+  }
+  x <- pred_mat[, keep, drop = FALSE]
+  # glmnet needs two columns; it leaves a constant one out of the fit
+  if (ncol(x) == 1) {
+    x <- cbind(x, 0)
+  }
+
   fits <- lapply(alphas, function(a) {
-    glmnet::cv.glmnet(x = pred_mat,
+    glmnet::cv.glmnet(x = x,
                       y = gene_exp,
                       foldid = foldid,
                       alpha = a,
                       keep = TRUE,
                       trace.it = FALSE)
   })
+  # Adjusted R2 of lm(gene_exp ~ pred), from r. It ignores the sign of r, so
+  # lambdas with r <= 0 are excluded, as are those with no non-zero weight.
   scores <- lapply(fits, function(f) {
-    apply(f$fit.preval, 2, function(x) {
-      if (stats::sd(x) > 0) summary(stats::lm(gene_exp ~ x))$adj.r.sq else NA
-    })
+    r <- suppressWarnings(as.vector(stats::cor(f$fit.preval, gene_exp)))
+    r2 <- 1 - (1 - r^2) * (n - 1) / (n - 2)
+    r2[is.na(r) | r <= 0 | f$glmnet.fit$df == 0] <- NA
+    r2
   })
-  best_alpha <- which.max(vapply(scores, function(x) {
-    if (all(is.na(x))) -Inf else max(x, na.rm = TRUE)
-  }, numeric(1)))
+  best_by_alpha <- vapply(scores, function(s) max(c(-Inf, s), na.rm = TRUE),
+                          numeric(1))
+  if (all(best_by_alpha == -Inf)) {
+    return(no_fit)
+  }
+  best_alpha <- which.max(best_by_alpha)
   best_lambda <- which.max(scores[[best_alpha]])
   fit <- fits[[best_alpha]]
-  glmnet_r2 <- unname(scores[[best_alpha]][best_lambda])
-
-  ccc <- as.numeric(stats::coef(fit, s = fit$lambda[best_lambda]))[-1]
-  if (all(ccc == 0)) {
-    ccc <- stats::coef(stats::lm(gene_exp ~ pred_mat))[-1]
-  }
+  coefs <- as.numeric(stats::coef(fit, s = fit$lambda[best_lambda]))[-1]
+  weights[keep] <- coefs[seq_len(sum(keep))]
 
   data.frame(Feature = tx_names,
-             Weight_tx2gene = ccc,
-             R2 = glmnet_r2)
+             Weight_tx2gene = weights,
+             R2 = scores[[best_alpha]][best_lambda])
 }
