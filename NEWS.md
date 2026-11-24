@@ -232,6 +232,25 @@ genes).
   nearly all of them and the R-squared on independent test data was about
   the same (0.030 vs 0.030, 0.105 vs 0.104).
 
+* `compute_isotwas()`'s transcript-to-gene model changes its fitted weights
+  in two cases.
+  * A prediction whose SD is at most 1/100 of that of `gene_exp`
+    (`getOption("isotwas.tx2gene_min_sd_ratio", 0.01)`) gets weight 0. glmnet
+    standardises its predictors, so such a prediction got a weight of order
+    one over its SD: -966 for one transcript in a fetal brain panel whose
+    other weights were at most 1.1.
+  * A lambda is a candidate only if its held-out predictions correlate
+    positively with `gene_exp`. The adjusted R-squared ignores the sign, so on
+    weak genes null-end lambdas, whose held-out predictions are the folds'
+    training means, won with an R-squared of up to about 0.04 and weights of
+    about 1e-37, or unpenalised `lm(gene ~ pred)` weights from a fallback
+    that is now removed. Such a gene now gets either no model or one whose
+    held-out predictions correlate positively with it, though its adjusted
+    R-squared can still be negative.
+
+  Each lambda's R-squared is now computed from a correlation instead of
+  `lm()`, which makes the step about three times faster.
+
 ## Bug fixes
 
 * `compute_isotwas()` with `gene_exp` no longer stops with glmnet's "All used
@@ -239,6 +258,19 @@ genes).
   models' cross-validated predictions varies, as when `sgl` runs alone on a
   gene it cannot predict. The transcript-to-gene model is then not fitted: its
   weights are 0 and its R-squared is `NA`.
+
+* `compute_isotwas()` with `gene_exp` no longer stops with error 7777 when
+  predictions are constant within the training samples of a fold.
+  `multivariate_sgl()` predicts the full-data mean wherever it selects no SNP,
+  so if it selects SNPs in one fold only, its predictions are constant in the
+  fit that holds that fold out, and glmnet stops when every column of a fit
+  is constant. Such a prediction now gets weight 0.
+
+* `compute_isotwas()` with `gene_exp` now fits the transcript-to-gene model
+  for a gene with one transcript, where it stopped with "x should be a matrix
+  with 2 or more columns". It rejects a `gene_exp` of the wrong length or
+  with missing values before fitting any model, and gives a prediction with
+  missing values weight 0 with a warning.
 
 * `compute_omega()` now calls `match.arg()` on `method`. Its documented default
   is `c('replicates','mean')`, which reached `if (method == 'mean')` as a

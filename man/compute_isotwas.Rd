@@ -42,8 +42,9 @@ compute_isotwas(
 
 \item{Y}{matrix, matrix of G isoform expression across columns}
 
-\item{gene_exp}{vector, total gene expression. If given, a
-transcript-to-gene model is also fitted (see Details).}
+\item{gene_exp}{vector, total gene expression, one finite value per
+sample. If given, a transcript-to-gene model is also fitted (see
+Details).}
 
 \item{Y.rep}{matrix, matrix of G isoform expression with replicates}
 
@@ -151,10 +152,19 @@ wins.
 With \code{gene_exp}, the transcript-to-gene model regresses gene
 expression on the selected models' cross-validated predictions with an
 elastic net. Each alpha in 0, 0.25, 0.5, 0.75 and 1 gets a cross-validated
-lambda path on the same folds. The alpha and lambda whose held-out
-predictions have the highest adjusted R-squared of \code{lm(gene ~ pred)}
-give the weights, and that R-squared is reported. When no prediction
-varies, the model is not fitted: its weights are 0 and its R-squared NA.
+lambda path on the same folds. A lambda is a candidate if its held-out
+predictions correlate positively with \code{gene_exp} and glmnet reports a
+non-zero coefficient (\code{df > 0}) in its fit on all samples. The
+candidate whose held-out predictions have the highest adjusted R-squared
+of \code{lm(gene ~ pred)} gives the weights, and that R-squared is
+reported. A prediction gets weight 0 if its standard deviation is at most
+\code{getOption('isotwas.tx2gene_min_sd_ratio', 0.01)} times that of
+\code{gene_exp} (glmnet standardises its predictors, so it would otherwise
+get a weight of order one over its standard deviation), if it is
+constant within the training samples of a fold, or if it is not finite
+(with a warning). The floor assumes
+\code{gene_exp} is on the scale of the predictions. Without a candidate,
+the model is not fitted: its weights are 0 and its R-squared NA.
 
 joinet is the most expensive method at moderate transcript counts, and most
 of that time is its inner cross-validation. Lowering
